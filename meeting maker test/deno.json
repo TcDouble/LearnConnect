@@ -1,0 +1,6 @@
+{
+  "//": "Marks this folder as a Deno project so the editor recognizes Deno globals.",
+  "lint": {
+    "exclude": ["config.js"]
+  }
+}

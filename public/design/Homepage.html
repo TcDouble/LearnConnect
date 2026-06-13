@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnConnect — Home</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="container navbar">
+            <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+            <ul class="nav-links">
+                <li><a href="homepage.html" class="active">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="pricing.html">Pricing</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section class="hero container">
+            <h1>Connect students with great teachers</h1>
+            <p class="tagline">A simple platform for finding the right teacher — or the right student.<br>Sign in below to get started.</p>
+            <div class="role-selector">
+                <div class="role-card" data-role="teacher">
+                    <i class="fas fa-chalkboard-user fa-2x"></i>
+                    <h3>I'm a teacher</h3>
+                    <p>Manage your students</p>
+                </div>
+                <div class="role-card" data-role="student">
+                    <i class="fas fa-user-graduate fa-2x"></i>
+                    <h3>I'm a student</h3>
+                    <p>Find a teacher</p>
+                </div>
+            </div>
+            <div id="demo-message" class="demo-message"></div>
+        </section>
+        <section class="quick-nav container">
+            <h2>Explore LearnConnect</h2>
+            <div class="quick-buttons">
+                <a href="about.html" class="btn btn-outline">Learn about us <i class="fas fa-arrow-right"></i></a>
+                <a href="pricing.html" class="btn btn-primary">View pricing plans</a>
+            </div>
+        </section>
+    </main>
+    <footer><div class="container"><p>&copy; 2026 LearnConnect — bridging learners and mentors.</p></div></footer>
+    <script>
+        document.querySelector('[data-role="teacher"]').addEventListener('click', () => {
+            window.location.href = 'teacher-signup.html';
+        });
+        document.querySelector('[data-role="student"]').addEventListener('click', () => {
+            window.location.href = 'signup.html';
+        });
+    </script>
+</body>
+</html>

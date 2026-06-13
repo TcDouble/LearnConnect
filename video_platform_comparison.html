@@ -1,0 +1,120 @@
+
+<h2 class="sr-only">Updated comparison of Daily.co, Jitsi Meet, Zoom, and Microsoft Teams including recording, transcript, and whiteboard capture support</h2>
+
+<style>
+  .wrap { padding: 1rem 0; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 160px repeat(4, minmax(0,1fr)); gap: 0; }
+  .cell { padding: 10px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: top; }
+  .cell.label { color: var(--color-text-secondary); font-size: 12px; font-weight: 500; letter-spacing: 0.03em; background: var(--color-background-secondary); border-right: 0.5px solid var(--color-border-tertiary); }
+  .cell.head { font-weight: 500; font-size: 13px; background: var(--color-background-secondary); border-bottom: 1.5px solid var(--color-border-secondary); text-align: center; }
+  .cell.head.rec { border-top: 2px solid #185FA5; }
+  .cell.highlight { background: #E6F1FB; }
+  @media (prefers-color-scheme: dark) { .cell.highlight { background: #0C447C22; } }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: var(--border-radius-md); margin-bottom: 4px; }
+  .b-green { background: #EAF3DE; color: #3B6D11; }
+  .b-amber { background: #FAEEDA; color: #854F0B; }
+  .b-red { background: #FCEBEB; color: #A32D2D; }
+  .b-blue { background: #E6F1FB; color: #185FA5; }
+  @media (prefers-color-scheme: dark) {
+    .b-green { background: #27500A; color: #C0DD97; }
+    .b-amber { background: #633806; color: #FAC775; }
+    .b-red { background: #791F1F; color: #F7C1C1; }
+    .b-blue { background: #0C447C; color: #B5D4F4; }
+  }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+  .dot-g { background: #639922; }
+  .dot-a { background: #BA7517; }
+  .dot-r { background: #E24B4A; }
+  ul { margin: 4px 0 0 0; padding-left: 14px; line-height: 1.6; color: var(--color-text-primary); }
+  li { margin-bottom: 2px; }
+  .rec-note { font-size: 12px; color: #185FA5; font-weight: 500; text-align: center; padding: 6px 12px; background: #E6F1FB; border-radius: var(--border-radius-md) var(--border-radius-md) 0 0; margin-bottom: 0; }
+  @media (prefers-color-scheme: dark) { .rec-note { background: #0C447C; color: #B5D4F4; } }
+  .section-divider { grid-column: 1 / -1; background: var(--color-background-tertiary); padding: 6px 12px; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+</style>
+
+<div class="wrap">
+  <div class="rec-note">Recommended for Radiance Learning — Daily.co or Jitsi, depending on budget</div>
+  <div class="grid">
+    <div class="cell head"></div>
+    <div class="cell head rec">Daily.co</div>
+    <div class="cell head">Jitsi Meet</div>
+    <div class="cell head">Zoom SDK</div>
+    <div class="cell head">Teams</div>
+
+    <div class="section-divider">Cost &amp; scaling</div>
+
+    <div class="cell label">Cost to start</div>
+    <div class="cell"><span class="badge b-green">Free tier</span><ul><li>1,000 min/mo free, then $0.004/min — roughly $0.24 per 1-hr session after the free tier.</li></ul></div>
+    <div class="cell"><span class="badge b-green">Truly free</span><ul><li>Public meet.jit.si is free with no limits. No API key or account needed — just generate a URL.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">Free tier limited</span><ul><li>10,000 min/mo free, then $3.50 per 1,000 min — the most expensive option at scale.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">Requires M365</span><ul><li>Embedding requires Azure Communication Services, which charges per minute on top of a Microsoft 365 license.</li></ul></div>
+
+    <div class="cell label">Cost at scale</div>
+    <div class="cell"><span class="badge b-green">Predictable</span><ul><li>Usage-based, scales linearly. 500 hrs/mo is around $120.</li></ul></div>
+    <div class="cell"><span class="badge b-green">Still free</span><ul><li>Public Jitsi stays free at any volume. Self-hosting adds ~$20–40/mo server cost.</li></ul></div>
+    <div class="cell"><span class="badge b-red">Expensive</span><ul><li>500 hrs/mo would cost ~$1,050 — about 8x more than Daily.co for the same usage.</li></ul></div>
+    <div class="cell"><span class="badge b-red">Unpredictable</span><ul><li>Per-minute Azure billing stacks on top of licensing fees, making it hard to predict costs as sessions grow.</li></ul></div>
+
+    <div class="section-divider">Quality &amp; reliability</div>
+
+    <div class="cell label">Reliability &amp; uptime</div>
+    <div class="cell"><span class="badge b-green">SLA backed</span><ul><li>Managed global WebRTC infrastructure with a formal uptime SLA — production-ready out of the box.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">No SLA (free)</span><ul><li>meet.jit.si has no uptime guarantee. JaaS (paid 8x8 tier) gives a 99.99% SLA.</li></ul></div>
+    <div class="cell"><span class="badge b-green">Reliable</span><ul><li>Battle-tested infrastructure at massive scale with strong uptime.</li></ul></div>
+    <div class="cell"><span class="badge b-green">Enterprise grade</span><ul><li>Microsoft-backed SLAs, though overkill for a tutoring app.</li></ul></div>
+
+    <div class="cell label">Video quality</div>
+    <div class="cell"><span class="dot dot-g"></span>HD by default, adaptive bitrate, end-to-end encryption, HIPAA/GDPR compliant.</div>
+    <div class="cell"><span class="dot dot-a"></span>Good for 1-on-1. Can degrade on unstable connections without a TURN server. Occasional browser compatibility bugs reported.</div>
+    <div class="cell"><span class="dot dot-g"></span>Industry-leading quality — the benchmark most others are judged against.</div>
+    <div class="cell"><span class="dot dot-g"></span>Excellent quality, optimized for the Teams app rather than embedded use.</div>
+
+    <div class="section-divider">Developer experience</div>
+
+    <div class="cell label">Ease of integration</div>
+    <div class="cell"><span class="badge b-green">Developer first</span><ul><li>One API call creates a room and returns a URL. Designed exactly for your use case.</li></ul></div>
+    <div class="cell"><span class="badge b-green">Trivially easy</span><ul><li>No API at all — just construct a URL string. Zero setup, zero credentials.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">Moderate effort</span><ul><li>SDK requires more setup. API documentation has a reputation for being complex and inconsistently transparent.</li></ul></div>
+    <div class="cell"><span class="badge b-red">Complex</span><ul><li>Requires Azure AD, Graph API, and Azure Communication Services setup. Not designed for simple third-party embedding.</li></ul></div>
+
+    <div class="cell label">Student experience</div>
+    <div class="cell"><span class="dot dot-g"></span>No app install — works in any modern browser. Students click a link and enter a waiting room until the tutor admits them.</div>
+    <div class="cell"><span class="dot dot-g"></span>No install, no account. Students join via a link in any browser. Occasional Safari and older Chrome issues reported.</div>
+    <div class="cell"><span class="dot dot-r"></span>Students need the Zoom app installed — a real barrier for younger students or parents who aren't tech-savvy.</div>
+    <div class="cell"><span class="dot dot-r"></span>Works best in the Teams app or Edge. External users face friction and repeated prompts to install the app.</div>
+
+    <div class="section-divider">Recordings, transcripts &amp; whiteboard — new</div>
+
+    <div class="cell label">Cloud recording</div>
+    <div class="cell highlight"><span class="badge b-green">Built-in API</span><ul><li>Cloud recording is a single API flag — set <code>start_cloud_recording: true</code> when creating the room token and recording starts automatically. Outputs 1080p MP4 retrievable via REST API or dashboard.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">Requires setup</span><ul><li>Cloud recording requires Jibri, a separate server component you must install and maintain yourself. Without it, only local (browser-download) recording is available. JaaS paid tier includes cloud recording without Jibri.</li></ul></div>
+    <div class="cell"><span class="badge b-green">Supported</span><ul><li>Cloud recording is available via the Video SDK with a single API call to <code>startCloudRecording()</code>. Files are retrievable via REST API as MP4. Costs extra on top of per-minute usage.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">Via Graph API</span><ul><li>Recordings are stored in OneDrive/SharePoint and accessible via Microsoft Graph API after the meeting. Setup requires Azure AD app registration and specific permissions.</li></ul></div>
+
+    <div class="cell label">Transcripts</div>
+    <div class="cell highlight"><span class="badge b-green">First-class API</span><ul><li>Real-time transcription powered by Deepgram is built in. Transcripts are stored automatically and retrievable via webhook or REST. You can also run batch transcription on any recording via the Batch Processor API — passing a recording ID returns a transcript file.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">Requires config</span><ul><li>Jigasi (a separate component) is needed for live transcription on self-hosted Jitsi. JaaS includes it. The Iframe API has a <code>startRecording</code> command with a transcription flag, but getting usable transcript files out requires additional configuration.</li></ul></div>
+    <div class="cell"><span class="badge b-green">Supported</span><ul><li>Transcripts are available via the <code>cloud_recording_transcript_option</code> JWT field. A webhook fires when the transcript is complete. Community reports of the audio transcript toggle being missing in some account configurations — a known pain point for developers.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">Post-meeting only</span><ul><li>Transcripts are accessible via Graph API after the meeting ends as a VTT file. Live transcript access during an active meeting is not currently available via API — only visible inside the Teams interface itself.</li></ul></div>
+
+    <div class="cell label">Screen &amp; whiteboard recording</div>
+    <div class="cell highlight"><span class="badge b-green">Included in cloud recording</span><ul><li>Cloud recording captures whatever is on screen — video, shared screen, and whiteboard — in a single composited MP4. You can also record raw individual tracks separately for maximum flexibility. No extra steps needed to capture screen shares.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">Manual or Jibri</span><ul><li>Jibri captures everything visible in the conference including screen shares and whiteboard, but only works on self-hosted Jitsi. Community-built browser recording hacks exist but are not production-grade. The Iframe API exposes a whiteboard toggle but capturing its content as part of a recording requires Jibri.</li></ul></div>
+    <div class="cell"><span class="badge b-green">Supported</span><ul><li>Cloud recording can capture shared_screen_with_speaker_view as a separate MP4 file. Zoom also has a dedicated Whiteboard API, though whiteboard content is stored separately and not automatically merged into the meeting recording.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">Partial</span><ul><li>Teams records screen shares as part of the meeting recording. However, Whiteboard content created in Teams is stored in a separate OneDrive file and is not captured in the meeting recording video — you'd need to retrieve it separately via the Whiteboard API.</li></ul></div>
+
+    <div class="cell label">AI-ready output</div>
+    <div class="cell highlight"><span class="badge b-green">Best pipeline</span><ul><li>The Batch Processor API accepts a recording ID and returns a transcript in one call — purpose-built for feeding into AI. Webhooks notify you the moment a transcript is ready so you can trigger your summary pipeline automatically.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">DIY pipeline</span><ul><li>No native AI pipeline. You collect the recording file and transcript separately, then build your own pipeline to feed them into an AI service. Workable but more assembly required.</li></ul></div>
+    <div class="cell"><span class="badge b-amber">Webhook-driven</span><ul><li>Webhooks fire when recordings and transcripts are complete, giving you a download URL to pull into your own AI pipeline. Functional but adds integration complexity compared to Daily.co's Batch Processor.</li></ul></div>
+    <div class="cell"><span class="badge b-red">Complex pipeline</span><ul><li>Requires Graph API subscriptions, webhook setup, Azure AD permissions, and separate handling for recording and transcript files. Significant engineering effort before you can feed data into an AI summarizer.</li></ul></div>
+
+    <div class="section-divider">Overall fit</div>
+
+    <div class="cell label">Best for</div>
+    <div class="cell" style="color: var(--color-text-secondary); font-size: 13px;">Building a tutoring platform that needs reliability, branding control, clean student experience, and the simplest possible path to AI-powered session summaries.</div>
+    <div class="cell" style="color: var(--color-text-secondary); font-size: 13px;">Getting started fast with zero cost while the platform is in development — then graduate to JaaS or swap to Daily.co when recordings and transcripts become critical.</div>
+    <div class="cell" style="color: var(--color-text-secondary); font-size: 13px;">Tutors and students who already have Zoom accounts and the app installed, and where the extra per-minute cost is acceptable.</div>
+    <div class="cell" style="color: var(--color-text-secondary); font-size: 13px;">Organizations already deep in Microsoft 365 where Teams is the standard tool and the complex API setup is already a sunk cost.</div>
+  </div>
+</div>

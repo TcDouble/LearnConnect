@@ -1,0 +1,51 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.BookedSessions (
+  SessionID uuid NOT NULL DEFAULT gen_random_uuid(),
+  TID uuid NOT NULL,
+  SID uuid NOT NULL,
+  day integer NOT NULL,
+  starttime integer NOT NULL,
+  endtime integer NOT NULL,
+  CONSTRAINT BookedSessions_pkey PRIMARY KEY (SessionID),
+  CONSTRAINT BookedSessions_TID_fkey FOREIGN KEY (TID) REFERENCES public.Users(UID),
+  CONSTRAINT BookedSessions_SID_fkey FOREIGN KEY (SID) REFERENCES public.Users(UID)
+);
+CREATE TABLE public.Calendar (
+  CID uuid NOT NULL DEFAULT gen_random_uuid(),
+  UID uuid NOT NULL,
+  day integer NOT NULL,
+  starttime integer NOT NULL,
+  endtime integer NOT NULL,
+  CONSTRAINT Calendar_pkey PRIMARY KEY (CID),
+  CONSTRAINT Calendar_UID_fkey FOREIGN KEY (UID) REFERENCES public.Users(UID)
+);
+CREATE TABLE public.Students (
+  SID uuid NOT NULL DEFAULT gen_random_uuid(),
+  UID uuid NOT NULL UNIQUE,
+  school text,
+  grade_level text,
+  age integer,
+  subject_list ARRAY,
+  CONSTRAINT Students_pkey PRIMARY KEY (SID),
+  CONSTRAINT Students_UID_fkey FOREIGN KEY (UID) REFERENCES public.Users(UID)
+);
+CREATE TABLE public.Teachers (
+  TID uuid NOT NULL DEFAULT gen_random_uuid(),
+  UID uuid NOT NULL UNIQUE,
+  subjects ARRAY NOT NULL DEFAULT '{}'::text[],
+  years_experience integer NOT NULL DEFAULT 0,
+  subject_list ARRAY,
+  CONSTRAINT Teachers_pkey PRIMARY KEY (TID),
+  CONSTRAINT Teachers_UID_fkey FOREIGN KEY (UID) REFERENCES public.Users(UID)
+);
+CREATE TABLE public.Users (
+  UID uuid NOT NULL DEFAULT gen_random_uuid(),
+  firstname text NOT NULL,
+  lastname text NOT NULL,
+  email text NOT NULL UNIQUE,
+  role text NOT NULL,
+  phone_number text,
+  CONSTRAINT Users_pkey PRIMARY KEY (UID)
+);

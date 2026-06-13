@@ -1,0 +1,7 @@
+{
+  // Deno is only used by the Supabase edge function in "meeting maker test".
+  // Enable the Deno language server for that folder so `Deno.*` resolves;
+  // keep the normal TypeScript/Node server everywhere else in the project.
+  "deno.enable": false,
+  "deno.enablePaths": ["meeting maker test"]
+}

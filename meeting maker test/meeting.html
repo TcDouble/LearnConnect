@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Radiance — Schedule a Session</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:       #1a1a2e;
+      --ink-soft:  #4a4a6a;
+      --surface:   #f7f6f2;
+      --card:      #ffffff;
+      --accent:    #4f46e5;
+      --accent-lt: #ede9fe;
+      --success:   #059669;
+      --error:     #dc2626;
+      --border:    #e2e0f0;
+      --radius:    12px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header .eyebrow {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.2rem;
+      line-height: 1.15;
+      color: var(--ink);
+    }
+
+    header p {
+      margin-top: 0.6rem;
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 4px 24px rgba(79,70,229,0.06);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--ink-soft);
+      letter-spacing: 0.04em;
+    }
+
+    input, select {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      background: #fff;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 1.5rem 0;
+      color: var(--border);
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: opacity 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    button[type="submit"]:hover { opacity: 0.92; }
+    button[type="submit"]:active { transform: scale(0.99); }
+    button[type="submit"]:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #status {
+      margin-top: 1.25rem;
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    #status.success {
+      background: #ecfdf5;
+      color: var(--success);
+      border: 1px solid #a7f3d0;
+      display: block;
+    }
+
+    #status.error {
+      background: #fef2f2;
+      color: var(--error);
+      border: 1px solid #fecaca;
+      display: block;
+    }
+
+    .meeting-result {
+      display: none;
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: var(--accent-lt);
+      border-radius: var(--radius);
+      border: 1px solid #c4b5fd;
+    }
+
+    .meeting-result h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      color: var(--ink);
+    }
+
+    .meeting-url {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #fff;
+      border: 1px solid #c4b5fd;
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.82rem;
+      color: var(--accent);
+      word-break: break-all;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.3rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .join-btn {
+      display: block;
+      text-align: center;
+      margin-top: 0.85rem;
+      padding: 0.7rem;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 500px) {
+      .row { grid-template-columns: 1fr; }
+      header h1 { font-size: 1.7rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="eyebrow">Radiance Learning</div>
+    <h1>Schedule a Session</h1>
+    <p>A video room link will be created and emailed to both parties.</p>
+  </header>
+
+  <div class="card">
+    <form id="scheduleForm" novalidate>
+
+      <div class="divider">Tutor</div>
+
+      <div class="field">
+        <label for="tutorName">Tutor name</label>
+        <input id="tutorName" type="text" placeholder="Ms. Campbell" required />
+      </div>
+      <div class="field">
+        <label for="tutorEmail">Tutor email</label>
+        <input id="tutorEmail" type="email" placeholder="tutor@radiancelearning.com" required />
+      </div>
+
+      <div class="divider">Student</div>
+
+      <div class="field">
+        <label for="studentName">Student name</label>
+        <input id="studentName" type="text" placeholder="Alex" required />
+      </div>
+      <div class="field">
+        <label for="studentEmail">Student email</label>
+        <input id="studentEmail" type="email" placeholder="student@email.com" required />
+      </div>
+
+      <div class="divider">Session details</div>
+
+      <div class="row">
+        <div class="field">
+          <label for="sessionDate">Date</label>
+          <input id="sessionDate" type="date" required />
+        </div>
+        <div class="field">
+          <label for="sessionTime">Time</label>
+          <input id="sessionTime" type="time" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="subject">Subject</label>
+        <select id="subject">
+          <option value="">Select a subject…</option>
+          <option>Math</option>
+          <option>Reading &amp; Writing</option>
+          <option>Science</option>
+          <option>Robotics</option>
+          <option>Test Prep</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <button type="submit" id="submitBtn">
+        <span id="btnText">Create meeting &amp; send invites</span>
+        <span class="spinner" id="spinner"></span>
+      </button>
+
+    </form>
+
+    <div id="status"></div>
+
+    <div class="meeting-result" id="meetingResult">
+      <h3>Session created</h3>
+      <div class="meeting-url" id="meetingUrlBox">
+        <span id="meetingUrl"></span>
+        <button class="copy-btn" onclick="copyUrl()">Copy</button>
+      </div>
+      <a id="joinLink" class="join-btn" href="#" target="_blank">Join now →</a>
+    </div>
+  </div>
+
+  <!-- The provider switch lives in config.js — change ACTIVE_PROVIDER there. -->
+  <script src="config.js"></script>
+  <script>
+    const EDGE_FN_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/create-meeting';
+    // ACTIVE_PROVIDER comes from config.js (loaded above).
+
+    // ── MEETING PROVIDER INTERFACE ───────────────────────────────────────────
+    // Every provider implements this same shape, so they're interchangeable:
+    //   @typedef MeetingProvider { name: string, createMeeting(payload): Promise }
+    // Each createMeeting() asks the edge function to build a room with THIS
+    // provider; the server holds the secret keys and does the actual work.
+    const PROVIDERS = {
+      jitsi: { name: 'jitsi', createMeeting: (payload) => requestMeeting('jitsi', payload) },
+      daily: { name: 'daily', createMeeting: (payload) => requestMeeting('daily', payload) },
+    };
+
+    // ── THE INTERFACE CALL ───────────────────────────────────────────────────
+    // Config picks one implementation of the interface; the form calls it.
+    const provider = PROVIDERS[ACTIVE_PROVIDER];
+    if (!provider) {
+      throw new Error(`Unknown ACTIVE_PROVIDER "${ACTIVE_PROVIDER}". Use 'jitsi' or 'daily'.`);
+    }
+
+    // Sends the request to the edge function, telling it which provider to use.
+    async function requestMeeting(providerName, payload) {
+      const res = await fetch(EDGE_FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, provider: providerName }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+      return data;
+    }
+
+    // Pre-fill today's date
+    document.getElementById('sessionDate').valueAsDate = new Date();
+
+    document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const tutorName    = document.getElementById('tutorName').value.trim();
+      const tutorEmail   = document.getElementById('tutorEmail').value.trim();
+      const studentName  = document.getElementById('studentName').value.trim();
+      const studentEmail = document.getElementById('studentEmail').value.trim();
+      const sessionDate  = document.getElementById('sessionDate').value;
+      const sessionTime  = document.getElementById('sessionTime').value;
+      const subject      = document.getElementById('subject').value;
+
+      if (!tutorName || !tutorEmail || !studentName || !studentEmail || !sessionDate || !sessionTime) {
+        showStatus('error', 'Please fill in all required fields.');
+        return;
+      }
+
+      setLoading(true);
+      hideStatus();
+      document.getElementById('meetingResult').style.display = 'none';
+
+      try {
+        // The interface call: whichever provider ACTIVE_PROVIDER selected.
+        const data = await provider.createMeeting({
+          tutorName, tutorEmail,
+          studentName, studentEmail,
+          sessionDate, sessionTime,
+          subject: subject || 'General'
+        });
+
+        showMeetingResult(data.meetingUrl);
+        const results = data.emailResults || [];
+        const sent = results.filter(r => r.ok).map(r => r.to);
+        const failed = results.filter(r => !r.ok);
+        let msg = '✓ Meeting created. ';
+        msg += sent.length ? `Emailed: ${sent.join(', ')}.` : 'No emails were delivered.';
+        if (failed.length) msg += ` Could not email ${failed.map(f => f.to).join(', ')} — ${failed[0].error}.`;
+        showStatus(sent.length ? 'success' : 'error', msg);
+
+      } catch (err) {
+        showStatus('error', err.message);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    function setLoading(on) {
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = on;
+      document.getElementById('spinner').style.display = on ? 'block' : 'none';
+      document.getElementById('btnText').textContent = on ? 'Creating…' : 'Create meeting & send invites';
+    }
+
+    function showStatus(type, msg) {
+      const el = document.getElementById('status');
+      el.className = type;
+      el.textContent = msg;
+      el.style.display = 'block'; // override the inline display:none left by hideStatus()
+    }
+
+    function hideStatus() {
+      const el = document.getElementById('status');
+      el.className = '';
+      el.style.display = 'none';
+    }
+
+    function showMeetingResult(url) {
+      document.getElementById('meetingUrl').textContent = url;
+      document.getElementById('joinLink').href = url;
+      document.getElementById('meetingResult').style.display = 'block';
+    }
+
+    function copyUrl() {
+      const url = document.getElementById('meetingUrl').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1800);
+      });
+    }
+  </script>
+
+</body>
+</html>

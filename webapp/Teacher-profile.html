@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnConnect — Teacher Profile Setup</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="homepage.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul></nav></header>
+    <main class="form-page"><div class="container form-container"><div class="steps"><div class="step">Account</div><div class="step active">Profile</div></div><h1>Set up your profile</h1><p class="form-subhead">This is what students will see when browsing teachers.</p><form id="teacherProfileForm"><div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3><div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label">Choose File</span><input type="file" id="teacherPhoto" accept="image/*"><span id="teacherFileName" class="file-name">No file chosen</span></div><small>Optional: Shown on your public profile.</small></div><div class="form-group"><label>Short bio</label><textarea rows="3" id="teacherBio" placeholder="Tell students about your teaching style..."></textarea></div><div class="form-group"><label>Subjects / specialties</label><div class="subject-tags" id="teacherSubjects"><span class="tag">Maths <i class="fas fa-times remove-tag"></i></span><span class="tag">English <i class="fas fa-times remove-tag"></i></span><span class="tag">Physics <i class="fas fa-times remove-tag"></i></span><span class="tag">History <i class="fas fa-times remove-tag"></i></span></div><div class="add-subject"><input type="text" id="newTeacherSubject" placeholder="e.g. Chemistry"><button type="button" id="addTeacherSubjectBtn" class="btn-small">+ Add</button></div></div><div class="form-group"><label>Years of experience</label><select id="experience"><option>Less than 1 year</option><option>1–2 years</option><option selected>3–5 years</option><option>6–10 years</option><option>10+ years</option></select></div></div><div class="form-section"><h3><i class="fas fa-calendar-alt"></i> SCHEDULE & AVAILABILITY</h3><div class="form-group"><label>Available days</label><div class="days-buttons" id="teacherDays"><span class="day" data-day="Mon">Mon</span><span class="day" data-day="Tue">Tue</span><span class="day" data-day="Wed">Wed</span><span class="day" data-day="Thu">Thu</span><span class="day" data-day="Fri">Fri</span><span class="day" data-day="Sat">Sat</span><span class="day" data-day="Sun">Sun</span></div></div><div class="form-group"><label>Preferred session times</label><select id="teacherSessionTimes"><option>Morning (9am – 12pm)</option><option selected>Afternoon (12pm – 5pm)</option><option>Evening (5pm – 9pm)</option></select></div></div><div class="form-section"><h3><i class="fas fa-lock"></i> PRIVATE INFO (ONLY YOU CAN SEE THIS)</h3><div class="form-group"><label>Phone number</label><input type="tel" id="teacherPhone" placeholder="+1 (555) 000-0000"></div><div class="form-group"><label>Institution or school</label><input type="text" id="teacherSchool" placeholder="e.g. Lincoln High School"></div></div><button type="submit" class="btn btn-primary btn-block">Finish and go to dashboard →</button></form></div></main>
+    <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script>
+        // Calls the create-teacher-profile Edge Function with the user's session token.
+        function attachTeacherRemoveEvents() { document.querySelectorAll('#teacherSubjects .remove-tag').forEach(icon => { icon.removeEventListener('click', removeHandler); icon.addEventListener('click', removeHandler); }); }
+        function removeHandler(e) { e.stopPropagation(); this.closest('.tag').remove(); }
+        document.getElementById('addTeacherSubjectBtn').addEventListener('click', () => { let input = document.getElementById('newTeacherSubject'); let subject = input.value.trim(); if(subject) { let container = document.getElementById('teacherSubjects'); let tag = document.createElement('span'); tag.className = 'tag'; tag.innerHTML = `${subject} <i class="fas fa-times remove-tag"></i>`; container.appendChild(tag); attachTeacherRemoveEvents(); input.value = ''; } });
+        attachTeacherRemoveEvents();
+        let teacherSelectedDays = new Set();
+        document.querySelectorAll('#teacherDays .day').forEach(day => { day.addEventListener('click', () => { let dayName = day.getAttribute('data-day'); if(teacherSelectedDays.has(dayName)) { teacherSelectedDays.delete(dayName); day.classList.remove('selected'); } else { teacherSelectedDays.add(dayName); day.classList.add('selected'); } }); });
+        document.getElementById('teacherProfileForm').addEventListener('submit', async function(e) { e.preventDefault();
+            const subjects = Array.from(document.querySelectorAll('#teacherSubjects .tag')).map(t => t.innerText.replace(/×/g, '').trim()).filter(Boolean);
+
+            // Keep a local copy so the dashboard can still show fields the database
+            // does not store (bio/availability/school).
+            const profileData = {
+                bio: document.getElementById('teacherBio').value,
+                subjects: subjects,
+                experience: document.getElementById('experience').value,
+                availableDays: Array.from(teacherSelectedDays),
+                sessionTimes: document.getElementById('teacherSessionTimes').value,
+                phone: document.getElementById('teacherPhone').value,
+                school: document.getElementById('teacherSchool').value
+            };
+            localStorage.setItem('teacherProfile', JSON.stringify(profileData));
+
+            // A logged-in session is required so the Edge Function runs RLS as this user.
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { alert('Please sign in before setting up your profile.'); window.location.href = 'student-login.html'; return; }
+
+            // Map the experience dropdown range to an integer (years_experience is an int).
+            const expText = document.getElementById('experience').value;
+            const years = /less than/i.test(expText) ? 0 : (expText.match(/\d+/) ? parseInt(expText.match(/\d+/)[0], 10) : 0);
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}/functions/v1/create-teacher-profile`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_PUBLISHABLE_KEY,
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({
+                        subjects: subjects,
+                        subject_list: subjects,
+                        years_experience: years,
+                        phone_number: document.getElementById('teacherPhone').value.trim()
+                    })
+                });
+                const result = await res.json();
+                if (!res.ok) { alert(result.error || 'Could not save your profile.'); return; }
+            } catch (err) { alert('Network error saving profile: ' + err.message); return; }
+
+            window.location.href = 'Teacher-dashboard.html';
+        });
+    </script>
+</body>
+</html>

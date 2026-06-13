@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnConnect — Student Profile Setup</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <nav class="container navbar">
+            <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+            <ul class="nav-links">
+                <li><a href="homepage.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="pricing.html">Pricing</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main class="form-page">
+        <div class="container form-container">
+            <div class="steps"><div class="step">Account</div><div class="step active">Profile</div></div>
+            <h1>Set up your profile</h1>
+            <p class="form-subhead">This helps teachers understand who you are and what you need.</p>
+            <form id="profileForm">
+                <div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
+                    <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label">Choose File</span><input type="file" id="profilePhoto" accept="image/*"><span id="fileName" class="file-name">No file chosen</span></div><small>Optional. Show to teachers viewing your profile.</small></div>
+                    <div class="form-group"><label>Short bio</label><textarea rows="3" id="bio" placeholder="Tell teachers a bit about yourself..."></textarea></div>
+                    <div class="form-group"><label>Grade level or year</label><select id="gradeLevel"><option>High school — year 9</option><option selected>High school — year 10</option><option>High school — year 11</option><option>High school — year 12</option><option>University freshman</option></select></div>
+                    <div class="form-group"><label>Subjects I need help with</label><div class="subject-tags" id="subjectTags"><span class="tag">Maths <i class="fas fa-times remove-tag"></i></span><span class="tag">English <i class="fas fa-times remove-tag"></i></span><span class="tag">Physics <i class="fas fa-times remove-tag"></i></span><span class="tag">History <i class="fas fa-times remove-tag"></i></span></div><div class="add-subject"><input type="text" id="newSubject" placeholder="e.g. Chemistry"><button type="button" id="addSubjectBtn" class="btn-small">+ Add</button></div></div>
+                    <div class="form-group"><label>Learning goals</label><textarea rows="2" id="goals" placeholder="e.g. Preparing for exams..."></textarea></div>
+                </div>
+                <div class="form-section"><h3><i class="fas fa-calendar-alt"></i> AVAILABILITY</h3>
+                    <div class="form-group"><label>Available days</label><div class="days-buttons"><span class="day" data-day="Mon">Mon</span><span class="day" data-day="Tue">Tue</span><span class="day" data-day="Wed">Wed</span><span class="day" data-day="Thu">Thu</span><span class="day" data-day="Fri">Fri</span><span class="day" data-day="Sat">Sat</span><span class="day" data-day="Sun">Sun</span></div></div>
+                    <div class="form-group"><label>Preferred session times</label><select id="sessionTimes"><option>Morning (9am – 12pm)</option><option>Afternoon (1pm – 5pm)</option><option selected>Evening (5pm – 9pm)</option></select></div>
+                </div>
+                <div class="form-section"><h3><i class="fas fa-lock"></i> PRIVATE INFO (ONLY YOU CAN SEE THIS)</h3>
+                    <div class="form-group"><label>Date of birth</label><input type="date" id="dob"></div>
+                    <div class="form-group"><label>Parent or guardian email</label><input type="email" id="parentEmail" placeholder="parent@email.com"><small>Optional. Required if under 18.</small></div>
+                    <div class="form-group"><label>School or institution</label><input type="text" id="school" placeholder="e.g. Lincoln High School"></div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Finish and go to dashboard →</button>
+            </form>
+        </div>
+    </main>
+    <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script>
+        // Calls the create-student-profile Edge Function with the user's session token.
+        function attachRemoveEvents() { document.querySelectorAll('.remove-tag').forEach(icon => { icon.removeEventListener('click', removeHandler); icon.addEventListener('click', removeHandler); }); }
+        function removeHandler(e) { e.stopPropagation(); this.closest('.tag').remove(); }
+        document.getElementById('addSubjectBtn').addEventListener('click', () => { let input = document.getElementById('newSubject'); let subject = input.value.trim(); if(subject) { let container = document.getElementById('subjectTags'); let tag = document.createElement('span'); tag.className = 'tag'; tag.innerHTML = `${subject} <i class="fas fa-times remove-tag"></i>`; container.appendChild(tag); attachRemoveEvents(); input.value = ''; } });
+        attachRemoveEvents();
+        let selectedDays = new Set();
+        document.querySelectorAll('.day').forEach(day => { day.addEventListener('click', () => { let dayName = day.getAttribute('data-day'); if(selectedDays.has(dayName)) { selectedDays.delete(dayName); day.classList.remove('selected'); } else { selectedDays.add(dayName); day.classList.add('selected'); } }); });
+        document.getElementById('profileForm').addEventListener('submit', async function(e) { e.preventDefault();
+            const subjects = Array.from(document.querySelectorAll('#subjectTags .tag')).map(t => t.innerText.replace(/×/g, '').trim()).filter(Boolean);
+
+            // Keep a local copy so the dashboard can still show extra fields the
+            // database does not store (bio/goals/availability/parent email).
+            const profileData = {
+                bio: document.getElementById('bio').value,
+                grade: document.getElementById('gradeLevel').value,
+                subjects: subjects,
+                goals: document.getElementById('goals').value,
+                availableDays: Array.from(selectedDays),
+                sessionTime: document.getElementById('sessionTimes').value,
+                dob: document.getElementById('dob').value,
+                parentEmail: document.getElementById('parentEmail').value,
+                school: document.getElementById('school').value
+            };
+            localStorage.setItem('studentProfile', JSON.stringify(profileData));
+
+            // A logged-in session is required so the Edge Function runs RLS as this user.
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { alert('Please sign in before setting up your profile.'); window.location.href = 'student-login.html'; return; }
+
+            // Students stores age, not date of birth — derive an integer age.
+            let age = null;
+            const dob = document.getElementById('dob').value;
+            if (dob) { const d = new Date(dob), now = new Date(); age = now.getFullYear() - d.getFullYear(); if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--; }
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}/functions/v1/create-student-profile`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_PUBLISHABLE_KEY,
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({
+                        school: document.getElementById('school').value.trim(),
+                        grade_level: document.getElementById('gradeLevel').value,
+                        age: age,
+                        subject_list: subjects
+                    })
+                });
+                const result = await res.json();
+                if (!res.ok) { alert(result.error || 'Could not save your profile.'); return; }
+            } catch (err) { alert('Network error saving profile: ' + err.message); return; }
+
+            window.location.href = 'student-dashboard.html';
+        });
+    </script>
+</body>
+</html>

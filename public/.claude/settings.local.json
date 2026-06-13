@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(update-config)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(claude mcp *)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__get_publishable_keys",
+      "mcp__supabase__get_advisors",
+      "PowerShell($health = Invoke-RestMethod -Uri \"http://localhost:3000/health\" -Method Get; Write-Output \"HEALTH: $\\($health | ConvertTo-Json -Compress\\)\"; $users = Invoke-RestMethod -Uri \"http://localhost:3000/users\" -Method Get; Write-Output \"USERS: $\\($users | ConvertTo-Json -Compress\\)\"; $teachers = Invoke-RestMethod -Uri \"http://localhost:3000/teachers\" -Method Get; Write-Output \"TEACHERS: $\\($teachers | ConvertTo-Json -Compress\\)\")",
+      "PowerShell(try { $body = @{ firstname = \"Test\"; lastname = \"User\"; email = \"test-$\\(Get-Random\\)@example.com\"; role = \"student\" } | ConvertTo-Json; $r = Invoke-RestMethod -Uri \"http://localhost:3000/users\" -Method Post -Body $body -ContentType \"application/json\"; Write-Output \"POST OK: $\\($r | ConvertTo-Json -Compress\\)\" } catch { $resp = $_.ErrorDetails.Message; Write-Output \"POST FAILED \\($\\($_.Exception.Response.StatusCode\\)\\): $resp\" })",
+      "mcp__supabase__execute_sql"
+    ]
+  }
+}
