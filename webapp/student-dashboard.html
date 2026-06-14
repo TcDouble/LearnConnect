@@ -39,6 +39,12 @@
         .opt-in-row label { font-weight: 500; cursor: pointer; }
         .ls-note { display: block; margin-top: 4px; font-size: 0.78rem; color: #94a3b8; font-style: italic; }
         .form-row input[readonly], .form-row textarea[readonly] { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
+        .status-pill { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; display: inline-block; }
+        .status-pill.pending   { background: #fef9c3; color: #854d0e; }
+        .status-pill.accepted  { background: #dcfce7; color: #166534; }
+        .status-pill.declined  { background: #fee2e2; color: #b91c1c; }
+        .status-pill.completed { background: #f1f5f9; color: #334155; }
+        .btn-cancel { background: #fee2e2; color: #b91c1c; border: none; border-radius: 20px; padding: 4px 12px; font-size: 0.72rem; cursor: pointer; margin-left: 8px; }
         @media (max-width: 768px) { .dashboard-container { flex-direction: column; } .sidebar { width: 100%; } .main-content { padding: 24px; } }
     </style>
 </head>
@@ -53,7 +59,7 @@
             <ul class="sidebar-nav"><li data-section="dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li data-section="find-teacher"><a href="#"><i class="fas fa-chalkboard-user"></i> Find a teacher</a></li><li data-section="my-sessions"><a href="#"><i class="fas fa-calendar-alt"></i> My sessions</a></li><li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li><li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li></ul>
         </aside>
         <main class="main-content">
-            <div id="dashboard-section"><div class="dashboard-header"><h1>Welcome, <span id="studentNameDisplay">Student</span></h1><p id="sessionAlert">Loading your sessions…</p></div><div class="stats-row"><div class="stat-card"><div class="stat-number" id="myTeachersCount">0</div><div class="stat-label">My teachers</div></div><div class="stat-card"><div class="stat-number" id="subjectsCount">0</div><div class="stat-label">Subjects</div></div><div class="stat-card"><div class="stat-number" id="sessionsCompleted">0</div><div class="stat-label">Sessions completed</div></div><div class="stat-card"><div class="stat-number" id="nextSessionDate">—</div><div class="stat-label">Next session</div><div class="stat-sub" id="nextSessionTime"></div></div></div><div class="section-title">My teachers</div><div id="myTeachersGrid" class="teachers-grid"></div><div class="section-title">Upcoming sessions</div><table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Subject / Topic</th></tr></thead><tbody id="upcomingSessionsBody"></tbody></table></div>
+            <div id="dashboard-section"><div class="dashboard-header"><h1>Welcome, <span id="studentNameDisplay">Student</span></h1><p id="sessionAlert">Loading your sessions…</p></div><div class="stats-row"><div class="stat-card"><div class="stat-number" id="myTeachersCount">0</div><div class="stat-label">My teachers</div></div><div class="stat-card"><div class="stat-number" id="subjectsCount">0</div><div class="stat-label">Subjects</div></div><div class="stat-card"><div class="stat-number" id="sessionsCompleted">0</div><div class="stat-label">Sessions completed</div></div><div class="stat-card"><div class="stat-number" id="nextSessionDate">—</div><div class="stat-label">Next session</div><div class="stat-sub" id="nextSessionTime"></div></div></div><div class="section-title">My teachers</div><div id="myTeachersGrid" class="teachers-grid"></div><div class="section-title">Upcoming sessions</div><table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Subject / Topic</th><th>Status</th></tr></thead><tbody id="upcomingSessionsBody"></tbody></table></div>
             <div id="find-teacher-section" class="hidden-section">
                 <!-- Step 1: create a tutoring request -->
                 <div id="requestFormView">
@@ -171,11 +177,41 @@
             });
         }
 
+        function statusPill(status) {
+            const map = {
+                'waiting for teacher': { cls: 'pending',   label: 'Pending' },
+                'scheduled':           { cls: 'accepted',  label: 'Accepted' },
+                'canceled':            { cls: 'declined',  label: 'Declined' },
+                'completed':           { cls: 'completed', label: 'Completed' }
+            };
+            const m = map[status] || { cls: 'completed', label: status || '—' };
+            return `<span class="status-pill ${m.cls}">${m.label}</span>`;
+        }
+
         function renderUpcomingSessions() {
             const tbody = document.getElementById('upcomingSessionsBody'); tbody.innerHTML = '';
             const upcoming = sessions.filter(isUpcoming);
-            if (!upcoming.length) { tbody.innerHTML = '<tr><td colspan="3">No upcoming sessions.</td></tr>'; return; }
-            upcoming.forEach(s => { const r = tbody.insertRow(); r.insertCell(0).innerText = `${s.session_date} ${fmtTime(s.starttime)}`; r.insertCell(1).innerText = s.counterparty || '—'; r.insertCell(2).innerText = `${s.subject || ''}${s.request ? ' — ' + s.request : ''}`; });
+            if (!upcoming.length) { tbody.innerHTML = '<tr><td colspan="4">No upcoming sessions.</td></tr>'; return; }
+            upcoming.forEach(s => {
+                const r = tbody.insertRow();
+                r.insertCell(0).innerText = `${s.session_date} ${fmtTime(s.starttime)}`;
+                r.insertCell(1).innerText = s.counterparty || '—';
+                r.insertCell(2).innerText = `${s.subject || ''}${s.request ? ' — ' + s.request : ''}`;
+                let statusHtml = statusPill(s.status);
+                if (s.status === 'waiting for teacher') {
+                    statusHtml += `<button class="btn-cancel" data-id="${s.session_id}">Cancel</button>`;
+                }
+                r.insertCell(3).innerHTML = statusHtml;
+            });
+            tbody.querySelectorAll('.btn-cancel').forEach(btn =>
+                btn.addEventListener('click', () => cancelRequest(btn.getAttribute('data-id'))));
+        }
+
+        async function cancelRequest(id) {
+            if (!confirm('Cancel this pending request?')) return;
+            const { error } = await supabaseClient.from('Blocked_Time').update({ status: 'canceled' }).eq('SessionID', id);
+            if (error) { alert('Could not cancel: ' + error.message); return; }
+            await refreshSessions(); updateStats(); renderUpcomingSessions(); renderAllSessions();
         }
 
         function renderAvailableTeachers() {
@@ -216,7 +252,19 @@
         function renderAllSessions() {
             const tbody = document.getElementById('allSessionsBody'); tbody.innerHTML = '';
             if (!sessions.length) { tbody.innerHTML = '<tr><td colspan="4">No sessions yet.</td></tr>'; return; }
-            sessions.forEach(s => { const r = tbody.insertRow(); r.insertCell(0).innerText = `${s.session_date} ${fmtTime(s.starttime)}`; r.insertCell(1).innerText = s.counterparty || '—'; r.insertCell(2).innerText = s.subject || ''; r.insertCell(3).innerText = s.status; });
+            sessions.forEach(s => {
+                const r = tbody.insertRow();
+                r.insertCell(0).innerText = `${s.session_date} ${fmtTime(s.starttime)}`;
+                r.insertCell(1).innerText = s.counterparty || '—';
+                r.insertCell(2).innerText = s.subject || '';
+                let statusHtml = statusPill(s.status);
+                if (s.status === 'waiting for teacher') {
+                    statusHtml += `<button class="btn-cancel" data-id="${s.session_id}">Cancel</button>`;
+                }
+                r.insertCell(3).innerHTML = statusHtml;
+            });
+            tbody.querySelectorAll('.btn-cancel').forEach(btn =>
+                btn.addEventListener('click', () => cancelRequest(btn.getAttribute('data-id'))));
         }
 
         function loadProfileForm() {
