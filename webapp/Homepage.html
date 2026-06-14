@@ -22,20 +22,11 @@
     <main>
         <section class="hero container">
             <h1>Connect students with great teachers</h1>
-            <p class="tagline">A simple platform for finding the right teacher — or the right student.<br>Sign in below to get started.</p>
-            <div class="role-selector">
-                <div class="role-card" data-role="teacher">
-                    <i class="fas fa-chalkboard-user fa-2x"></i>
-                    <h3>I'm a teacher</h3>
-                    <p>Manage your students</p>
-                </div>
-                <div class="role-card" data-role="student">
-                    <i class="fas fa-user-graduate fa-2x"></i>
-                    <h3>I'm a student</h3>
-                    <p>Find a teacher</p>
-                </div>
+            <p class="tagline">A simple platform for finding the right teacher — or being one yourself.<br>Pick what you want to do after you sign up.</p>
+            <div class="hero-cta" style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-top:32px;">
+                <a href="signup.html" class="btn btn-primary">Sign up</a>
+                <a href="student-login.html" class="btn btn-outline">Sign in</a>
             </div>
-            <div id="demo-message" class="demo-message"></div>
         </section>
         <section class="quick-nav container">
             <h2>Explore LearnConnect</h2>
@@ -46,13 +37,5 @@
         </section>
     </main>
     <footer><div class="container"><p>&copy; 2026 LearnConnect — bridging learners and mentors.</p></div></footer>
-    <script>
-        document.querySelector('[data-role="teacher"]').addEventListener('click', () => {
-            window.location.href = 'teacher-signup.html';
-        });
-        document.querySelector('[data-role="student"]').addEventListener('click', () => {
-            window.location.href = 'signup.html';
-        });
-    </script>
 </body>
 </html>
