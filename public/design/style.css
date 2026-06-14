@@ -167,9 +167,10 @@ main { flex: 1; }
 }
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 360px));
     gap: 32px;
-    margin: 48px 0;
+    margin: 48px auto;
+    justify-content: center;
 }
 .feature-card {
     background: white;
@@ -191,9 +192,10 @@ main { flex: 1; }
 }
 .pricing-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
     gap: 32px;
-    margin: 48px 0 80px;
+    margin: 48px auto 80px;
+    justify-content: center;
 }
 .pricing-card {
     background: white;
@@ -240,7 +242,6 @@ main { flex: 1; }
 .plan-description { color: #475569; margin-bottom: 24px; }
 .feature-list {
     list-style: none;
-    text-align: left;
     margin: 24px 0 32px;
     padding: 0;
 }
@@ -248,6 +249,7 @@ main { flex: 1; }
     margin: 12px 0;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
     font-size: 0.95rem;
 }

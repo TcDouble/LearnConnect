@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnConnect — Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .dashboard-container { display: flex; min-height: calc(100vh - 140px); background: #f8fafc; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e2e8f0; padding: 24px 0 32px; flex-shrink: 0; }
+        .sidebar-nav { margin: 0; padding: 0; }
+        .sidebar-nav li { list-style: none; margin-bottom: 4px; }
+        .sidebar-nav a { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: #334155; text-decoration: none; font-weight: 500; border-left: 3px solid transparent; }
+        .sidebar-nav li.active a { background: #f1f5f9; border-left-color: #2b7a4b; color: #0f3b2c; }
+        .main-content { flex: 1; padding: 32px 40px; }
+
+        /* Role toggle pill */
+        .role-toggle { display: flex; background: #f1f5f9; border-radius: 40px; padding: 4px; margin: 0 16px 24px; }
+        .role-btn { flex: 1; padding: 8px 10px; border: none; border-radius: 36px; background: transparent; color: #64748b; font-weight: 600; cursor: pointer; font-size: 0.82rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .role-btn.active { background: white; color: #0f3b2c; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+        .role-btn:hover:not(.active) { color: #334155; }
+
+        /* Stats */
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 40px; }
+        .stat-card { background: white; border-radius: 24px; padding: 20px; border: 1px solid #e2e8f0; text-align: center; }
+        .stat-number, .stat-value { font-size: 2.2rem; font-weight: 700; color: #0f3b2c; }
+
+        /* Teacher badges */
+        .badge-subject { background: #eef2ff; padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; display: inline-block; margin-right: 5px; }
+        .badge-immediate { background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+
+        /* Student teacher cards */
+        .teachers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 32px; }
+        .teacher-card { background: white; border-radius: 24px; padding: 20px; border: 1px solid #e2e8f0; }
+        .teacher-name { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .teacher-initials { background: #eef2ff; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 40px; font-weight: 600; color: #2b7a4b; }
+        .subject-badge { background: #f1f5f9; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; display: inline-block; margin-right: 5px; }
+
+        /* Shared */
+        .section-title { font-size: 1.4rem; font-weight: 600; margin: 32px 0 20px 0; }
+        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 20px; overflow: hidden; }
+        .data-table th { text-align: left; padding: 14px 20px; background: #f1f5f9; }
+        .data-table td { padding: 12px 20px; border-bottom: 1px solid #eef2f6; }
+        .clickable-row { cursor: pointer; }
+        .clickable-row:hover td { background: #f0fdf4; }
+        .hidden-section { display: none; }
+        .profile-form, .settings-form { max-width: 600px; background: white; padding: 24px; border-radius: 24px; }
+        .form-row { margin-bottom: 20px; }
+        .form-row label { font-weight: 500; display: block; margin-bottom: 6px; }
+        .form-row input, .form-row textarea, .form-row select { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 16px; }
+        .btn-save { background: #2b7a4b; color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
+        .btn-small { background: transparent; color: #2b7a4b; border: 1px solid #2b7a4b; padding: 6px 16px; border-radius: 40px; cursor: pointer; font-size: 0.85rem; }
+
+        @media (max-width: 768px) { .dashboard-container { flex-direction: column; } .sidebar { width: 100%; } .main-content { padding: 24px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container navbar">
+            <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+            <ul class="nav-links">
+                <li><a href="homepage.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="pricing.html">Pricing</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <!-- Role toggle -->
+            <div class="role-toggle">
+                <button id="teacherToggleBtn" class="role-btn" onclick="switchRole('teacher')">
+                    <i class="fas fa-chalkboard-user"></i> Teacher
+                </button>
+                <button id="studentToggleBtn" class="role-btn" onclick="switchRole('student')">
+                    <i class="fas fa-graduation-cap"></i> Student
+                </button>
+            </div>
+
+            <!-- Teacher nav -->
+            <ul class="sidebar-nav" id="teacherNav">
+                <li data-section="t-dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li data-section="t-requests"><a href="#"><i class="fas fa-inbox"></i> My requests</a></li>
+                <li data-section="t-schedule"><a href="#"><i class="fas fa-calendar-week"></i> Schedule</a></li>
+                <li data-section="t-profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li>
+                <li data-section="t-settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li>
+            </ul>
+
+            <!-- Student nav -->
+            <ul class="sidebar-nav hidden-section" id="studentNav">
+                <li data-section="s-dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li data-section="s-find-teacher"><a href="#"><i class="fas fa-chalkboard-user"></i> Find a teacher</a></li>
+                <li data-section="s-my-sessions"><a href="#"><i class="fas fa-calendar-alt"></i> My sessions</a></li>
+                <li data-section="s-profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li>
+                <li data-section="s-settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+
+            <!-- =================== TEACHER SECTIONS =================== -->
+            <div id="t-dashboard-section">
+                <div class="dashboard-header">
+                    <h1>Good morning, <span id="teacherNameDisplay">Sarah</span></h1>
+                    <p>Here's what's on today.</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-value" id="totalRequests">4</div><div class="stat-label">Pending requests</div></div>
+                    <div class="stat-card"><div class="stat-value" id="weeklySessions">3</div><div class="stat-label">Sessions this week</div></div>
+                    <div class="stat-card"><div class="stat-value" id="t-subjectsCount">3</div><div class="stat-label">Subjects taught</div></div>
+                </div>
+                <div class="section-title">My requests</div>
+                <table class="data-table"><thead><tr><th>Student</th><th>Subject</th><th>When</th></tr></thead><tbody id="requestsTableBody"></tbody></table>
+                <div class="section-title">Upcoming sessions</div>
+                <table class="data-table"><thead><tr><th>Date</th><th>Event</th><th>Time</th></tr></thead><tbody id="sessionsTableBody"></tbody></table>
+            </div>
+
+            <div id="t-requests-section" class="hidden-section">
+                <div class="dashboard-header"><h1>My requests</h1></div>
+                <table class="data-table"><thead><tr><th>Student</th><th>Subject</th><th>When</th></tr></thead><tbody id="fullRequestsBody"></tbody></table>
+            </div>
+
+            <div id="t-schedule-section" class="hidden-section">
+                <div class="dashboard-header"><h1>Schedule</h1></div>
+                <table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Time</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table>
+            </div>
+
+            <div id="t-profile-section" class="hidden-section">
+                <div class="dashboard-header"><h1>My profile</h1></div>
+                <div class="profile-form">
+                    <div class="form-row"><label>Full name</label><input type="text" id="profileFullName"></div>
+                    <div class="form-row"><label>Email</label><input type="email" id="profileEmail"></div>
+                    <div class="form-row"><label>Short bio</label><textarea id="profileBio" rows="3"></textarea></div>
+                    <div class="form-row"><label>Subjects / specialties</label><input type="text" id="profileSubjects"></div>
+                    <div class="form-row"><label>Years of experience</label>
+                        <select id="profileExperience">
+                            <option>Less than 1 year</option><option>1–2 years</option><option>3–5 years</option><option>6–10 years</option><option>10+ years</option>
+                        </select>
+                    </div>
+                    <div class="form-row"><label>Institution / school</label><input type="text" id="profileSchool"></div>
+                    <button id="saveProfileBtn" class="btn-save">Save changes</button>
+                </div>
+            </div>
+
+            <div id="t-settings-section" class="hidden-section">
+                <div class="dashboard-header"><h1>Settings</h1></div>
+                <div class="settings-form">
+                    <div class="form-row"><label>Email notifications</label>
+                        <select id="notifSetting"><option>All updates</option><option>Only session reminders</option><option>None</option></select>
+                    </div>
+                    <div class="form-row"><label>Timezone</label>
+                        <select id="timezone"><option>Eastern Time</option><option>Central Time</option><option>Pacific Time</option></select>
+                    </div>
+                    <button id="saveSettingsBtn" class="btn-save">Save settings</button>
+                </div>
+            </div>
+
+            <!-- =================== STUDENT SECTIONS =================== -->
+            <div id="s-dashboard-section" class="hidden-section">
+                <div class="dashboard-header">
+                    <h1>Good morning, <span id="studentNameDisplay">Jamie</span></h1>
+                    <p id="sessionAlert">You have a session today at 3:00 pm.</p>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-card"><div class="stat-number" id="myTeachersCount">2</div><div class="stat-label">My teachers</div></div>
+                    <div class="stat-card"><div class="stat-number" id="s-subjectsCount">2</div><div class="stat-label">Subjects</div></div>
+                    <div class="stat-card"><div class="stat-number" id="sessionsCompleted">0</div><div class="stat-label">Sessions completed</div></div>
+                    <div class="stat-card"><div class="stat-number" id="nextSessionDate">Today</div><div class="stat-label">Next session</div><div class="stat-sub" id="nextSessionTime">3:00 pm with Sarah Chen</div></div>
+                </div>
+                <div class="section-title">My teachers</div>
+                <div id="myTeachersGrid" class="teachers-grid"></div>
+                <div class="section-title">Upcoming sessions</div>
+                <table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Subject / Topic</th></tr></thead><tbody id="upcomingSessionsBody"></tbody></table>
+            </div>
+
+            <div id="s-find-teacher-section" class="hidden-section">
+                <div id="requestFormView">
+                    <div class="dashboard-header"><h1>Find a teacher</h1><p class="greeting">Tell us what you need help with, then we'll show you teachers.</p></div>
+                    <form id="tutorRequestForm" class="profile-form">
+                        <div class="form-row"><label>Subject name</label><input type="text" id="reqSubject" placeholder="e.g. Maths" required></div>
+                        <div class="form-row"><label>Topic</label><input type="text" id="reqTopic" placeholder="e.g. Quadratic equations" required></div>
+                        <div class="form-row"><label>Notes</label><textarea id="reqNotes" rows="3" placeholder="Anything the teacher should know beforehand..."></textarea></div>
+                        <div class="form-row"><label>Session type</label>
+                            <select id="reqSessionType">
+                                <option value="immediate">Immediate — find a teacher available now</option>
+                                <option value="scheduled">Scheduled — pick a date and time</option>
+                            </select>
+                        </div>
+                        <div id="scheduledFields" style="display:none;">
+                            <div class="form-row"><label>Date</label><input type="date" id="reqDate"></div>
+                            <div class="form-row"><label>Time</label><input type="time" id="reqTime"></div>
+                        </div>
+                        <button type="submit" class="btn-save">Find teachers →</button>
+                    </form>
+                </div>
+                <div id="teacherBrowseView" style="display:none;">
+                    <div class="dashboard-header">
+                        <h1>Available teachers</h1>
+                        <p class="greeting" id="requestSummary"></p>
+                        <button type="button" id="editRequestBtn" class="btn-small" style="margin-top:8px;">← Edit request</button>
+                    </div>
+                    <div id="availableTeachersGrid" class="teachers-grid"></div>
+                </div>
+            </div>
+
+            <div id="s-my-sessions-section" class="hidden-section">
+                <div class="dashboard-header"><h1>My sessions</h1></div>
+                <table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Subject</th><th>Status</th></tr></thead><tbody id="allSessionsBody"></tbody></table>
+            </div>
+
+            <div id="s-profile-section" class="hidden-section">
+                <div class="dashboard-header"><h1>My profile</h1></div>
+                <div class="profile-form">
+                    <div class="form-row"><label>Full name</label><input type="text" id="studentFullName"></div>
+                    <div class="form-row"><label>Email</label><input type="email" id="studentEmail"></div>
+                    <div class="form-row"><label>Short bio</label><textarea id="studentBio" rows="3"></textarea></div>
+                    <div class="form-row"><label>Grade level</label><input type="text" id="studentGrade"></div>
+                    <div class="form-row"><label>Subjects interested in</label><input type="text" id="studentSubjects"></div>
+                    <div class="form-row"><label>Learning goals</label><textarea id="studentGoals" rows="2"></textarea></div>
+                    <button id="saveStudentProfileBtn" class="btn-save">Save changes</button>
+                </div>
+            </div>
+
+            <div id="s-settings-section" class="hidden-section">
+                <div class="dashboard-header"><h1>Settings</h1></div>
+                <div class="settings-form">
+                    <div class="form-row"><label>Email reminders</label>
+                        <select id="reminderSetting"><option>All sessions</option><option>Only upcoming</option><option>None</option></select>
+                    </div>
+                    <div class="form-row"><label>Timezone</label>
+                        <select id="studentTimezone"><option>Eastern Time</option><option>Central Time</option><option>Pacific Time</option></select>
+                    </div>
+                    <button id="saveStudentSettingsBtn" class="btn-save">Save settings</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+
+    <script>
+        // =================== SECTION REGISTRIES ===================
+        const teacherSections = {
+            't-dashboard':  document.getElementById('t-dashboard-section'),
+            't-requests':   document.getElementById('t-requests-section'),
+            't-schedule':   document.getElementById('t-schedule-section'),
+            't-profile':    document.getElementById('t-profile-section'),
+            't-settings':   document.getElementById('t-settings-section')
+        };
+        const studentSections = {
+            's-dashboard':    document.getElementById('s-dashboard-section'),
+            's-find-teacher': document.getElementById('s-find-teacher-section'),
+            's-my-sessions':  document.getElementById('s-my-sessions-section'),
+            's-profile':      document.getElementById('s-profile-section'),
+            's-settings':     document.getElementById('s-settings-section')
+        };
+
+        // =================== ROLE TOGGLE ===================
+        let currentRole = localStorage.getItem('activeRole') || 'teacher';
+
+        function switchRole(role) {
+            currentRole = role;
+            localStorage.setItem('activeRole', role);
+            document.getElementById('teacherToggleBtn').classList.toggle('active', role === 'teacher');
+            document.getElementById('studentToggleBtn').classList.toggle('active', role === 'student');
+
+            if (role === 'teacher') {
+                document.getElementById('teacherNav').classList.remove('hidden-section');
+                document.getElementById('studentNav').classList.add('hidden-section');
+                Object.values(studentSections).forEach(s => s.classList.add('hidden-section'));
+                showTeacherSection('t-dashboard');
+            } else {
+                document.getElementById('studentNav').classList.remove('hidden-section');
+                document.getElementById('teacherNav').classList.add('hidden-section');
+                Object.values(teacherSections).forEach(s => s.classList.add('hidden-section'));
+                showStudentSection('s-dashboard');
+            }
+        }
+
+        // =================== TEACHER LOGIC ===================
+        const defaultRequests = [
+            { studentName: "Jamie Rivera",  subject: "Maths",     sessionType: "immediate" },
+            { studentName: "Priya Kumar",   subject: "Chemistry", sessionType: "scheduled", sessionDate: "2026-06-15", sessionTime: "10:00" },
+            { studentName: "Oliver Marsh",  subject: "Maths",     sessionType: "scheduled", sessionDate: "2026-06-16", sessionTime: "16:30" },
+            { studentName: "Aisha Lowe",    subject: "Physics",   sessionType: "immediate" }
+        ];
+        const defaultSessions = [
+            { date: "May 11", student: "Jamie Rivera",  subject: "Maths — quadratic equations",  time: "3:00 pm" },
+            { date: "May 12", student: "Priya Kumar",   subject: "Chemistry — organic reactions", time: "10:00 am" },
+            { date: "May 13", student: "Oliver Marsh",  subject: "Maths — trigonometry",          time: "4:30 pm" }
+        ];
+        if (!localStorage.getItem('teacherRequests')) localStorage.setItem('teacherRequests', JSON.stringify(defaultRequests));
+        if (!localStorage.getItem('teacherSessions')) localStorage.setItem('teacherSessions', JSON.stringify(defaultSessions));
+
+        function getRequests() { return JSON.parse(localStorage.getItem('teacherRequests')); }
+        function getSessions() { return JSON.parse(localStorage.getItem('teacherSessions')); }
+
+        let teacherInfo = {
+            fullName: localStorage.getItem('teacherFullName') || "Sarah Chen",
+            email:    localStorage.getItem('teacherEmail')    || "sarah@learnconnect.com",
+            bio: "", subjects: "Maths, Physics, Chemistry", experience: "3–5 years", school: "Lincoln High School"
+        };
+        const savedTeacherProfile = localStorage.getItem('teacherProfile');
+        if (savedTeacherProfile) {
+            const sp = JSON.parse(savedTeacherProfile);
+            teacherInfo.bio        = sp.bio        || "";
+            teacherInfo.subjects   = (sp.subjects && sp.subjects.join) ? sp.subjects.join(", ") : teacherInfo.subjects;
+            teacherInfo.experience = sp.experience || teacherInfo.experience;
+            teacherInfo.school     = sp.school     || teacherInfo.school;
+        }
+
+        function formatWhen(req) {
+            if (req.sessionType === 'immediate') return '<span class="badge-immediate">Immediate</span>';
+            try {
+                const d = new Date(`${req.sessionDate}T${req.sessionTime}`);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            } catch (_) { return `${req.sessionDate || ''} ${req.sessionTime || ''}`.trim(); }
+        }
+
+        function openRequest(r, index) {
+            localStorage.setItem('teacherPendingRequest', JSON.stringify({
+                index, studentName: r.studentName, studentEmail: r.studentEmail || '',
+                subject: r.subject, sessionType: r.sessionType,
+                sessionDate: r.sessionDate || null, sessionTime: r.sessionTime || null,
+                request: r.request || '', tutorName: teacherInfo.fullName, tutorEmail: teacherInfo.email
+            }));
+            window.location.href = '../../meeting maker test/review-request.html';
+        }
+
+        function openTeacherSession(s) {
+            localStorage.setItem('meetingConfirmation', JSON.stringify({
+                provider: 'jitsi', meetingUrl: `https://meet.learnconnect.com/session-${Date.now()}`,
+                tutorName: teacherInfo.fullName, tutorEmail: teacherInfo.email,
+                studentName: s.student, studentEmail: '',
+                sessionType: 'scheduled', sessionDate: s.date, sessionTime: s.time || '',
+                subject: s.subject, request: '', emailResults: []
+            }));
+            window.location.href = '../../meeting maker test/confirmation.html';
+        }
+
+        function updateTeacherStats() {
+            const requests = getRequests();
+            document.getElementById('totalRequests').innerText  = requests.length;
+            document.getElementById('weeklySessions').innerText = getSessions().length;
+            const allSubjects = new Set(); requests.forEach(r => allSubjects.add(r.subject));
+            document.getElementById('t-subjectsCount').innerText = allSubjects.size;
+            document.getElementById('teacherNameDisplay').innerText = teacherInfo.fullName;
+        }
+
+        function renderDashboardRequests() {
+            const requests = getRequests();
+            const tbody = document.getElementById('requestsTableBody'); tbody.innerHTML = "";
+            requests.forEach((r, i) => {
+                const row = tbody.insertRow(); row.classList.add('clickable-row');
+                row.addEventListener('click', () => openRequest(r, i));
+                row.insertCell(0).innerText = r.studentName;
+                row.insertCell(1).innerHTML = `<span class="badge-subject">${r.subject}</span>`;
+                row.insertCell(2).innerHTML = formatWhen(r);
+            });
+        }
+
+        function renderDashboardSessions() {
+            const sessions = getSessions();
+            const tbody = document.getElementById('sessionsTableBody'); tbody.innerHTML = "";
+            sessions.forEach(s => {
+                const row = tbody.insertRow(); row.classList.add('clickable-row');
+                row.addEventListener('click', () => openTeacherSession(s));
+                row.insertCell(0).innerText = s.date;
+                row.insertCell(1).innerHTML = `<strong>${s.student}</strong><br><small>${s.subject}</small>`;
+                row.insertCell(2).innerText = s.time;
+            });
+        }
+
+        function renderFullRequests() {
+            const requests = getRequests();
+            const tbody = document.getElementById('fullRequestsBody'); tbody.innerHTML = "";
+            requests.forEach((r, i) => {
+                const row = tbody.insertRow(); row.classList.add('clickable-row');
+                row.addEventListener('click', () => openRequest(r, i));
+                row.insertCell(0).innerText = r.studentName;
+                row.insertCell(1).innerHTML = `<span class="badge-subject">${r.subject}</span>`;
+                row.insertCell(2).innerHTML = formatWhen(r);
+            });
+        }
+
+        function renderScheduleSection() {
+            const sessions = getSessions();
+            const tbody = document.getElementById('scheduleSessionsBody'); tbody.innerHTML = "";
+            sessions.forEach(s => {
+                const row = tbody.insertRow(); row.classList.add('clickable-row');
+                row.addEventListener('click', () => openTeacherSession(s));
+                row.insertCell(0).innerText = s.date;
+                row.insertCell(1).innerText = s.student;
+                row.insertCell(2).innerText = s.subject;
+                row.insertCell(3).innerText = s.time;
+            });
+        }
+
+        function loadTeacherProfileForm() {
+            document.getElementById('profileFullName').value   = teacherInfo.fullName;
+            document.getElementById('profileEmail').value      = teacherInfo.email;
+            document.getElementById('profileBio').value        = teacherInfo.bio;
+            document.getElementById('profileSubjects').value   = teacherInfo.subjects;
+            document.getElementById('profileExperience').value = teacherInfo.experience;
+            document.getElementById('profileSchool').value     = teacherInfo.school;
+        }
+
+        function showTeacherSection(sectionId) {
+            Object.values(teacherSections).forEach(s => s.classList.add('hidden-section'));
+            teacherSections[sectionId].classList.remove('hidden-section');
+            document.querySelectorAll('#teacherNav li').forEach(li => li.classList.remove('active'));
+            document.querySelector(`#teacherNav li[data-section="${sectionId}"]`).classList.add('active');
+            if (sectionId === 't-dashboard') { updateTeacherStats(); renderDashboardRequests(); renderDashboardSessions(); }
+            if (sectionId === 't-requests')  renderFullRequests();
+            if (sectionId === 't-schedule')  renderScheduleSection();
+            if (sectionId === 't-profile')   loadTeacherProfileForm();
+            if (sectionId === 't-settings')  {
+                document.getElementById('notifSetting').value = localStorage.getItem('teacherNotif')     || 'All updates';
+                document.getElementById('timezone').value     = localStorage.getItem('teacherTimezone')  || 'Eastern Time';
+            }
+        }
+
+        document.querySelectorAll('#teacherNav li').forEach(li =>
+            li.addEventListener('click', e => { e.preventDefault(); showTeacherSection(li.getAttribute('data-section')); })
+        );
+
+        document.getElementById('saveProfileBtn').addEventListener('click', () => {
+            teacherInfo.fullName   = document.getElementById('profileFullName').value;
+            teacherInfo.email      = document.getElementById('profileEmail').value;
+            teacherInfo.bio        = document.getElementById('profileBio').value;
+            teacherInfo.subjects   = document.getElementById('profileSubjects').value;
+            teacherInfo.experience = document.getElementById('profileExperience').value;
+            teacherInfo.school     = document.getElementById('profileSchool').value;
+            localStorage.setItem('teacherFullName', teacherInfo.fullName);
+            localStorage.setItem('teacherEmail',    teacherInfo.email);
+            const sp = JSON.parse(localStorage.getItem('teacherProfile') || '{}');
+            sp.bio = teacherInfo.bio; sp.subjects = teacherInfo.subjects.split(',').map(s => s.trim());
+            sp.experience = teacherInfo.experience; sp.school = teacherInfo.school;
+            localStorage.setItem('teacherProfile', JSON.stringify(sp));
+            document.getElementById('teacherNameDisplay').innerText = teacherInfo.fullName;
+            alert("Profile saved!");
+        });
+
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+            localStorage.setItem('teacherNotif',    document.getElementById('notifSetting').value);
+            localStorage.setItem('teacherTimezone', document.getElementById('timezone').value);
+            alert("Settings saved.");
+        });
+
+        // =================== STUDENT LOGIC ===================
+        let studentInfo = {
+            fullName: localStorage.getItem('studentFullName') || "Jamie Rivera",
+            email:    localStorage.getItem('studentEmail')    || "jamie@example.com",
+            bio: "", grade: "Year 11", subjects: "Maths, Physics", goals: ""
+        };
+        const savedStudentProfile = localStorage.getItem('studentProfile');
+        if (savedStudentProfile) {
+            const prof = JSON.parse(savedStudentProfile);
+            studentInfo.bio      = prof.bio      || "";
+            studentInfo.grade    = prof.grade    || studentInfo.grade;
+            studentInfo.subjects = (prof.subjects && prof.subjects.join) ? prof.subjects.join(", ") : studentInfo.subjects;
+            studentInfo.goals    = prof.goals    || "";
+        }
+
+        const allTeachers = [
+            { name: "Sarah Chen",  initials: "SC", experience: "5–10 years", subjects: ["Maths", "Physics"],  availability: "Mon, Tue, Thu — afternoons" },
+            { name: "David Mills", initials: "DM", experience: "3–5 years",  subjects: ["Chemistry"],          availability: "Wed, Fri — mornings" }
+        ];
+        const myTeachers = [...allTeachers];
+        const upcomingSessions = [
+            { date: "May 11", teacher: "Sarah Chen",  topic: "Maths — quadratic equations" },
+            { date: "May 14", teacher: "David Mills", topic: "Chemistry — organic reactions" },
+            { date: "May 16", teacher: "Sarah Chen",  topic: "Physics — wave motion" }
+        ];
+        const allSessions = [...upcomingSessions, { date: "May 5", teacher: "Sarah Chen", topic: "Algebra review", status: "Completed" }];
+
+        function updateStudentStats() {
+            document.getElementById('studentNameDisplay').innerText = studentInfo.fullName;
+            document.getElementById('myTeachersCount').innerText   = myTeachers.length;
+            const subjectsSet = new Set(); myTeachers.forEach(t => t.subjects.forEach(s => subjectsSet.add(s)));
+            document.getElementById('s-subjectsCount').innerText   = subjectsSet.size;
+            document.getElementById('sessionsCompleted').innerText = allSessions.filter(s => s.status === "Completed").length;
+            if (upcomingSessions.length) {
+                const next = upcomingSessions[0];
+                document.getElementById('nextSessionDate').innerText  = next.date;
+                document.getElementById('nextSessionTime').innerHTML  = `${next.date} with ${next.teacher}`;
+            }
+        }
+
+        function renderMyTeachers() {
+            const grid = document.getElementById('myTeachersGrid'); grid.innerHTML = "";
+            myTeachers.forEach(t => {
+                const card = document.createElement('div'); card.className = "teacher-card";
+                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${t.initials}</span> ${t.name}</div><div class="teacher-exp">${t.experience} experience</div><div class="teacher-subjects">${t.subjects.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div><div class="teacher-availability"><i class="fas fa-calendar-alt"></i> ${t.availability}</div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        function openStudentSession(s) {
+            localStorage.setItem('meetingConfirmation', JSON.stringify({
+                provider: 'jitsi', meetingUrl: `https://meet.learnconnect.com/session-${Date.now()}`,
+                tutorName: s.teacher, tutorEmail: '',
+                studentName:  localStorage.getItem('studentFullName') || 'Student',
+                studentEmail: localStorage.getItem('studentEmail')    || '',
+                sessionType: 'scheduled', sessionDate: s.date, sessionTime: s.time || '',
+                subject: s.topic, request: '', emailResults: []
+            }));
+            window.location.href = '../../meeting maker test/confirmation.html';
+        }
+
+        function renderUpcomingSessions() {
+            const tbody = document.getElementById('upcomingSessionsBody'); tbody.innerHTML = "";
+            upcomingSessions.forEach(s => {
+                const row = tbody.insertRow(); row.classList.add('clickable-row');
+                row.addEventListener('click', () => openStudentSession(s));
+                row.insertCell(0).innerText = s.date;
+                row.insertCell(1).innerText = s.teacher;
+                row.insertCell(2).innerText = s.topic;
+            });
+        }
+
+        function renderAvailableTeachers() {
+            const container = document.getElementById('availableTeachersGrid'); container.innerHTML = "";
+            allTeachers.forEach(t => {
+                const card = document.createElement('div'); card.className = "teacher-card";
+                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${t.initials}</span> ${t.name}</div><div class="teacher-exp">${t.experience}</div><div class="teacher-subjects">${t.subjects.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div><button class="btn-small request-teacher" data-name="${t.name}" style="margin-top:12px;">Request session</button>`;
+                container.appendChild(card);
+            });
+            document.querySelectorAll('.request-teacher').forEach(btn =>
+                btn.addEventListener('click', () => alert("Demo: request sent"))
+            );
+        }
+
+        function renderAllSessions() {
+            const tbody = document.getElementById('allSessionsBody'); tbody.innerHTML = "";
+            [...upcomingSessions.map(s => ({ ...s, status: "Upcoming" })), ...allSessions.filter(s => s.status === "Completed")].forEach(s => {
+                const row = tbody.insertRow(); row.classList.add('clickable-row');
+                row.addEventListener('click', () => openStudentSession(s));
+                row.insertCell(0).innerText = s.date;
+                row.insertCell(1).innerText = s.teacher;
+                row.insertCell(2).innerText = s.topic;
+                row.insertCell(3).innerText = s.status || "Upcoming";
+            });
+        }
+
+        function loadStudentProfileForm() {
+            document.getElementById('studentFullName').value = studentInfo.fullName;
+            document.getElementById('studentEmail').value    = studentInfo.email;
+            document.getElementById('studentBio').value      = studentInfo.bio;
+            document.getElementById('studentGrade').value    = studentInfo.grade;
+            document.getElementById('studentSubjects').value = studentInfo.subjects;
+            document.getElementById('studentGoals').value    = studentInfo.goals;
+        }
+
+        function showStudentSection(sectionId) {
+            Object.values(studentSections).forEach(s => s.classList.add('hidden-section'));
+            studentSections[sectionId].classList.remove('hidden-section');
+            document.querySelectorAll('#studentNav li').forEach(li => li.classList.remove('active'));
+            document.querySelector(`#studentNav li[data-section="${sectionId}"]`).classList.add('active');
+            if (sectionId === 's-dashboard')    { updateStudentStats(); renderMyTeachers(); renderUpcomingSessions(); }
+            if (sectionId === 's-find-teacher') resetFindTeacher();
+            if (sectionId === 's-my-sessions')  renderAllSessions();
+            if (sectionId === 's-profile')      loadStudentProfileForm();
+        }
+
+        document.querySelectorAll('#studentNav li').forEach(li =>
+            li.addEventListener('click', e => { e.preventDefault(); showStudentSection(li.getAttribute('data-section')); })
+        );
+
+        document.getElementById('saveStudentProfileBtn').addEventListener('click', () => {
+            studentInfo.fullName = document.getElementById('studentFullName').value;
+            studentInfo.email    = document.getElementById('studentEmail').value;
+            studentInfo.bio      = document.getElementById('studentBio').value;
+            studentInfo.grade    = document.getElementById('studentGrade').value;
+            studentInfo.subjects = document.getElementById('studentSubjects').value;
+            studentInfo.goals    = document.getElementById('studentGoals').value;
+            localStorage.setItem('studentFullName', studentInfo.fullName);
+            localStorage.setItem('studentEmail',    studentInfo.email);
+            localStorage.setItem('studentProfile', JSON.stringify({
+                bio: studentInfo.bio, grade: studentInfo.grade,
+                subjects: studentInfo.subjects.split(',').map(s => s.trim()), goals: studentInfo.goals
+            }));
+            alert("Profile saved!"); updateStudentStats();
+        });
+
+        document.getElementById('saveStudentSettingsBtn').addEventListener('click', () => {
+            localStorage.setItem('studentReminders', document.getElementById('reminderSetting').value);
+            localStorage.setItem('studentTZ',        document.getElementById('studentTimezone').value);
+            alert("Settings saved.");
+        });
+
+        // --- Find a teacher flow ---
+        const requestFormView  = document.getElementById('requestFormView');
+        const teacherBrowseView = document.getElementById('teacherBrowseView');
+        const reqSessionType   = document.getElementById('reqSessionType');
+        const scheduledFields  = document.getElementById('scheduledFields');
+
+        function resetFindTeacher() { requestFormView.style.display = 'block'; teacherBrowseView.style.display = 'none'; }
+
+        function toggleScheduledFields() {
+            const scheduled = reqSessionType.value === 'scheduled';
+            scheduledFields.style.display = scheduled ? 'block' : 'none';
+            document.getElementById('reqDate').required = scheduled;
+            document.getElementById('reqTime').required = scheduled;
+        }
+        reqSessionType.addEventListener('change', toggleScheduledFields);
+        toggleScheduledFields();
+
+        document.getElementById('tutorRequestForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const sessionType = reqSessionType.value;
+            const request = {
+                subject: document.getElementById('reqSubject').value.trim(),
+                topic:   document.getElementById('reqTopic').value.trim(),
+                notes:   document.getElementById('reqNotes').value.trim(),
+                sessionType,
+                date: sessionType === 'scheduled' ? document.getElementById('reqDate').value : null,
+                time: sessionType === 'scheduled' ? document.getElementById('reqTime').value : null
+            };
+            if (sessionType === 'scheduled' && (!request.date || !request.time)) { alert('Please pick a date and time for your scheduled session.'); return; }
+            localStorage.setItem('tutorRequest', JSON.stringify(request));
+            const when = sessionType === 'immediate' ? 'as soon as possible' : `on ${request.date} at ${request.time}`;
+            document.getElementById('requestSummary').innerText = `${request.subject} — ${request.topic} (${when})`;
+            requestFormView.style.display  = 'none';
+            teacherBrowseView.style.display = 'block';
+            renderAvailableTeachers();
+        });
+
+        document.getElementById('editRequestBtn').addEventListener('click', resetFindTeacher);
+
+        // =================== BOOT ===================
+        switchRole(currentRole);
+    </script>
+</body>
+</html>
