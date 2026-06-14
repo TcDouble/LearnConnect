@@ -41,6 +41,13 @@
         .opt-in-row label { font-weight: 500; cursor: pointer; }
         .ls-note { display: block; margin-top: 4px; font-size: 0.78rem; color: #94a3b8; font-style: italic; }
         .form-row input[readonly], .form-row textarea[readonly] { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
+        .pending-banner { display: none; background: #fef9c3; border: 1px solid #fde68a; color: #854d0e; padding: 14px 18px; border-radius: 16px; margin-bottom: 28px; align-items: center; gap: 14px; }
+        .pending-banner.visible { display: flex; }
+        .pending-banner i { font-size: 1.1rem; }
+        .pending-banner strong { font-weight: 700; }
+        .pending-banner .btn-mini { margin-left: auto; background: #2b7a4b; color: white; padding: 6px 14px; }
+        .sidebar-badge { background: #b91c1c; color: white; border-radius: 40px; padding: 1px 8px; font-size: 0.7rem; font-weight: 700; margin-left: auto; }
+        .sidebar-nav a { justify-content: flex-start; }
         @media (max-width: 768px) { .dashboard-container { flex-direction: column; } .sidebar { width: 100%; } .main-content { padding: 24px; } }
     </style>
 </head>
@@ -52,10 +59,10 @@
                 <a class="persona-pill disabled" id="studentPill" title="Enable in My profile">Student</a>
                 <span class="persona-pill active">Teacher</span>
             </div>
-            <ul class="sidebar-nav"><li data-section="dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li data-section="students"><a href="#"><i class="fas fa-users"></i> My students</a></li><li data-section="schedule"><a href="#"><i class="fas fa-calendar-week"></i> Schedule</a></li><li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li><li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li></ul>
+            <ul class="sidebar-nav"><li data-section="dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li data-section="students"><a href="#"><i class="fas fa-users"></i> My students</a></li><li data-section="schedule"><a href="#"><i class="fas fa-calendar-week"></i> Schedule <span id="pendingBadgeSidebar" class="sidebar-badge" style="display:none;">0</span></a></li><li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li><li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li></ul>
         </aside>
         <main class="main-content">
-            <div id="dashboard-section"><div class="dashboard-header"><h1>Welcome, <span id="teacherNameDisplay">Teacher</span></h1><p>Here's what's on.</p></div><div class="stats-grid"><div class="stat-card"><div class="stat-value" id="totalStudents">0</div><div class="stat-label">Total students</div></div><div class="stat-card"><div class="stat-value" id="weeklySessions">0</div><div class="stat-label">Upcoming sessions</div></div><div class="stat-card"><div class="stat-value" id="subjectsCount">0</div><div class="stat-label">Subjects taught</div></div></div><div class="section-title">My students <input type="text" id="studentSearch" placeholder="Search students..." class="search-bar" style="float:right; width:200px;"></div><table class="data-table"><thead><tr><th>Name</th><th>Subjects</th><th>Sessions</th><th></th></tr></thead><tbody id="studentsTableBody"></tbody></table><div class="section-title">Upcoming sessions</div><table class="data-table"><thead><tr><th>Date</th><th>Event</th><th>Time / Status</th></tr></thead><tbody id="sessionsTableBody"></tbody></table></div>
+            <div id="dashboard-section"><div class="dashboard-header"><h1>Welcome, <span id="teacherNameDisplay">Teacher</span></h1><p>Here's what's on.</p></div><div id="pendingBanner" class="pending-banner"><i class="fas fa-bell"></i><span><strong id="pendingCountText">0 requests</strong> waiting for your response.</span><button class="btn-mini" id="goToScheduleBtn">Review</button></div><div class="stats-grid"><div class="stat-card"><div class="stat-value" id="totalStudents">0</div><div class="stat-label">Total students</div></div><div class="stat-card"><div class="stat-value" id="weeklySessions">0</div><div class="stat-label">Upcoming sessions</div></div><div class="stat-card"><div class="stat-value" id="subjectsCount">0</div><div class="stat-label">Subjects taught</div></div></div><div class="section-title">My students <input type="text" id="studentSearch" placeholder="Search students..." class="search-bar" style="float:right; width:200px;"></div><table class="data-table"><thead><tr><th>Name</th><th>Subjects</th><th>Sessions</th><th></th></tr></thead><tbody id="studentsTableBody"></tbody></table><div class="section-title">Upcoming sessions</div><table class="data-table"><thead><tr><th>Date</th><th>Event</th><th>Time / Status</th></tr></thead><tbody id="sessionsTableBody"></tbody></table></div>
             <div id="students-section" class="hidden-section"><div class="dashboard-header"><h1>My students</h1></div><div style="margin-bottom:20px;"><input type="text" id="studentSearchFull" placeholder="Search by name..." class="search-bar"></div><table class="data-table"><thead><tr><th>Name</th><th>Subjects</th><th>Sessions</th></tr></thead><tbody id="fullStudentsBody"></tbody></table></div>
             <div id="schedule-section" class="hidden-section"><div class="dashboard-header"><h1>Schedule</h1><p>Accept or decline incoming requests.</p></div><table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Time / Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table></div>
             <div id="profile-section" class="hidden-section"><div class="dashboard-header"><h1>My profile</h1></div><div class="profile-form">
@@ -126,6 +133,23 @@
             document.getElementById('totalStudents').innerText = getStudents().length;
             document.getElementById('weeklySessions').innerText = sessions.filter(isUpcoming).length;
             document.getElementById('subjectsCount').innerText = teacherInfo.subjects ? teacherInfo.subjects.split(',').filter(s => s.trim()).length : 0;
+            renderPendingIndicator();
+        }
+
+        function renderPendingIndicator() {
+            const pending = sessions.filter(s => s.status === 'waiting for teacher').length;
+            const banner = document.getElementById('pendingBanner');
+            const countText = document.getElementById('pendingCountText');
+            const sidebarBadge = document.getElementById('pendingBadgeSidebar');
+            if (pending > 0) {
+                banner.classList.add('visible');
+                countText.innerText = `${pending} request${pending === 1 ? '' : 's'}`;
+                sidebarBadge.style.display = 'inline-block';
+                sidebarBadge.innerText = String(pending);
+            } else {
+                banner.classList.remove('visible');
+                sidebarBadge.style.display = 'none';
+            }
         }
 
         function renderDashboardStudents(filter = '') {
@@ -235,6 +259,7 @@
         const sections = { dashboard: document.getElementById('dashboard-section'), students: document.getElementById('students-section'), schedule: document.getElementById('schedule-section'), profile: document.getElementById('profile-section'), settings: document.getElementById('settings-section') };
         function showSection(sectionId) { Object.keys(sections).forEach(id => sections[id].classList.add('hidden-section')); sections[sectionId].classList.remove('hidden-section'); document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active')); document.querySelector(`.sidebar-nav li[data-section="${sectionId}"]`).classList.add('active'); if (sectionId === 'students') renderFullStudents(''); if (sectionId === 'schedule') renderScheduleSection(); if (sectionId === 'profile') loadProfileForm(); if (sectionId === 'settings') { document.getElementById('notifSetting').value = localStorage.getItem('teacherNotif') || 'All updates'; document.getElementById('timezone').value = localStorage.getItem('teacherTimezone') || 'Eastern Time'; } }
         document.querySelectorAll('.sidebar-nav li').forEach(li => li.addEventListener('click', (e) => { e.preventDefault(); showSection(li.getAttribute('data-section')); }));
+        document.getElementById('goToScheduleBtn').addEventListener('click', () => showSection('schedule'));
         document.getElementById('studentSearch').addEventListener('input', (e) => renderDashboardStudents(e.target.value));
         document.getElementById('studentSearchFull').addEventListener('input', (e) => renderFullStudents(e.target.value));
 
