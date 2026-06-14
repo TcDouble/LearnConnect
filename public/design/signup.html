@@ -32,16 +32,23 @@
         </div>
     </main>
     <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script>
-        // Frontend only for now — not connected to the Supabase database.
-        document.getElementById('signupForm').addEventListener('submit', function(e) {
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const fullName = document.getElementById('fullName').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             if (!fullName || !email || password.length < 8) { alert('Please fill all fields correctly'); return; }
 
-            // Pass basic info forward via localStorage only; no account is created yet.
+            const { firstname, lastname } = splitFullName(fullName);
+            const { error } = await supabaseClient.auth.signUp({
+                email, password,
+                options: { data: { firstname, lastname, role: 'student' } }
+            });
+            if (error) { alert('Could not create account: ' + error.message); return; }
+
             localStorage.setItem('studentFullName', fullName);
             localStorage.setItem('studentEmail', email);
             window.location.href = 'Profile-setup.html';

@@ -58,8 +58,6 @@
         document.getElementById('profileForm').addEventListener('submit', async function(e) { e.preventDefault();
             const subjects = Array.from(document.querySelectorAll('#subjectTags .tag')).map(t => t.innerText.replace(/×/g, '').trim()).filter(Boolean);
 
-            // Keep a local copy so the dashboard can still show extra fields the
-            // database does not store (bio/goals/availability/parent email).
             const profileData = {
                 bio: document.getElementById('bio').value,
                 grade: document.getElementById('gradeLevel').value,
@@ -73,33 +71,30 @@
             };
             localStorage.setItem('studentProfile', JSON.stringify(profileData));
 
-            // A logged-in session is required so the Edge Function runs RLS as this user.
+            // Best-effort DB write: only runs if a session exists from signup.
+            // Navigation to dashboard always happens regardless.
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) { alert('Please sign in before setting up your profile.'); window.location.href = 'student-login.html'; return; }
-
-            // Students stores age, not date of birth — derive an integer age.
-            let age = null;
-            const dob = document.getElementById('dob').value;
-            if (dob) { const d = new Date(dob), now = new Date(); age = now.getFullYear() - d.getFullYear(); if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--; }
-
-            try {
-                const res = await fetch(`${SUPABASE_URL}/functions/v1/create-student-profile`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_PUBLISHABLE_KEY,
-                        'Authorization': `Bearer ${session.access_token}`
-                    },
-                    body: JSON.stringify({
-                        school: document.getElementById('school').value.trim(),
-                        grade_level: document.getElementById('gradeLevel').value,
-                        age: age,
-                        subject_list: subjects
-                    })
-                });
-                const result = await res.json();
-                if (!res.ok) { alert(result.error || 'Could not save your profile.'); return; }
-            } catch (err) { alert('Network error saving profile: ' + err.message); return; }
+            if (session) {
+                let age = null;
+                const dob = document.getElementById('dob').value;
+                if (dob) { const d = new Date(dob), now = new Date(); age = now.getFullYear() - d.getFullYear(); if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--; }
+                try {
+                    await fetch(`${SUPABASE_URL}/functions/v1/create-student-profile`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_PUBLISHABLE_KEY,
+                            'Authorization': `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({
+                            school: document.getElementById('school').value.trim(),
+                            grade_level: document.getElementById('gradeLevel').value,
+                            age: age,
+                            subject_list: subjects
+                        })
+                    });
+                } catch (_) {}
+            }
 
             window.location.href = 'student-dashboard.html';
         });

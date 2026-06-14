@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnConnect — Review Request</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../public/design/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .request-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 20px 24px;
+      margin-bottom: 8px;
+    }
+    .request-card .row-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 3px;
+    }
+    .request-card .row-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #0f3b2c;
+    }
+    .request-card .row-note {
+      font-size: 0.88rem;
+      color: #475569;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+    .badge-immediate {
+      background: #dcfce7;
+      color: #166534;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .divider-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 28px 0 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+    }
+    .divider-label::before, .divider-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+    .provider-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 8px;
+    }
+    .submit-btn { cursor: pointer; font-family: inherit; }
+    .submit-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
+    .spinner {
+      display: none;
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    .btn-outline .spinner {
+      border-color: rgba(15,59,44,0.3);
+      border-top-color: #0f3b2c;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #status {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    #status.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; display: block; }
+    @media (max-width: 500px) { .provider-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav class="container navbar">
+      <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+    </nav>
+  </header>
+
+  <main class="form-page">
+    <div class="container form-container">
+
+      <a href="../public/design/Teacher-dashboard.html"
+         style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; color:#2b7a4b; font-weight:600; text-decoration:none; margin-bottom:20px;">
+        <i class="fas fa-arrow-left"></i> Back to dashboard
+      </a>
+
+      <h1 style="color:#0f3b2c; margin-bottom:6px;">Review request</h1>
+      <p class="form-subhead">Accept or decline this student's session request.</p>
+
+      <!-- Student request details (read-only) -->
+      <div class="form-section">
+        <h3><i class="fas fa-user-graduate"></i> Student request</h3>
+
+        <div class="request-card" style="margin-bottom:12px;">
+          <div class="row-label">Student</div>
+          <div class="row-value" id="dispStudentName">—</div>
+        </div>
+
+        <div class="request-card" style="margin-bottom:12px;">
+          <div class="row-label">Subject</div>
+          <div class="row-value" id="dispSubject">—</div>
+        </div>
+
+        <div class="request-card" style="margin-bottom:12px;">
+          <div class="row-label">Requested time</div>
+          <div class="row-value" id="dispWhen">—</div>
+        </div>
+
+        <div class="request-card" id="dispRequestCard" style="display:none;">
+          <div class="row-label">Request notes</div>
+          <div class="row-note" id="dispRequest">—</div>
+        </div>
+      </div>
+
+      <!-- Teacher response -->
+      <div class="divider-label">Your response</div>
+
+      <!-- Decline -->
+      <button id="declineBtn" class="btn btn-secondary btn-block" style="margin-bottom:20px;">
+        <i class="fas fa-xmark"></i> Decline request
+      </button>
+
+      <!-- Accept — teacher configures the session -->
+      <form id="acceptForm" novalidate>
+
+        <div class="form-section">
+          <h3><i class="fas fa-calendar-alt"></i> Set session time</h3>
+
+          <div class="form-group">
+            <label>Session type</label>
+            <div class="days-buttons">
+              <span class="day selected" id="typeImmediate">Immediate</span>
+              <span class="day" id="typeScheduled">Scheduled</span>
+            </div>
+            <small style="display:block; margin-top:8px; color:#64748b;">Immediate sessions start right now.</small>
+          </div>
+
+          <div id="dateTimeFields" style="display:none;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div class="form-group">
+                <label for="sessionDate">Date</label>
+                <input id="sessionDate" type="date" />
+              </div>
+              <div class="form-group">
+                <label for="sessionTime">Time</label>
+                <input id="sessionTime" type="time" value="15:00" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="provider-row">
+          <button type="submit" class="btn btn-primary btn-block submit-btn"
+                  name="provider" value="jitsi" data-label="Accept with Jitsi">
+            <span class="btn-text">Accept with Jitsi</span>
+            <span class="spinner"></span>
+          </button>
+          <button type="submit" class="btn btn-outline btn-block submit-btn"
+                  name="provider" value="daily" data-label="Accept with Daily">
+            <span class="btn-text">Accept with Daily</span>
+            <span class="spinner"></span>
+          </button>
+        </div>
+
+      </form>
+
+      <div id="status"></div>
+
+    </div>
+  </main>
+
+  <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+
+  <script>
+    const EDGE_FN_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/create-meeting';
+
+    // Load the pending request saved by the teacher dashboard
+    const raw = localStorage.getItem('teacherPendingRequest');
+    if (!raw) { window.location.href = '../public/design/Teacher-dashboard.html'; }
+    const req = JSON.parse(raw);
+
+    // ── Display request details ──────────────────────────────────────────────
+    document.getElementById('dispStudentName').textContent = req.studentName || '—';
+    document.getElementById('dispSubject').textContent     = req.subject || '—';
+
+    if (req.sessionType === 'immediate') {
+      document.getElementById('dispWhen').innerHTML = '<span class="badge-immediate">Immediate</span>';
+    } else if (req.sessionDate && req.sessionTime) {
+      try {
+        const d = new Date(`${req.sessionDate}T${req.sessionTime}`);
+        document.getElementById('dispWhen').textContent =
+          d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' }) +
+          ' at ' + d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+      } catch(_) {
+        document.getElementById('dispWhen').textContent = `${req.sessionDate} ${req.sessionTime}`;
+      }
+    } else {
+      document.getElementById('dispWhen').textContent = '—';
+    }
+
+    if (req.request) {
+      document.getElementById('dispRequest').textContent = req.request;
+      document.getElementById('dispRequestCard').style.display = 'block';
+    }
+
+    // Pre-fill today's date for scheduled option
+    document.getElementById('sessionDate').valueAsDate = new Date();
+
+    // ── Session type toggle ──────────────────────────────────────────────────
+    let sessionType = 'immediate';
+
+    document.getElementById('typeImmediate').addEventListener('click', () => {
+      sessionType = 'immediate';
+      document.getElementById('typeImmediate').classList.add('selected');
+      document.getElementById('typeScheduled').classList.remove('selected');
+      document.getElementById('dateTimeFields').style.display = 'none';
+    });
+    document.getElementById('typeScheduled').addEventListener('click', () => {
+      sessionType = 'scheduled';
+      document.getElementById('typeScheduled').classList.add('selected');
+      document.getElementById('typeImmediate').classList.remove('selected');
+      document.getElementById('dateTimeFields').style.display = 'block';
+    });
+
+    // ── Decline ──────────────────────────────────────────────────────────────
+    document.getElementById('declineBtn').addEventListener('click', () => {
+      if (!confirm(`Decline ${req.studentName}'s request for ${req.subject}?`)) return;
+
+      // Remove the request from localStorage
+      const requests = JSON.parse(localStorage.getItem('teacherRequests') || '[]');
+      if (req.index !== undefined) requests.splice(req.index, 1);
+      localStorage.setItem('teacherRequests', JSON.stringify(requests));
+      localStorage.removeItem('teacherPendingRequest');
+
+      window.location.href = '../public/design/Teacher-dashboard.html';
+    });
+
+    // ── Accept ───────────────────────────────────────────────────────────────
+    const PROVIDERS = {
+      jitsi: { name: 'jitsi', createMeeting: (p) => requestMeeting('jitsi', p) },
+      daily: { name: 'daily', createMeeting: (p) => requestMeeting('daily', p) },
+    };
+    let activeBtn = null;
+
+    async function requestMeeting(providerName, payload) {
+      const res = await fetch(EDGE_FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, provider: providerName }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+      return data;
+    }
+
+    document.getElementById('acceptForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const sessionDate = sessionType === 'scheduled' ? document.getElementById('sessionDate').value : null;
+      const sessionTime = sessionType === 'scheduled' ? document.getElementById('sessionTime').value : null;
+
+      if (sessionType === 'scheduled' && (!sessionDate || !sessionTime)) {
+        showStatus('error', 'Please pick a date and time for the scheduled session.');
+        return;
+      }
+
+      const providerChoice = e.submitter?.value;
+      const provider = PROVIDERS[providerChoice];
+      if (!provider) { showStatus('error', `Unknown provider "${providerChoice}".`); return; }
+
+      activeBtn = e.submitter;
+      setLoading(true);
+
+      const now = new Date();
+      const formData = {
+        tutorName:    req.tutorName,
+        tutorEmail:   req.tutorEmail,
+        studentName:  req.studentName,
+        studentEmail: req.studentEmail,
+        sessionType,
+        sessionDate:  sessionDate ?? now.toISOString().slice(0, 10),
+        sessionTime:  sessionTime ?? now.toTimeString().slice(0, 5),
+        subject:      req.subject,
+        request:      req.request || ''
+      };
+
+      let confirmation;
+      try {
+        const data = await provider.createMeeting(formData);
+        confirmation = {
+          provider:     data.provider,
+          meetingUrl:   data.meetingUrl,
+          roomName:     data.roomName,
+          emailResults: data.emailResults || [],
+          ...formData
+        };
+      } catch (_) {
+        // Design fallback: navigate with placeholder data if backend unavailable
+        confirmation = {
+          provider:     providerChoice,
+          meetingUrl:   `https://meet.learnconnect.com/demo-${Date.now()}`,
+          roomName:     'demo-room',
+          emailResults: [],
+          ...formData
+        };
+      }
+
+      // Remove accepted request from the list
+      const requests = JSON.parse(localStorage.getItem('teacherRequests') || '[]');
+      if (req.index !== undefined) requests.splice(req.index, 1);
+      localStorage.setItem('teacherRequests', JSON.stringify(requests));
+      localStorage.removeItem('teacherPendingRequest');
+
+      setLoading(false);
+      localStorage.setItem('meetingConfirmation', JSON.stringify(confirmation));
+      window.location.href = 'confirmation.html';
+    });
+
+    function setLoading(on) {
+      document.querySelectorAll('.submit-btn').forEach(btn => btn.disabled = on);
+      document.getElementById('declineBtn').disabled = on;
+      if (activeBtn) {
+        activeBtn.querySelector('.spinner').style.display = on ? 'inline-block' : 'none';
+        activeBtn.querySelector('.btn-text').textContent = on ? 'Creating…' : activeBtn.dataset.label;
+      }
+    }
+
+    function showStatus(type, msg) {
+      const el = document.getElementById('status');
+      el.style.display = '';
+      el.className = type;
+      el.textContent = msg;
+    }
+  </script>
+
+</body>
+</html>

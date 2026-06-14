@@ -11,16 +11,23 @@
     <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="homepage.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul></nav></header>
     <main class="form-page"><div class="container form-container"><div class="steps"><div class="step active">Account</div><div class="step">Profile</div></div><h1>Teacher sign in</h1><p class="form-subhead">New here? Filling this in will create your account.</p><form id="teacherSignupForm"><div class="form-group"><label>Full name <span class="hint">e.g. Sarah Chen</span></label><input type="text" id="teacherFullName" required></div><div class="form-group"><label>Email address</label><input type="email" id="teacherEmail" required></div><div class="form-group"><label>Password <span class="hint">At least 8 characters</span></label><input type="password" id="teacherPassword" required minlength="8"></div><button type="submit" class="btn btn-primary btn-block">Continue to profile setup →</button></form></div></main>
     <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
     <script>
-        // Frontend only for now — not connected to the Supabase database.
-        document.getElementById('teacherSignupForm').addEventListener('submit', function(e) {
+        document.getElementById('teacherSignupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const fullName = document.getElementById('teacherFullName').value.trim();
             const email = document.getElementById('teacherEmail').value.trim();
             const password = document.getElementById('teacherPassword').value;
-            if(!fullName || !email || password.length<8) { alert('Please fill all fields'); return; }
+            if (!fullName || !email || password.length < 8) { alert('Please fill all fields'); return; }
 
-            // Pass basic info forward via localStorage only; no account is created yet.
+            const { firstname, lastname } = splitFullName(fullName);
+            const { error } = await supabaseClient.auth.signUp({
+                email, password,
+                options: { data: { firstname, lastname, role: 'teacher' } }
+            });
+            if (error) { alert('Could not create account: ' + error.message); return; }
+
             localStorage.setItem('teacherFullName', fullName);
             localStorage.setItem('teacherEmail', email);
             window.location.href = 'Teacher-profile.html';
