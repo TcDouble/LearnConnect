@@ -3,9 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LearnConnect — Student Profile Setup</title>
+    <title>LearnConnect — Profile Setup</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .persona-picker { display: flex; gap: 24px; flex-wrap: wrap; }
+        .persona-picker label { display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; }
+        .persona-picker input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .persona-block.hidden { display: none; }
+        .persona-block {
+            background: #fafdfb;
+            border: 1px solid #d9e7e0;
+            border-radius: 20px;
+            padding: 24px 28px;
+            margin: 24px 0;
+            position: relative;
+        }
+        .persona-block::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 24px; right: 24px;
+            height: 4px;
+            border-radius: 0 0 4px 4px;
+            background: #2b7a4b;
+        }
+        #teacherBlock { background: #faf9fd; border-color: #ddd6ee; }
+        #teacherBlock::before { background: #5f4bb6; }
+        .persona-block-header {
+            display: flex; align-items: center; gap: 12px;
+            margin: 4px 0 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .persona-block-header .persona-icon {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: #e6f2ec; color: #2b7a4b;
+            font-size: 1.2rem;
+        }
+        #teacherBlock .persona-block-header .persona-icon { background: #ece8f7; color: #5f4bb6; }
+        .persona-block-header h2 { font-size: 1.25rem; color: #0f3b2c; margin: 0; }
+        .persona-block-header small { color: #64748b; display: block; margin-top: 2px; }
+        .persona-block .form-section { border-bottom-color: #e2e8f0; }
+        .persona-block .form-section:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+        .picker-remember { display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 20px; font-weight: 500; color: #334155; }
+        .picker-remember input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .role-card { cursor: pointer; }
+        .ls-note { display: block; margin-top: 6px; font-size: 0.78rem; color: #94a3b8; font-style: italic; }
+        input[readonly], textarea[readonly], select:disabled { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
+        .day.disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; opacity: 0.7; }
+    </style>
 </head>
 <body>
     <header>
@@ -19,71 +67,244 @@
         </nav>
     </header>
     <main class="form-page">
-        <div class="container form-container">
+        <div class="container form-container" id="profileContainer">
             <div class="steps"><div class="step">Account</div><div class="step active">Profile</div></div>
             <h1>Set up your profile</h1>
-            <p class="form-subhead">This helps teachers understand who you are and what you need.</p>
+            <p class="form-subhead" id="formSubhead">Pick one or both — you can change this later from your dashboard.</p>
+
             <form id="profileForm">
-                <div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
-                    <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label">Choose File</span><input type="file" id="profilePhoto" accept="image/*"><span id="fileName" class="file-name">No file chosen</span></div><small>Optional. Show to teachers viewing your profile.</small></div>
-                    <div class="form-group"><label>Short bio</label><textarea rows="3" id="bio" placeholder="Tell teachers a bit about yourself..."></textarea></div>
-                    <div class="form-group"><label>Grade level or year</label><select id="gradeLevel"><option>High school — year 9</option><option selected>High school — year 10</option><option>High school — year 11</option><option>High school — year 12</option><option>University freshman</option></select></div>
-                    <div class="form-group"><label>Subjects I need help with</label><div class="subject-tags" id="subjectTags"><span class="tag">Maths <i class="fas fa-times remove-tag"></i></span><span class="tag">English <i class="fas fa-times remove-tag"></i></span><span class="tag">Physics <i class="fas fa-times remove-tag"></i></span><span class="tag">History <i class="fas fa-times remove-tag"></i></span></div><div class="add-subject"><input type="text" id="newSubject" placeholder="e.g. Chemistry"><button type="button" id="addSubjectBtn" class="btn-small">+ Add</button></div></div>
-                    <div class="form-group"><label>Learning goals</label><textarea rows="2" id="goals" placeholder="e.g. Preparing for exams..."></textarea></div>
+                <!-- Persona picker -->
+                <div class="form-section" id="personaPickerSection">
+                    <h3><i class="fas fa-user-tag"></i> WHAT DO YOU WANT TO DO?</h3>
+                    <div class="persona-picker">
+                        <label><input type="checkbox" id="wantStudent"> I want to learn (be a student)</label>
+                        <label><input type="checkbox" id="wantTeacher"> I want to teach (be a teacher)</label>
+                    </div>
+                    <small>At least one is required. You can enable the other later from My profile.</small>
                 </div>
-                <div class="form-section"><h3><i class="fas fa-calendar-alt"></i> AVAILABILITY</h3>
-                    <div class="form-group"><label>Available days</label><div class="days-buttons"><span class="day" data-day="Mon">Mon</span><span class="day" data-day="Tue">Tue</span><span class="day" data-day="Wed">Wed</span><span class="day" data-day="Thu">Thu</span><span class="day" data-day="Fri">Fri</span><span class="day" data-day="Sat">Sat</span><span class="day" data-day="Sun">Sun</span></div></div>
-                    <div class="form-group"><label>Preferred session times</label><select id="sessionTimes"><option>Morning (9am – 12pm)</option><option>Afternoon (1pm – 5pm)</option><option selected>Evening (5pm – 9pm)</option></select></div>
+
+                <!-- Student fields -->
+                <div id="studentBlock" class="persona-block">
+                    <div class="persona-block-header">
+                        <span class="persona-icon"><i class="fas fa-user-graduate"></i></span>
+                        <div>
+                            <h2>Your student profile</h2>
+                            <small>What teachers will see when you request a session.</small>
+                        </div>
+                    </div>
+                    <div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
+                        <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label" style="opacity:0.6; pointer-events:none;">Choose File</span><input type="file" id="profilePhoto" accept="image/*" disabled><span id="fileName" class="file-name">No file chosen</span></div><small class="ls-note">Display only — saving coming soon.</small></div>
+                        <div class="form-group"><label>Short bio</label><textarea rows="3" id="bio" placeholder="Display only — saving coming soon." readonly></textarea></div>
+                        <div class="form-group"><label>Grade level or year</label><select id="gradeLevel"><option>High school — year 9</option><option selected>High school — year 10</option><option>High school — year 11</option><option>High school — year 12</option><option>University freshman</option></select></div>
+                        <div class="form-group"><label>Subjects I need help with</label><div class="subject-tags" id="subjectTags"><span class="tag">Maths <i class="fas fa-times remove-tag"></i></span><span class="tag">English <i class="fas fa-times remove-tag"></i></span><span class="tag">Physics <i class="fas fa-times remove-tag"></i></span><span class="tag">History <i class="fas fa-times remove-tag"></i></span></div><div class="add-subject"><input type="text" id="newSubject" placeholder="e.g. Chemistry"><button type="button" id="addSubjectBtn" class="btn-small">+ Add</button></div></div>
+                        <div class="form-group"><label>Learning goals</label><textarea rows="2" id="goals" placeholder="Display only — saving coming soon." readonly></textarea></div>
+                    </div>
+                    <div class="form-section"><h3><i class="fas fa-calendar-alt"></i> AVAILABILITY <small class="ls-note" style="margin-left:8px;">Display only — saving coming soon.</small></h3>
+                        <div class="form-group"><label>Available days</label><div class="days-buttons" id="studentDays"><span class="day disabled" data-day="Mon">Mon</span><span class="day disabled" data-day="Tue">Tue</span><span class="day disabled" data-day="Wed">Wed</span><span class="day disabled" data-day="Thu">Thu</span><span class="day disabled" data-day="Fri">Fri</span><span class="day disabled" data-day="Sat">Sat</span><span class="day disabled" data-day="Sun">Sun</span></div></div>
+                        <div class="form-group"><label>Preferred session times</label><select id="sessionTimes" disabled><option>Morning (9am – 12pm)</option><option>Afternoon (1pm – 5pm)</option><option selected>Evening (5pm – 9pm)</option></select></div>
+                    </div>
+                    <div class="form-section"><h3><i class="fas fa-lock"></i> PRIVATE INFO (ONLY YOU CAN SEE THIS)</h3>
+                        <div class="form-group"><label>Date of birth</label><input type="date" id="dob"></div>
+                        <div class="form-group"><label>Parent or guardian email</label><input type="email" id="parentEmail" placeholder="Display only — saving coming soon." readonly></div>
+                        <div class="form-group"><label>School or institution</label><input type="text" id="school" placeholder="e.g. Lincoln High School"></div>
+                    </div>
                 </div>
-                <div class="form-section"><h3><i class="fas fa-lock"></i> PRIVATE INFO (ONLY YOU CAN SEE THIS)</h3>
-                    <div class="form-group"><label>Date of birth</label><input type="date" id="dob"></div>
-                    <div class="form-group"><label>Parent or guardian email</label><input type="email" id="parentEmail" placeholder="parent@email.com"><small>Optional. Required if under 18.</small></div>
-                    <div class="form-group"><label>School or institution</label><input type="text" id="school" placeholder="e.g. Lincoln High School"></div>
+
+                <!-- Teacher fields -->
+                <div id="teacherBlock" class="persona-block">
+                    <div class="persona-block-header">
+                        <span class="persona-icon"><i class="fas fa-chalkboard-user"></i></span>
+                        <div>
+                            <h2>Your teacher profile</h2>
+                            <small>What students will see when browsing teachers.</small>
+                        </div>
+                    </div>
+                    <div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
+                        <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label" style="opacity:0.6; pointer-events:none;">Choose File</span><input type="file" id="teacherPhoto" accept="image/*" disabled><span id="teacherFileName" class="file-name">No file chosen</span></div><small class="ls-note">Display only — saving coming soon.</small></div>
+                        <div class="form-group"><label>Short bio</label><textarea rows="3" id="teacherBio" placeholder="Display only — saving coming soon." readonly></textarea></div>
+                        <div class="form-group"><label>Subjects / specialties</label><div class="subject-tags" id="teacherSubjects"><span class="tag">Maths <i class="fas fa-times remove-tag"></i></span><span class="tag">English <i class="fas fa-times remove-tag"></i></span><span class="tag">Physics <i class="fas fa-times remove-tag"></i></span><span class="tag">History <i class="fas fa-times remove-tag"></i></span></div><div class="add-subject"><input type="text" id="newTeacherSubject" placeholder="e.g. Chemistry"><button type="button" id="addTeacherSubjectBtn" class="btn-small">+ Add</button></div></div>
+                        <div class="form-group"><label>Years of experience</label><select id="experience"><option>Less than 1 year</option><option>1–2 years</option><option selected>3–5 years</option><option>6–10 years</option><option>10+ years</option></select></div>
+                    </div>
+                    <div class="form-section"><h3><i class="fas fa-calendar-alt"></i> SCHEDULE & AVAILABILITY <small class="ls-note" style="margin-left:8px;">Display only — saving coming soon.</small></h3>
+                        <div class="form-group"><label>Available days</label><div class="days-buttons" id="teacherDays"><span class="day disabled" data-day="Mon">Mon</span><span class="day disabled" data-day="Tue">Tue</span><span class="day disabled" data-day="Wed">Wed</span><span class="day disabled" data-day="Thu">Thu</span><span class="day disabled" data-day="Fri">Fri</span><span class="day disabled" data-day="Sat">Sat</span><span class="day disabled" data-day="Sun">Sun</span></div></div>
+                        <div class="form-group"><label>Preferred session times</label><select id="teacherSessionTimes" disabled><option>Morning (9am – 12pm)</option><option selected>Afternoon (12pm – 5pm)</option><option>Evening (5pm – 9pm)</option></select></div>
+                    </div>
+                    <div class="form-section"><h3><i class="fas fa-lock"></i> PRIVATE INFO (ONLY YOU CAN SEE THIS)</h3>
+                        <div class="form-group"><label>Phone number</label><input type="tel" id="teacherPhone" placeholder="+1 (555) 000-0000"></div>
+                        <div class="form-group"><label>Institution or school</label><input type="text" id="teacherSchool" placeholder="Display only — saving coming soon." readonly></div>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Finish and go to dashboard →</button>
+
+                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Finish and go to dashboard →</button>
             </form>
+        </div>
+
+        <!-- Dashboard picker (shown when both personas were saved) -->
+        <div class="container form-container" id="dashboardPicker" hidden>
+            <h1>Where do you want to start?</h1>
+            <p class="form-subhead">You can switch dashboards any time from the sidebar.</p>
+            <div class="role-selector">
+                <div class="role-card" data-pick="student">
+                    <i class="fas fa-user-graduate fa-2x"></i>
+                    <h3>Student dashboard</h3>
+                    <p>Find a teacher, book sessions</p>
+                </div>
+                <div class="role-card" data-pick="teacher">
+                    <i class="fas fa-chalkboard-user fa-2x"></i>
+                    <h3>Teacher dashboard</h3>
+                    <p>Manage students and requests</p>
+                </div>
+            </div>
+            <label class="picker-remember"><input type="checkbox" id="rememberPick"> Remember my choice</label>
         </div>
     </main>
     <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
     <script>
-        // Calls the create-student-profile Edge Function with the user's session token.
-        function attachRemoveEvents() { document.querySelectorAll('.remove-tag').forEach(icon => { icon.removeEventListener('click', removeHandler); icon.addEventListener('click', removeHandler); }); }
-        function removeHandler(e) { e.stopPropagation(); this.closest('.tag').remove(); }
-        document.getElementById('addSubjectBtn').addEventListener('click', () => { let input = document.getElementById('newSubject'); let subject = input.value.trim(); if(subject) { let container = document.getElementById('subjectTags'); let tag = document.createElement('span'); tag.className = 'tag'; tag.innerHTML = `${subject} <i class="fas fa-times remove-tag"></i>`; container.appendChild(tag); attachRemoveEvents(); input.value = ''; } });
-        attachRemoveEvents();
-        let selectedDays = new Set();
-        document.querySelectorAll('.day').forEach(day => { day.addEventListener('click', () => { let dayName = day.getAttribute('data-day'); if(selectedDays.has(dayName)) { selectedDays.delete(dayName); day.classList.remove('selected'); } else { selectedDays.add(dayName); day.classList.add('selected'); } }); });
-        document.getElementById('profileForm').addEventListener('submit', async function(e) { e.preventDefault();
-            const subjects = Array.from(document.querySelectorAll('#subjectTags .tag')).map(t => t.innerText.replace(/×/g, '').trim()).filter(Boolean);
+        // editAddPersona: set by a dashboard's "My profile" save when the user
+        // checks the opt-in for the other persona. Tells this page to only
+        // collect the new persona's fields and route back to the source dashboard.
+        const editAddPersona = localStorage.getItem('editAddPersona'); // 'student' | 'teacher' | null
 
-            // Keep a local copy so the dashboard can still show extra fields the
-            // database does not store (bio/goals/availability/parent email).
-            const profileData = {
-                bio: document.getElementById('bio').value,
-                grade: document.getElementById('gradeLevel').value,
-                subjects: subjects,
-                goals: document.getElementById('goals').value,
-                availableDays: Array.from(selectedDays),
-                sessionTime: document.getElementById('sessionTimes').value,
-                dob: document.getElementById('dob').value,
-                parentEmail: document.getElementById('parentEmail').value,
-                school: document.getElementById('school').value
-            };
-            localStorage.setItem('studentProfile', JSON.stringify(profileData));
+        const wantStudent = document.getElementById('wantStudent');
+        const wantTeacher = document.getElementById('wantTeacher');
+        const studentBlock = document.getElementById('studentBlock');
+        const teacherBlock = document.getElementById('teacherBlock');
+        const profileForm = document.getElementById('profileForm');
+        const profileContainer = document.getElementById('profileContainer');
+        const dashboardPicker = document.getElementById('dashboardPicker');
 
-            // A logged-in session is required so the Edge Function runs RLS as this user.
+        function syncBlocks() {
+            studentBlock.classList.toggle('hidden', !wantStudent.checked);
+            teacherBlock.classList.toggle('hidden', !wantTeacher.checked);
+        }
+        wantStudent.addEventListener('change', syncBlocks);
+        wantTeacher.addEventListener('change', syncBlocks);
+
+        // ── Initial state: signup pre-check OR editAddPersona mode ────────────
+        (async function initPersonaState() {
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) { alert('Please sign in before setting up your profile.'); window.location.href = 'student-login.html'; return; }
+            if (!session) { window.location.href = 'student-login.html'; return; }
 
-            // Students stores age, not date of birth — derive an integer age.
-            let age = null;
-            const dob = document.getElementById('dob').value;
-            if (dob) { const d = new Date(dob), now = new Date(); age = now.getFullYear() - d.getFullYear(); if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--; }
+            const { data: userRow } = await supabaseClient
+                .from('Users').select('role, is_student, is_teacher').eq('UID', session.user.id).maybeSingle();
+            const role = userRow?.role || session.user.user_metadata?.role || 'student';
 
-            try {
-                const res = await fetch(`${SUPABASE_URL}/functions/v1/create-student-profile`, {
+            if (editAddPersona === 'student' || editAddPersona === 'teacher') {
+                // Add-persona mode: pre-check both, hide the existing block + the picker.
+                wantStudent.checked = true;
+                wantTeacher.checked = true;
+                document.getElementById('personaPickerSection').style.display = 'none';
+                document.getElementById('formSubhead').textContent =
+                    editAddPersona === 'teacher'
+                        ? "Tell students how you'd like to teach."
+                        : "Tell teachers a bit about how you'd like to learn.";
+                if (editAddPersona === 'teacher') studentBlock.classList.add('hidden');
+                else teacherBlock.classList.add('hidden');
+            } else {
+                // First-time setup: pre-check the box matching the signup role.
+                wantStudent.checked = role !== 'teacher' || !!userRow?.is_student;
+                wantTeacher.checked = role === 'teacher' || !!userRow?.is_teacher;
+                syncBlocks();
+            }
+        })();
+
+        // ── Student block UI helpers ──────────────────────────────────────────
+        function attachRemoveEvents(scope) {
+            scope.querySelectorAll('.remove-tag').forEach(icon => {
+                icon.removeEventListener('click', removeHandler);
+                icon.addEventListener('click', removeHandler);
+            });
+        }
+        function removeHandler(e) { e.stopPropagation(); this.closest('.tag').remove(); }
+        document.getElementById('addSubjectBtn').addEventListener('click', () => {
+            const input = document.getElementById('newSubject');
+            const subject = input.value.trim();
+            if (!subject) return;
+            const container = document.getElementById('subjectTags');
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.innerHTML = `${subject} <i class="fas fa-times remove-tag"></i>`;
+            container.appendChild(tag);
+            attachRemoveEvents(container);
+            input.value = '';
+        });
+        attachRemoveEvents(studentBlock);
+        const studentSelectedDays = new Set();
+        document.querySelectorAll('#studentDays .day').forEach(day => {
+            day.addEventListener('click', () => {
+                if (day.classList.contains('disabled')) return;
+                const name = day.getAttribute('data-day');
+                if (studentSelectedDays.has(name)) { studentSelectedDays.delete(name); day.classList.remove('selected'); }
+                else { studentSelectedDays.add(name); day.classList.add('selected'); }
+            });
+        });
+
+        // ── Teacher block UI helpers ──────────────────────────────────────────
+        document.getElementById('addTeacherSubjectBtn').addEventListener('click', () => {
+            const input = document.getElementById('newTeacherSubject');
+            const subject = input.value.trim();
+            if (!subject) return;
+            const container = document.getElementById('teacherSubjects');
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.innerHTML = `${subject} <i class="fas fa-times remove-tag"></i>`;
+            container.appendChild(tag);
+            attachRemoveEvents(container);
+            input.value = '';
+        });
+        attachRemoveEvents(teacherBlock);
+        const teacherSelectedDays = new Set();
+        document.querySelectorAll('#teacherDays .day').forEach(day => {
+            day.addEventListener('click', () => {
+                if (day.classList.contains('disabled')) return;
+                const name = day.getAttribute('data-day');
+                if (teacherSelectedDays.has(name)) { teacherSelectedDays.delete(name); day.classList.remove('selected'); }
+                else { teacherSelectedDays.add(name); day.classList.add('selected'); }
+            });
+        });
+
+        // ── Submit ────────────────────────────────────────────────────────────
+        profileForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const saveStudent = wantStudent.checked && !studentBlock.classList.contains('hidden');
+            const saveTeacher = wantTeacher.checked && !teacherBlock.classList.contains('hidden');
+
+            if (!wantStudent.checked && !wantTeacher.checked) {
+                alert('Pick at least one: I want to learn and/or I want to teach.');
+                return;
+            }
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { alert('Please sign in.'); window.location.href = 'student-login.html'; return; }
+
+            const calls = [];
+
+            if (saveStudent) {
+                const subjects = Array.from(studentBlock.querySelectorAll('#subjectTags .tag'))
+                    .map(t => t.innerText.replace(/×/g, '').trim()).filter(Boolean);
+                // Local copy for dashboard fields not stored in DB.
+                localStorage.setItem('studentProfile', JSON.stringify({
+                    bio: document.getElementById('bio').value,
+                    grade: document.getElementById('gradeLevel').value,
+                    subjects,
+                    goals: document.getElementById('goals').value,
+                    availableDays: Array.from(studentSelectedDays),
+                    sessionTime: document.getElementById('sessionTimes').value,
+                    dob: document.getElementById('dob').value,
+                    parentEmail: document.getElementById('parentEmail').value,
+                    school: document.getElementById('school').value
+                }));
+                let age = null;
+                const dob = document.getElementById('dob').value;
+                if (dob) {
+                    const d = new Date(dob), now = new Date();
+                    age = now.getFullYear() - d.getFullYear();
+                    if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--;
+                }
+                calls.push(fetch(`${SUPABASE_URL}/functions/v1/create-student-profile`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -93,15 +314,83 @@
                     body: JSON.stringify({
                         school: document.getElementById('school').value.trim(),
                         grade_level: document.getElementById('gradeLevel').value,
-                        age: age,
+                        age,
                         subject_list: subjects
                     })
-                });
-                const result = await res.json();
-                if (!res.ok) { alert(result.error || 'Could not save your profile.'); return; }
-            } catch (err) { alert('Network error saving profile: ' + err.message); return; }
+                }).then(async r => ({ which: 'student', ok: r.ok, body: await r.json() })));
+            }
 
-            window.location.href = 'student-dashboard.html';
+            if (saveTeacher) {
+                const subjects = Array.from(teacherBlock.querySelectorAll('#teacherSubjects .tag'))
+                    .map(t => t.innerText.replace(/×/g, '').trim()).filter(Boolean);
+                localStorage.setItem('teacherProfile', JSON.stringify({
+                    bio: document.getElementById('teacherBio').value,
+                    subjects,
+                    experience: document.getElementById('experience').value,
+                    availableDays: Array.from(teacherSelectedDays),
+                    sessionTimes: document.getElementById('teacherSessionTimes').value,
+                    phone: document.getElementById('teacherPhone').value,
+                    school: document.getElementById('teacherSchool').value
+                }));
+                const expText = document.getElementById('experience').value;
+                const years = /less than/i.test(expText) ? 0 : (expText.match(/\d+/) ? parseInt(expText.match(/\d+/)[0], 10) : 0);
+                calls.push(fetch(`${SUPABASE_URL}/functions/v1/create-teacher-profile`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_PUBLISHABLE_KEY,
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({
+                        subjects,
+                        subject_list: subjects,
+                        years_experience: years,
+                        phone_number: document.getElementById('teacherPhone').value.trim()
+                    })
+                }).then(async r => ({ which: 'teacher', ok: r.ok, body: await r.json() })));
+            }
+
+            try {
+                const results = await Promise.all(calls);
+                const failed = results.find(r => !r.ok);
+                if (failed) { alert(failed.body.error || `Could not save your ${failed.which} profile.`); return; }
+            } catch (err) {
+                alert('Network error saving profile: ' + err.message);
+                return;
+            }
+
+            // Cache persona flags for the dashboards.
+            if (wantStudent.checked) localStorage.setItem('isStudent', 'true');
+            if (wantTeacher.checked) localStorage.setItem('isTeacher', 'true');
+
+            // ── Where to next? ────────────────────────────────────────────────
+            if (editAddPersona === 'student' || editAddPersona === 'teacher') {
+                // The user was adding the other persona from a dashboard. Send them back.
+                const sourceDashboard = editAddPersona === 'teacher' ? 'student-dashboard.html' : 'Teacher-dashboard.html';
+                localStorage.removeItem('editAddPersona');
+                window.location.href = sourceDashboard;
+                return;
+            }
+
+            if (wantStudent.checked && wantTeacher.checked) {
+                // Dual-persona setup → ask which dashboard to land on.
+                profileContainer.hidden = true;
+                dashboardPicker.hidden = false;
+                return;
+            }
+
+            window.location.href = wantTeacher.checked ? 'Teacher-dashboard.html' : 'student-dashboard.html';
+        });
+
+        // ── Dashboard picker handlers ─────────────────────────────────────────
+        document.querySelectorAll('#dashboardPicker .role-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const pick = card.getAttribute('data-pick'); // 'student' | 'teacher'
+                if (document.getElementById('rememberPick').checked) {
+                    localStorage.setItem('preferredDashboard', pick);
+                }
+                window.location.href = pick === 'teacher' ? 'Teacher-dashboard.html' : 'student-dashboard.html';
+            });
         });
     </script>
 </body>

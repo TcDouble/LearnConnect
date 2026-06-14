@@ -32,18 +32,39 @@
         .btn-mini { border: none; border-radius: 20px; padding: 5px 12px; font-size: 0.75rem; cursor: pointer; margin-right: 6px; }
         .btn-accept { background: #2b7a4b; color: white; }
         .btn-decline { background: #fde2e2; color: #b91c1c; }
+        .persona-switcher { display: flex; gap: 8px; padding: 0 24px 16px; }
+        .persona-pill { flex: 1; text-align: center; padding: 8px 12px; border-radius: 40px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: white; color: #334155; text-decoration: none; }
+        .persona-pill.active { background: #2b7a4b; color: white; border-color: #2b7a4b; cursor: default; }
+        .persona-pill.disabled { color: #94a3b8; cursor: not-allowed; background: #f8fafc; }
+        .opt-in-row { background: #f1f5f9; padding: 12px 16px; border-radius: 16px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .opt-in-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .opt-in-row label { font-weight: 500; cursor: pointer; }
+        .ls-note { display: block; margin-top: 4px; font-size: 0.78rem; color: #94a3b8; font-style: italic; }
+        .form-row input[readonly], .form-row textarea[readonly] { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
         @media (max-width: 768px) { .dashboard-container { flex-direction: column; } .sidebar { width: 100%; } .main-content { padding: 24px; } }
     </style>
 </head>
 <body>
     <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="homepage.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul></nav></header>
     <div class="dashboard-container">
-        <aside class="sidebar"><ul class="sidebar-nav"><li data-section="dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li data-section="students"><a href="#"><i class="fas fa-users"></i> My students</a></li><li data-section="schedule"><a href="#"><i class="fas fa-calendar-week"></i> Schedule</a></li><li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li><li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li></ul></aside>
+        <aside class="sidebar">
+            <div class="persona-switcher" id="personaSwitcher">
+                <a class="persona-pill disabled" id="studentPill" title="Enable in My profile">Student</a>
+                <span class="persona-pill active">Teacher</span>
+            </div>
+            <ul class="sidebar-nav"><li data-section="dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li data-section="students"><a href="#"><i class="fas fa-users"></i> My students</a></li><li data-section="schedule"><a href="#"><i class="fas fa-calendar-week"></i> Schedule</a></li><li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li><li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li></ul>
+        </aside>
         <main class="main-content">
             <div id="dashboard-section"><div class="dashboard-header"><h1>Welcome, <span id="teacherNameDisplay">Teacher</span></h1><p>Here's what's on.</p></div><div class="stats-grid"><div class="stat-card"><div class="stat-value" id="totalStudents">0</div><div class="stat-label">Total students</div></div><div class="stat-card"><div class="stat-value" id="weeklySessions">0</div><div class="stat-label">Upcoming sessions</div></div><div class="stat-card"><div class="stat-value" id="subjectsCount">0</div><div class="stat-label">Subjects taught</div></div></div><div class="section-title">My students <input type="text" id="studentSearch" placeholder="Search students..." class="search-bar" style="float:right; width:200px;"></div><table class="data-table"><thead><tr><th>Name</th><th>Subjects</th><th>Sessions</th><th></th></tr></thead><tbody id="studentsTableBody"></tbody></table><div class="section-title">Upcoming sessions</div><table class="data-table"><thead><tr><th>Date</th><th>Event</th><th>Time / Status</th></tr></thead><tbody id="sessionsTableBody"></tbody></table></div>
             <div id="students-section" class="hidden-section"><div class="dashboard-header"><h1>My students</h1></div><div style="margin-bottom:20px;"><input type="text" id="studentSearchFull" placeholder="Search by name..." class="search-bar"></div><table class="data-table"><thead><tr><th>Name</th><th>Subjects</th><th>Sessions</th></tr></thead><tbody id="fullStudentsBody"></tbody></table></div>
             <div id="schedule-section" class="hidden-section"><div class="dashboard-header"><h1>Schedule</h1><p>Accept or decline incoming requests.</p></div><table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Time / Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table></div>
-            <div id="profile-section" class="hidden-section"><div class="dashboard-header"><h1>My profile</h1></div><div class="profile-form"><div class="form-row"><label>Full name</label><input type="text" id="profileFullName"></div><div class="form-row"><label>Email</label><input type="email" id="profileEmail" readonly></div><div class="form-row"><label>Short bio</label><textarea id="profileBio" rows="3"></textarea></div><div class="form-row"><label>Subjects / specialties</label><input type="text" id="profileSubjects" placeholder="Comma separated"></div><div class="form-row"><label>Years of experience</label><select id="profileExperience"><option>Less than 1 year</option><option>1–2 years</option><option>3–5 years</option><option>6–10 years</option><option>10+ years</option></select></div><div class="form-row"><label>Institution / school</label><input type="text" id="profileSchool"></div><button id="saveProfileBtn" class="btn-save">Save changes</button></div></div>
+            <div id="profile-section" class="hidden-section"><div class="dashboard-header"><h1>My profile</h1></div><div class="profile-form">
+                <div class="opt-in-row" id="alsoLearnRow">
+                    <input type="checkbox" id="alsoLearn">
+                    <label for="alsoLearn">I also want to learn on LearnConnect</label>
+                </div>
+                <div class="form-row"><label>Full name</label><input type="text" id="profileFullName"></div><div class="form-row"><label>Email</label><input type="email" id="profileEmail" readonly></div><div class="form-row"><label>Short bio</label><textarea id="profileBio" rows="3" readonly></textarea><small class="ls-note">Display only — saving coming soon.</small></div><div class="form-row"><label>Subjects / specialties</label><input type="text" id="profileSubjects" placeholder="Comma separated"></div><div class="form-row"><label>Years of experience</label><select id="profileExperience"><option>Less than 1 year</option><option>1–2 years</option><option>3–5 years</option><option>6–10 years</option><option>10+ years</option></select></div><div class="form-row"><label>Institution / school</label><input type="text" id="profileSchool" readonly><small class="ls-note">Display only — saving coming soon.</small></div><button id="saveProfileBtn" class="btn-save">Save changes</button>
+            </div></div>
             <div id="settings-section" class="hidden-section"><div class="dashboard-header"><h1>Settings</h1></div><div class="settings-form"><div class="form-row"><label>Email notifications</label><select id="notifSetting"><option>All updates</option><option>Only session reminders</option><option>None</option></select></div><div class="form-row"><label>Timezone</label><select id="timezone"><option>Eastern Time</option><option>Central Time</option><option>Pacific Time</option></select></div><button id="saveSettingsBtn" class="btn-save">Save settings</button></div></div>
         </main>
     </div>
@@ -54,6 +75,7 @@
         let teacherInfo = { fullName: 'Teacher', email: '', subjects: '', experience: 'Less than 1 year', school: '', bio: '' };
         let TID = null;
         let sessions = [];   // this teacher's sessions from my_sessions() RPC
+        let personas = { isStudent: false, isTeacher: true }; // refreshed from Users on init
 
         function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':'); let hr = parseInt(h, 10); const ap = hr >= 12 ? 'pm' : 'am'; hr = hr % 12 || 12; return `${hr}:${m} ${ap}`; }
         function isUpcoming(s) { return s.status !== 'completed' && s.status !== 'canceled'; }
@@ -79,9 +101,16 @@
             if (!session) { window.location.href = 'student-login.html'; return; }
             const uid = session.user.id;
 
-            const { data: u } = await supabaseClient.from('Users').select('firstname, lastname, email').eq('UID', uid).single();
+            const { data: u } = await supabaseClient.from('Users').select('firstname, lastname, email, is_student, is_teacher').eq('UID', uid).single();
             teacherInfo.fullName = u ? [u.firstname, u.lastname].filter(Boolean).join(' ') : (localStorage.getItem('teacherFullName') || 'Teacher');
             teacherInfo.email = (u && u.email) || localStorage.getItem('teacherEmail') || '';
+            if (u) {
+                personas.isStudent = !!u.is_student;
+                personas.isTeacher = !!u.is_teacher;
+                localStorage.setItem('isStudent', personas.isStudent ? 'true' : 'false');
+                localStorage.setItem('isTeacher', personas.isTeacher ? 'true' : 'false');
+            }
+            renderPersonaSwitcher();
 
             const { data: t } = await supabaseClient.from('Teachers').select('TID, subject_list, years_experience').eq('UID', uid).maybeSingle();
             if (t) { TID = t.TID; teacherInfo.subjects = (t.subject_list || []).join(', '); teacherInfo.experience = yearsToRange(t.years_experience); }
@@ -148,6 +177,28 @@
             document.getElementById('profileSubjects').value = teacherInfo.subjects;
             document.getElementById('profileExperience').value = teacherInfo.experience;
             document.getElementById('profileSchool').value = teacherInfo.school;
+            const alsoLearn = document.getElementById('alsoLearn');
+            if (personas.isStudent) {
+                alsoLearn.checked = true;
+                alsoLearn.disabled = true;
+            } else {
+                alsoLearn.checked = false;
+                alsoLearn.disabled = false;
+            }
+        }
+
+        function renderPersonaSwitcher() {
+            const pill = document.getElementById('studentPill');
+            if (personas.isStudent) {
+                pill.classList.remove('disabled');
+                pill.href = 'student-dashboard.html';
+                pill.title = 'Switch to student dashboard';
+                pill.onclick = () => { localStorage.setItem('preferredDashboard', 'student'); };
+            } else {
+                pill.classList.add('disabled');
+                pill.removeAttribute('href');
+                pill.onclick = (e) => { e.preventDefault(); alert('Enable learning from "My profile" first.'); };
+            }
         }
         document.getElementById('saveProfileBtn').addEventListener('click', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -168,6 +219,15 @@
             teacherInfo.fullName = fullName; teacherInfo.subjects = subjectsArr.join(', '); teacherInfo.experience = yearsToRange(years);
             document.getElementById('teacherNameDisplay').innerText = fullName.split(' ')[0] || fullName;
             updateStats();
+
+            // Opting in to the student persona → send them to merged profile setup
+            // in add-persona mode; that page flips is_student when it saves.
+            const alsoLearn = document.getElementById('alsoLearn');
+            if (alsoLearn.checked && !alsoLearn.disabled) {
+                localStorage.setItem('editAddPersona', 'student');
+                window.location.href = 'Profile-setup.html';
+                return;
+            }
             alert('Profile saved!');
         });
         document.getElementById('saveSettingsBtn').addEventListener('click', () => { localStorage.setItem('teacherNotif', document.getElementById('notifSetting').value); localStorage.setItem('teacherTimezone', document.getElementById('timezone').value); alert('Settings saved.'); });

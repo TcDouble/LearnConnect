@@ -6,12 +6,14 @@ Supabase). Project ref `voqpgofzhuuzlensefxm`.
 ## Pages & flow
 
 ```
-Homepage → signup.html / Teacher-signup.html  (real auth.signUp + role metadata)
-         → "check your email" screen (email confirmation is ON)
+Homepage → signup.html        (single signup form; auth.signUp + default role metadata)
+         → "check your email" screen if confirmation is ON, otherwise straight to setup
          → confirm email → student-login.html (signInWithPassword)
-         → login routes by Users.role + whether the role row exists:
-             no Students/Teachers row → Profile-setup.html / Teacher-profile.html
-             has row                  → student-dashboard.html / Teacher-dashboard.html
+         → login routes by is_student / is_teacher + preferredDashboard:
+             no Students AND no Teachers row → Profile-setup.html (merged page)
+             one persona                     → that dashboard
+             both personas, no preference    → inline dashboard picker on login
+             both personas, with preference  → preferred dashboard
 ```
 
 ## What's connected to Supabase
@@ -19,7 +21,7 @@ Homepage → signup.html / Teacher-signup.html  (real auth.signUp + role metadat
 - **Auth:** `signUp` (with `firstname/lastname/role` metadata; the `handle_new_user` trigger
   creates the `Users` row) and `signInWithPassword`. Email confirmation is **ON**.
 - **Profile setup → Edge Functions:** `Profile-setup.html` calls `create-student-profile`,
-  `Teacher-profile.html` calls `create-teacher-profile` (Bearer session token).
+  `Profile-setup.html` calls `create-teacher-profile` (Bearer session token).
 - **Student dashboard:**
   - Browse teachers via the `list_teachers()` RPC.
   - "Request session" inserts a row into `Blocked_Time` (status `waiting for teacher`).

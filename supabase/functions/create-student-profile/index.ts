@@ -60,6 +60,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (error) return jsonResponse({ error: error.message }, 400);
+
+    // Saving the student profile is the moment the user IS a student.
+    const { error: flagError } = await supabase
+      .from("Users")
+      .update({ is_student: true })
+      .eq("UID", user.id);
+    if (flagError) return jsonResponse({ error: flagError.message }, 400);
+
     return jsonResponse({ student: data }, 200);
   } catch (e) {
     return jsonResponse(

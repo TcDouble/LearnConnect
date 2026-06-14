@@ -47,5 +47,7 @@ CREATE TABLE public.Users (
   email text NOT NULL UNIQUE,
   role text NOT NULL,
   phone_number text,
+  is_student boolean NOT NULL DEFAULT false,
+  is_teacher boolean NOT NULL DEFAULT false,
   CONSTRAINT Users_pkey PRIMARY KEY (UID)
 );

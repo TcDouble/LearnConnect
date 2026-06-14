@@ -21,8 +21,8 @@
     </header>
 
     <main class="form-page">
-        <div class="container form-container">
-            <h1>Student sign in</h1>
+        <div class="container form-container" id="loginContainer">
+            <h1>Sign in</h1>
             <p class="form-subhead">Enter your email and password to continue.</p>
 
             <form id="loginForm">
@@ -40,6 +40,28 @@
                 </p>
             </form>
         </div>
+
+        <!-- Shown to dual-persona users who don't have a preferredDashboard yet. -->
+        <div class="container form-container" id="dashboardPicker" hidden>
+            <h1>Where do you want to start?</h1>
+            <p class="form-subhead">You can switch dashboards any time from the sidebar.</p>
+            <div class="role-selector">
+                <div class="role-card" data-pick="student" style="cursor:pointer;">
+                    <i class="fas fa-user-graduate fa-2x"></i>
+                    <h3>Student dashboard</h3>
+                    <p>Find a teacher, book sessions</p>
+                </div>
+                <div class="role-card" data-pick="teacher" style="cursor:pointer;">
+                    <i class="fas fa-chalkboard-user fa-2x"></i>
+                    <h3>Teacher dashboard</h3>
+                    <p>Manage students and requests</p>
+                </div>
+            </div>
+            <label style="display:flex; align-items:center; gap:10px; justify-content:center; margin-top:20px; font-weight:500; color:#334155;">
+                <input type="checkbox" id="rememberPick" style="width:18px; height:18px; cursor:pointer;">
+                Remember my choice
+            </label>
+        </div>
     </main>
 
     <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
@@ -47,6 +69,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
     <script>
+        const loginContainer = document.getElementById('loginContainer');
+        const dashboardPicker = document.getElementById('dashboardPicker');
+
+        function go(dest) { window.location.href = dest; }
+        function dashboardFor(persona) { return persona === 'teacher' ? 'Teacher-dashboard.html' : 'student-dashboard.html'; }
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
@@ -57,22 +85,52 @@
             if (authError) { alert(authError.message); return; }
 
             const { data: userRow, error: userError } = await supabaseClient
-                .from('Users').select('role, firstname, lastname').eq('UID', authData.user.id).single();
+                .from('Users').select('role, firstname, lastname, is_student, is_teacher').eq('UID', authData.user.id).single();
             if (userError) { alert(userError.message); return; }
 
             const fullName = [userRow.firstname, userRow.lastname].filter(Boolean).join(' ');
-            if (userRow.role === 'teacher') {
-                localStorage.setItem('teacherFullName', fullName);
-                localStorage.setItem('teacherEmail', email);
-                // No Teachers row yet → go finish profile setup; otherwise the dashboard.
-                const { data: tRow } = await supabaseClient.from('Teachers').select('TID').eq('UID', authData.user.id).maybeSingle();
-                window.location.href = tRow ? 'Teacher-dashboard.html' : 'Teacher-profile.html';
-            } else {
-                localStorage.setItem('studentFullName', fullName);
-                localStorage.setItem('studentEmail', email);
-                const { data: sRow } = await supabaseClient.from('Students').select('SID').eq('UID', authData.user.id).maybeSingle();
-                window.location.href = sRow ? 'student-dashboard.html' : 'Profile-setup.html';
+            // Keep both name caches in sync — the two dashboards each read their own key.
+            localStorage.setItem('studentFullName', fullName);
+            localStorage.setItem('teacherFullName', fullName);
+            localStorage.setItem('studentEmail', email);
+            localStorage.setItem('teacherEmail', email);
+            localStorage.setItem('isStudent', userRow.is_student ? 'true' : 'false');
+            localStorage.setItem('isTeacher', userRow.is_teacher ? 'true' : 'false');
+
+            // Profile rows tell us whether they've finished setup yet.
+            const [{ data: sRow }, { data: tRow }] = await Promise.all([
+                supabaseClient.from('Students').select('SID').eq('UID', authData.user.id).maybeSingle(),
+                supabaseClient.from('Teachers').select('TID').eq('UID', authData.user.id).maybeSingle()
+            ]);
+
+            // No profile row yet → merged profile setup. (For a brand-new user the
+            // pre-checked persona on that page comes from Users.role.)
+            if (!sRow && !tRow) { go('Profile-setup.html'); return; }
+
+            const hasStudent = !!sRow && userRow.is_student;
+            const hasTeacher = !!tRow && userRow.is_teacher;
+
+            if (hasStudent && hasTeacher) {
+                const pref = localStorage.getItem('preferredDashboard');
+                if (pref === 'student' || pref === 'teacher') { go(dashboardFor(pref)); return; }
+                // No preference yet → ask.
+                loginContainer.hidden = true;
+                dashboardPicker.hidden = false;
+                return;
             }
+
+            // Exactly one persona is set up — go there.
+            go(dashboardFor(hasTeacher ? 'teacher' : 'student'));
+        });
+
+        document.querySelectorAll('#dashboardPicker .role-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const pick = card.getAttribute('data-pick');
+                if (document.getElementById('rememberPick').checked) {
+                    localStorage.setItem('preferredDashboard', pick);
+                }
+                go(dashboardFor(pick));
+            });
         });
     </script>
 </body>
