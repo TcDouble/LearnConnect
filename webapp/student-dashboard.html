@@ -45,11 +45,39 @@
         .status-pill.declined  { background: #fee2e2; color: #b91c1c; }
         .status-pill.completed { background: #f1f5f9; color: #334155; }
         .btn-cancel { background: #fee2e2; color: #b91c1c; border: none; border-radius: 20px; padding: 4px 12px; font-size: 0.72rem; cursor: pointer; margin-left: 8px; }
+        .subject-picker { position: relative; border: 1px solid #cbd5e1; border-radius: 16px; padding: 8px 12px; background: white; min-height: 44px; cursor: text; }
+        .subject-picker:focus-within { border-color: #2b7a4b; box-shadow: 0 0 0 3px rgba(43,122,75,0.1); }
+        .picker-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+        .picker-tag { display: flex; align-items: center; gap: 4px; background: #e6f2ec; color: #0f3b2c; padding: 3px 10px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; }
+        .picker-tag button { background: none; border: none; cursor: pointer; color: #2b7a4b; font-size: 1rem; padding: 0; line-height: 1; }
+        input.picker-search { border: none !important; outline: none; min-width: 120px; font-size: 0.9rem; background: transparent; padding: 2px 0 !important; box-shadow: none !important; width: auto; }
+        .picker-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; max-height: 200px; overflow-y: auto; list-style: none; margin: 0; padding: 4px 0; }
+        .picker-dropdown li { padding: 9px 16px; cursor: pointer; font-size: 0.9rem; }
+        .picker-dropdown li:hover { background: #f0fdf4; }
+        .picker-dropdown li.no-results { color: #94a3b8; cursor: default; }
         @media (max-width: 768px) { .dashboard-container { flex-direction: column; } .sidebar { width: 100%; } .main-content { padding: 24px; } }
+        /* ── Notification bell ── */
+        .notif-wrap { position: relative; }
+        .notif-btn { background: none; border: none; cursor: pointer; padding: 6px 8px; position: relative; font-size: 1.1rem; color: #334155; line-height: 1; }
+        .notif-btn:hover { color: #0f3b2c; }
+        .notif-badge { position: absolute; top: 1px; right: 1px; background: #b91c1c; color: white; border-radius: 40px; padding: 1px 5px; font-size: 0.6rem; font-weight: 700; line-height: 1.5; min-width: 16px; text-align: center; display: none; pointer-events: none; }
+        .notif-badge.visible { display: block; }
+        .notif-dropdown { position: absolute; right: 0; top: calc(100% + 10px); width: 300px; background: white; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); z-index: 500; display: none; overflow: hidden; }
+        .notif-dropdown.open { display: block; }
+        .notif-header { padding: 13px 16px 10px; font-weight: 700; font-size: 0.85rem; color: #0f3b2c; border-bottom: 1px solid #f1f5f9; }
+        .notif-item { padding: 11px 16px; border-bottom: 1px solid #f8fafc; cursor: pointer; display: flex; align-items: flex-start; gap: 10px; }
+        .notif-item:hover { background: #f8fafc; }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-icon { width: 30px; height: 30px; border-radius: 30px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem; }
+        .notif-icon.soon { background: #dcfce7; color: #166534; }
+        .notif-icon.request { background: #fef9c3; color: #854d0e; }
+        .notif-title { font-weight: 600; font-size: 0.85rem; color: #0f3b2c; }
+        .notif-sub { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+        .notif-empty { padding: 22px 16px; text-align: center; color: #94a3b8; font-size: 0.85rem; }
     </style>
 </head>
 <body>
-    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="homepage.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul></nav></header>
+    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="homepage.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div></nav></header>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="persona-switcher" id="personaSwitcher">
@@ -59,19 +87,27 @@
             <ul class="sidebar-nav"><li data-section="dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li data-section="find-teacher"><a href="#"><i class="fas fa-chalkboard-user"></i> Find a teacher</a></li><li data-section="my-sessions"><a href="#"><i class="fas fa-calendar-alt"></i> My sessions</a></li><li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li><li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li></ul>
         </aside>
         <main class="main-content">
-            <div id="dashboard-section"><div class="dashboard-header"><h1>Welcome, <span id="studentNameDisplay">Student</span></h1><p id="sessionAlert">Loading your sessions…</p></div><div class="stats-row"><div class="stat-card"><div class="stat-number" id="myTeachersCount">0</div><div class="stat-label">My teachers</div></div><div class="stat-card"><div class="stat-number" id="subjectsCount">0</div><div class="stat-label">Subjects</div></div><div class="stat-card"><div class="stat-number" id="sessionsCompleted">0</div><div class="stat-label">Sessions completed</div></div><div class="stat-card"><div class="stat-number" id="nextSessionDate">—</div><div class="stat-label">Next session</div><div class="stat-sub" id="nextSessionTime"></div></div></div><div class="section-title">My teachers</div><div id="myTeachersGrid" class="teachers-grid"></div><div class="section-title">Upcoming sessions</div><table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Subject / Topic</th><th>Status</th></tr></thead><tbody id="upcomingSessionsBody"></tbody></table></div>
+            <div id="dashboard-section"><div class="dashboard-header"><h1>Welcome, <span id="studentNameDisplay">Student</span></h1><p id="sessionAlert">Loading your sessions…</p></div><div class="stats-row"><div class="stat-card"><div class="stat-number" id="myTeachersCount">0</div><div class="stat-label">My teachers</div></div><div class="stat-card"><div class="stat-number" id="subjectsCount">0</div><div class="stat-label">Subjects</div></div><div class="stat-card"><div class="stat-number" id="sessionsCompleted">0</div><div class="stat-label">Sessions completed</div></div><div class="stat-card"><div class="stat-number" id="nextSessionDate">—</div><div class="stat-label">Next session</div><div class="stat-sub" id="nextSessionTime"></div></div></div><div class="section-title">My teachers</div><div id="myTeachersGrid" class="teachers-grid"></div><div class="section-title">Upcoming sessions</div><table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Status</th></tr></thead><tbody id="upcomingSessionsBody"></tbody></table></div>
             <div id="find-teacher-section" class="hidden-section">
                 <!-- Step 1: create a tutoring request -->
                 <div id="requestFormView">
                     <div class="dashboard-header"><h1>Find a teacher</h1><p class="greeting">Tell us what you need help with, then we'll show you teachers.</p></div>
                     <form id="tutorRequestForm" class="profile-form">
-                        <div class="form-row"><label>Subject name</label><input type="text" id="reqSubject" placeholder="e.g. Maths" required></div>
+                        <div class="form-row"><label>Subject</label><select id="reqSubject" required><option value="">Select a subject…</option><option>Maths</option><option>English</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>History</option><option>Geography</option><option>Economics</option><option>Business Studies</option><option>Computer Science</option><option>Psychology</option><option>Legal Studies</option></select></div>
                         <div class="form-row"><label>Topic</label><input type="text" id="reqTopic" placeholder="e.g. Quadratic equations" required></div>
                         <div class="form-row"><label>Notes</label><textarea id="reqNotes" rows="3" placeholder="Anything the teacher should know beforehand..."></textarea></div>
                         <div class="form-row"><label>Session type</label>
                             <select id="reqSessionType">
                                 <option value="immediate">Immediate — find a teacher available now</option>
                                 <option value="scheduled">Scheduled — pick a date and time</option>
+                            </select>
+                        </div>
+                        <div class="form-row"><label>Duration</label>
+                            <select id="reqDuration">
+                                <option value="30">30 minutes</option>
+                                <option value="60" selected>1 hour</option>
+                                <option value="90">1.5 hours</option>
+                                <option value="120">2 hours</option>
                             </select>
                         </div>
                         <div id="scheduledFields" style="display:none;">
@@ -87,13 +123,13 @@
                     <div id="availableTeachersGrid" class="teachers-grid"></div>
                 </div>
             </div>
-            <div id="my-sessions-section" class="hidden-section"><div class="dashboard-header"><h1>My sessions</h1></div><table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Subject</th><th>Status</th></tr></thead><tbody id="allSessionsBody"></tbody></table></div>
+            <div id="my-sessions-section" class="hidden-section"><div class="dashboard-header"><h1>My sessions</h1></div><table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Status</th></tr></thead><tbody id="allSessionsBody"></tbody></table></div>
             <div id="profile-section" class="hidden-section"><div class="dashboard-header"><h1>My profile</h1></div><div class="profile-form">
                 <div class="opt-in-row" id="alsoTeachRow">
                     <input type="checkbox" id="alsoTeach">
                     <label for="alsoTeach">I also want to teach on LearnConnect</label>
                 </div>
-                <div class="form-row"><label>Full name</label><input type="text" id="studentFullName"></div><div class="form-row"><label>Email</label><input type="email" id="studentEmail" readonly></div><div class="form-row"><label>Short bio</label><textarea id="studentBio" rows="3" readonly></textarea><small class="ls-note">Display only — saving coming soon.</small></div><div class="form-row"><label>Grade level</label><input type="text" id="studentGrade"></div><div class="form-row"><label>Subjects interested in</label><input type="text" id="studentSubjects" placeholder="Comma separated"></div><div class="form-row"><label>Learning goals</label><textarea id="studentGoals" rows="2" readonly></textarea><small class="ls-note">Display only — saving coming soon.</small></div><button id="saveStudentProfileBtn" class="btn-save">Save changes</button>
+                <div class="form-row"><label>Full name</label><input type="text" id="studentFullName"></div><div class="form-row"><label>Email</label><input type="email" id="studentEmail" readonly></div><div class="form-row"><label>Short bio</label><textarea id="studentBio" rows="3" readonly></textarea><small class="ls-note">Display only — saving coming soon.</small></div><div class="form-row"><label>Age</label><input type="number" id="studentAge" min="5" max="100"></div><div class="form-row"><label>Education level</label><select id="studentGrade"><option value="">Select…</option><option>Primary school</option><option>High school</option><option>University</option><option>Vocational / TAFE</option><option>Other</option></select></div><div class="form-row"><label>Subjects interested in</label><div id="studentSubjectPicker"></div></div><div class="form-row"><label>Learning goals</label><textarea id="studentGoals" rows="2" readonly></textarea><small class="ls-note">Display only — saving coming soon.</small></div><button id="saveStudentProfileBtn" class="btn-save">Save changes</button>
             </div></div>
             <div id="settings-section" class="hidden-section"><div class="dashboard-header"><h1>Settings</h1></div><div class="settings-form"><div class="form-row"><label>Email reminders</label><select id="reminderSetting"><option>All sessions</option><option>Only upcoming</option><option>None</option></select></div><div class="form-row"><label>Timezone</label><select id="studentTimezone"><option>Eastern Time</option><option>Central Time</option><option>Pacific Time</option></select></div><button id="saveStudentSettingsBtn" class="btn-save">Save settings</button></div></div>
         </main>
@@ -101,21 +137,79 @@
     <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
+    <script src="tz.js"></script>
     <script>
+        const SUBJECTS = ['Maths','English','Physics','Chemistry','Biology','History','Geography','Economics','Business Studies','Computer Science','Psychology','Legal Studies'];
+
+        function initSubjectPicker(wrapId, initial) {
+            const wrap = document.getElementById(wrapId);
+            if (!wrap) return;
+            wrap.className = 'subject-picker';
+            wrap.innerHTML = '';
+            const tagsEl = Object.assign(document.createElement('div'), { className: 'picker-tags' });
+            const input = Object.assign(document.createElement('input'), { type: 'text', className: 'picker-search', placeholder: 'Search subjects…', autocomplete: 'off' });
+            const dropdown = Object.assign(document.createElement('ul'), { className: 'picker-dropdown' });
+            dropdown.style.display = 'none';
+            wrap.append(tagsEl, input, dropdown);
+            const selected = new Set(initial || []);
+            function renderTags() {
+                tagsEl.innerHTML = '';
+                selected.forEach(s => {
+                    const tag = document.createElement('span');
+                    tag.className = 'picker-tag'; tag.dataset.value = s;
+                    const btn = Object.assign(document.createElement('button'), { type: 'button', textContent: '×' });
+                    btn.addEventListener('click', e => { e.stopPropagation(); selected.delete(s); renderTags(); input.focus(); });
+                    tag.append(document.createTextNode(s + ' '), btn);
+                    tagsEl.appendChild(tag);
+                });
+                input.placeholder = selected.size === 0 ? 'Search subjects…' : 'Add more…';
+            }
+            function showDropdown(query) {
+                const q = (query || '').toLowerCase();
+                const matches = SUBJECTS.filter(s => !selected.has(s) && s.toLowerCase().includes(q));
+                dropdown.innerHTML = '';
+                if (!matches.length) { dropdown.innerHTML = '<li class="no-results">No subjects found</li>'; }
+                else { matches.forEach(s => { const li = Object.assign(document.createElement('li'), { textContent: s }); li.addEventListener('mousedown', e => { e.preventDefault(); selected.add(s); input.value = ''; dropdown.style.display = 'none'; renderTags(); }); dropdown.appendChild(li); }); }
+                dropdown.style.display = 'block';
+            }
+            input.addEventListener('focus', () => showDropdown(input.value));
+            input.addEventListener('input', () => showDropdown(input.value));
+            input.addEventListener('blur', () => setTimeout(() => { dropdown.style.display = 'none'; }, 150));
+            wrap.addEventListener('click', () => input.focus());
+            renderTags();
+        }
+
+        function getPickerValues(wrapId) {
+            return Array.from(document.querySelectorAll(`#${wrapId} .picker-tag`)).map(t => t.dataset.value);
+        }
+
         // Live data, all loaded from Supabase.
-        let studentInfo = { fullName: 'Student', email: '', grade: '', subjects: '' };
+        let studentInfo = { fullName: 'Student', email: '', grade: '', age: '', subjects: '' };
         let SID = null;              // this student's Students.SID (needed to book)
         let currentRequest = null;  // the in-progress tutoring request
         let teachers = [];          // from list_teachers() RPC
+        let availableTeacherUIDs = null; // Set of UIDs available at requested time, null = no filter
         let sessions = [];          // this student's sessions from my_sessions() RPC
         let personas = { isStudent: true, isTeacher: false }; // refreshed from Users on init
 
         function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':'); let hr = parseInt(h, 10); const ap = hr >= 12 ? 'pm' : 'am'; hr = hr % 12 || 12; return `${hr}:${m} ${ap}`; }
-        function addOneHour(hhmm) { let [h, m] = hhmm.split(':').map(Number); h += 1; if (h > 23) return '23:59:00'; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`; }
+        function addMinutes(hhmm, mins) { let [h, m] = hhmm.split(':').map(Number); const total = h * 60 + m + mins; const nh = Math.min(Math.floor(total / 60), 23); const nm = total % 60; return `${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}:00`; }
         function isUpcoming(s) { return s.status !== 'completed' && s.status !== 'canceled'; }
         function initials(name) { return (name || '?').split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase(); }
 
-        async function refreshTeachers() { const { data, error } = await supabaseClient.rpc('list_teachers'); teachers = error ? [] : (data || []); }
+        async function refreshTeachers(startISO, endISO) {
+            const { data, error } = await supabaseClient.rpc('list_teachers');
+            teachers = error ? [] : (data || []);
+            if (startISO) {
+                const { data: avail } = await supabaseClient.rpc('available_teachers', {
+                    session_start: startISO,
+                    session_end:   endISO
+                });
+                availableTeacherUIDs = new Set((avail || []).map(a => a.uid));
+            } else {
+                availableTeacherUIDs = null;
+            }
+        }
         async function refreshSessions() {
             const { data, error } = await supabaseClient.rpc('my_sessions');
             sessions = error ? [] : (data || []).filter(r => r.my_role === 'student');
@@ -126,6 +220,7 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { window.location.href = 'student-login.html'; return; }
             const uid = session.user.id;
+            supabaseClient.from('Users').update({ timezone: USER_TZ }).eq('UID', uid);
 
             const { data: u } = await supabaseClient.from('Users').select('firstname, lastname, email, is_student, is_teacher').eq('UID', uid).single();
             studentInfo.fullName = u ? [u.firstname, u.lastname].filter(Boolean).join(' ') : (localStorage.getItem('studentFullName') || 'Student');
@@ -139,13 +234,13 @@
             renderPersonaSwitcher();
 
             const { data: s } = await supabaseClient.from('Students').select('SID, school, grade_level, age, subject_list').eq('UID', uid).maybeSingle();
-            if (s) { SID = s.SID; studentInfo.grade = s.grade_level || ''; studentInfo.subjects = (s.subject_list || []).join(', '); }
+            if (s) { SID = s.SID; studentInfo.grade = s.grade_level || ''; studentInfo.age = s.age || ''; studentInfo.subjects = (s.subject_list || []).join(', '); }
 
             await refreshTeachers();
             await refreshSessions();
 
             document.getElementById('studentNameDisplay').innerText = studentInfo.fullName.split(' ')[0] || studentInfo.fullName;
-            updateStats(); renderMyTeachers(); renderUpcomingSessions();
+            updateStats(); renderMyTeachers(); renderUpcomingSessions(); updateNotifications();
         }
 
         function updateStats() {
@@ -191,17 +286,16 @@
         function renderUpcomingSessions() {
             const tbody = document.getElementById('upcomingSessionsBody'); tbody.innerHTML = '';
             const upcoming = sessions.filter(isUpcoming);
-            if (!upcoming.length) { tbody.innerHTML = '<tr><td colspan="4">No upcoming sessions.</td></tr>'; return; }
+            if (!upcoming.length) { tbody.innerHTML = '<tr><td colspan="3">No upcoming sessions.</td></tr>'; return; }
             upcoming.forEach(s => {
                 const r = tbody.insertRow();
-                r.insertCell(0).innerText = `${s.session_date} ${fmtTime(s.starttime)}`;
+                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime);
                 r.insertCell(1).innerText = s.counterparty || '—';
-                r.insertCell(2).innerText = `${s.subject || ''}${s.request ? ' — ' + s.request : ''}`;
                 let statusHtml = statusPill(s.status);
                 if (s.status === 'waiting for teacher') {
                     statusHtml += `<button class="btn-cancel" data-id="${s.session_id}">Cancel</button>`;
                 }
-                r.insertCell(3).innerHTML = statusHtml;
+                r.insertCell(2).innerHTML = statusHtml;
             });
             tbody.querySelectorAll('.btn-cancel').forEach(btn =>
                 btn.addEventListener('click', () => cancelRequest(btn.getAttribute('data-id'))));
@@ -211,17 +305,21 @@
             if (!confirm('Cancel this pending request?')) return;
             const { error } = await supabaseClient.from('Blocked_Time').update({ status: 'canceled' }).eq('SessionID', id);
             if (error) { alert('Could not cancel: ' + error.message); return; }
-            await refreshSessions(); updateStats(); renderUpcomingSessions(); renderAllSessions();
+            await refreshSessions(); updateStats(); renderUpcomingSessions(); renderAllSessions(); updateNotifications();
         }
 
         function renderAvailableTeachers() {
             const container = document.getElementById('availableTeachersGrid'); container.innerHTML = '';
-            if (!teachers.length) { container.innerHTML = '<p>No teachers are available yet.</p>'; return; }
-            teachers.forEach(t => {
+            const requestedSubject = (currentRequest?.subject || '').toLowerCase();
+            const filtered = teachers
+                .filter(t => !requestedSubject || (t.subject_list || []).some(s => s.toLowerCase() === requestedSubject))
+                .filter(t => !availableTeacherUIDs || availableTeacherUIDs.has(t.uid));
+            if (!filtered.length) { container.innerHTML = `<p>No teachers are available for <strong>${currentRequest?.subject || 'that subject'}</strong> at the requested time.</p>`; return; }
+            filtered.forEach(t => {
                 const name = t.name || 'Unnamed teacher';
                 const subs = t.subject_list || [];
                 const card = document.createElement('div'); card.className = 'teacher-card';
-                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div><button class="btn-small request-teacher" style="margin-top:12px;">Request session</button>`;
+                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div><button class="btn btn-primary request-teacher" style="margin-top:16px; width:100%; justify-content:center;">Request session</button>`;
                 card.querySelector('.request-teacher').addEventListener('click', () => createBooking(t.tid, name));
                 container.appendChild(card);
             });
@@ -230,19 +328,24 @@
         async function createBooking(tid, name) {
             if (!currentRequest) { alert('Create a request first.'); return; }
             if (!SID) { alert('Please finish your student profile setup before booking.'); return; }
-            let date, start;
+            let date, start, end;
             if (currentRequest.sessionType === 'scheduled') {
-                date = currentRequest.date; start = currentRequest.time + ':00';
+                const startDt = new Date(`${currentRequest.date}T${currentRequest.time}:00`);
+                const endDt   = new Date(startDt.getTime() + (currentRequest.duration || 60) * 60000);
+                date  = startDt.toISOString().slice(0, 10);
+                start = startDt.toISOString().slice(11, 19);
+                end   = endDt.toISOString().slice(11, 19);
             } else {
-                const now = new Date();
-                date = now.toISOString().slice(0, 10);
-                start = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:00`;
+                const now   = new Date();
+                const endDt = new Date(now.getTime() + (currentRequest.duration || 60) * 60000);
+                date  = now.toISOString().slice(0, 10);
+                start = now.toISOString().slice(11, 19);
+                end   = endDt.toISOString().slice(11, 19);
             }
-            const end = addOneHour(start.slice(0, 5));
             const request = currentRequest.topic + (currentRequest.notes ? ` — ${currentRequest.notes}` : '');
             const { error } = await supabaseClient.from('Blocked_Time').insert({
                 TID: tid, SID: SID, date, starttime: start, endtime: end,
-                status: 'waiting for teacher', subject: currentRequest.subject, request
+                status: 'waiting for teacher', subject: currentRequest.subject, request, duration: currentRequest.duration || 60
             });
             if (error) { alert('Could not send request: ' + error.message); return; }
             alert(`Request sent to ${name}!`);
@@ -251,17 +354,16 @@
 
         function renderAllSessions() {
             const tbody = document.getElementById('allSessionsBody'); tbody.innerHTML = '';
-            if (!sessions.length) { tbody.innerHTML = '<tr><td colspan="4">No sessions yet.</td></tr>'; return; }
+            if (!sessions.length) { tbody.innerHTML = '<tr><td colspan="3">No sessions yet.</td></tr>'; return; }
             sessions.forEach(s => {
                 const r = tbody.insertRow();
-                r.insertCell(0).innerText = `${s.session_date} ${fmtTime(s.starttime)}`;
+                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime);
                 r.insertCell(1).innerText = s.counterparty || '—';
-                r.insertCell(2).innerText = s.subject || '';
                 let statusHtml = statusPill(s.status);
                 if (s.status === 'waiting for teacher') {
                     statusHtml += `<button class="btn-cancel" data-id="${s.session_id}">Cancel</button>`;
                 }
-                r.insertCell(3).innerHTML = statusHtml;
+                r.insertCell(2).innerHTML = statusHtml;
             });
             tbody.querySelectorAll('.btn-cancel').forEach(btn =>
                 btn.addEventListener('click', () => cancelRequest(btn.getAttribute('data-id'))));
@@ -270,8 +372,10 @@
         function loadProfileForm() {
             document.getElementById('studentFullName').value = studentInfo.fullName || '';
             document.getElementById('studentEmail').value = studentInfo.email || '';
+            document.getElementById('studentAge').value = studentInfo.age || '';
             document.getElementById('studentGrade').value = studentInfo.grade || '';
-            document.getElementById('studentSubjects').value = studentInfo.subjects || '';
+            const savedSubs = (studentInfo.subjects || '').split(',').map(s => s.trim()).filter(Boolean);
+            initSubjectPicker('studentSubjectPicker', savedSubs);
             const extra = JSON.parse(localStorage.getItem('studentExtra') || '{}');
             document.getElementById('studentBio').value = extra.bio || '';
             document.getElementById('studentGoals').value = extra.goals || '';
@@ -304,17 +408,21 @@
             const uid = session.user.id;
             const fullName = document.getElementById('studentFullName').value.trim();
             const { firstname, lastname } = splitFullName(fullName);
-            const subjectsArr = document.getElementById('studentSubjects').value.split(',').map(s => s.trim()).filter(Boolean);
-            const grade = document.getElementById('studentGrade').value.trim();
+            const subjectsArr = getPickerValues('studentSubjectPicker');
+            const grade = document.getElementById('studentGrade').value;
+            const age = parseInt(document.getElementById('studentAge').value, 10) || null;
             const { error: uErr } = await supabaseClient.from('Users').update({ firstname, lastname }).eq('UID', uid);
             if (uErr) { alert(uErr.message); return; }
-            if (SID) {
-                const { error: sErr } = await supabaseClient.from('Students').update({ grade_level: grade || null, subject_list: subjectsArr }).eq('UID', uid);
-                if (sErr) { alert(sErr.message); return; }
-            }
+            const { data: sData, error: sErr } = await supabaseClient
+                .from('Students')
+                .upsert({ UID: uid, grade_level: grade || null, age, subject_list: subjectsArr }, { onConflict: 'UID' })
+                .select('SID')
+                .single();
+            if (sErr) { alert(sErr.message); return; }
+            if (sData) SID = sData.SID;
             // bio/goals have no column in the schema — kept locally so the form remembers them.
             localStorage.setItem('studentExtra', JSON.stringify({ bio: document.getElementById('studentBio').value, goals: document.getElementById('studentGoals').value }));
-            studentInfo.fullName = fullName; studentInfo.grade = grade; studentInfo.subjects = subjectsArr.join(', ');
+            studentInfo.fullName = fullName; studentInfo.grade = grade; studentInfo.age = age || ''; studentInfo.subjects = subjectsArr.join(', ');
             document.getElementById('studentNameDisplay').innerText = fullName.split(' ')[0] || fullName;
 
             // Opting in to the teacher persona → send them to merged profile setup
@@ -333,6 +441,56 @@
         function showSection(sectionId) { Object.keys(sections).forEach(id => sections[id].classList.add('hidden-section')); sections[sectionId].classList.remove('hidden-section'); document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active')); document.querySelector(`.sidebar-nav li[data-section="${sectionId}"]`).classList.add('active'); if (sectionId === 'find-teacher') resetFindTeacher(); if (sectionId === 'my-sessions') renderAllSessions(); if (sectionId === 'profile') loadProfileForm(); }
         document.querySelectorAll('.sidebar-nav li').forEach(li => li.addEventListener('click', (e) => { e.preventDefault(); showSection(li.getAttribute('data-section')); }));
 
+        // ── Notification bell ──────────────────────────────────────────────────
+        const SESSION_EMAIL_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/send-session-email';
+        async function callSessionEmail(type, sessionId) {
+            try {
+                const { data: { session: s } } = await supabaseClient.auth.getSession();
+                if (!s) return;
+                fetch(SESSION_EMAIL_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${s.access_token}` }, body: JSON.stringify({ type, session_id: sessionId }) });
+            } catch (_) {}
+        }
+
+        function updateNotifications() {
+            const now = new Date();
+            const soonCutoff = new Date(now.getTime() + 60 * 60 * 1000);
+            const notifs = [];
+            const seenConfirmed = new Set(JSON.parse(localStorage.getItem('lcSeenConfirmed') || '[]'));
+            const sentReminders = new Set(JSON.parse(localStorage.getItem('lcSentReminders') || '[]'));
+
+            // Newly-confirmed sessions the student hasn't dismissed yet
+            sessions.filter(s => s.status === 'scheduled' && !seenConfirmed.has(s.session_id)).forEach(s => {
+                notifs.push({ type: 'confirmed', icon: 'fa-check-circle', title: `Session confirmed!`, sub: `${s.counterparty || 'Your teacher'} accepted your ${s.subject || ''} request`, action: () => { seenConfirmed.add(s.session_id); localStorage.setItem('lcSeenConfirmed', JSON.stringify([...seenConfirmed])); showSection('my-sessions'); } });
+            });
+
+            // Sessions starting within 60 minutes
+            sessions.filter(s => s.status === 'scheduled' && s.session_date && s.starttime).forEach(s => {
+                const startDt = new Date(`${s.session_date}T${s.starttime.slice(0, 5)}:00Z`);
+                if (startDt >= now && startDt <= soonCutoff) {
+                    const mins = Math.round((startDt - now) / 60000);
+                    notifs.push({ type: 'soon', title: `Session with ${s.counterparty || 'your teacher'} starting soon`, sub: `In ${mins} min · ${s.subject || ''}`, action: () => showSection('my-sessions') });
+                    if (!sentReminders.has(s.session_id)) {
+                        sentReminders.add(s.session_id);
+                        localStorage.setItem('lcSentReminders', JSON.stringify([...sentReminders]));
+                        callSessionEmail('reminder', s.session_id);
+                    }
+                }
+            });
+            const badge = document.getElementById('notifBadge');
+            badge.textContent = notifs.length || '';
+            badge.classList.toggle('visible', notifs.length > 0);
+            const list = document.getElementById('notifList');
+            list.innerHTML = notifs.length ? '' : '<div class="notif-empty">No new notifications</div>';
+            notifs.forEach(n => {
+                const el = document.createElement('div'); el.className = 'notif-item';
+                el.innerHTML = `<div class="notif-icon ${n.type}"><i class="fas fa-clock"></i></div><div><div class="notif-title">${n.title}</div><div class="notif-sub">${n.sub}</div></div>`;
+                el.addEventListener('click', () => { n.action(); document.getElementById('notifDropdown').classList.remove('open'); });
+                list.appendChild(el);
+            });
+        }
+        document.getElementById('notifBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('open'); });
+        document.addEventListener('click', () => document.getElementById('notifDropdown').classList.remove('open'));
+
         // --- Find a teacher: request first, then browse real teachers ---
         const requestFormView = document.getElementById('requestFormView');
         const teacherBrowseView = document.getElementById('teacherBrowseView');
@@ -350,13 +508,27 @@
                 topic: document.getElementById('reqTopic').value.trim(),
                 notes: document.getElementById('reqNotes').value.trim(),
                 sessionType,
+                duration: parseInt(document.getElementById('reqDuration').value, 10),
                 date: sessionType === 'scheduled' ? document.getElementById('reqDate').value : null,
                 time: sessionType === 'scheduled' ? document.getElementById('reqTime').value : null
             };
             if (sessionType === 'scheduled' && (!currentRequest.date || !currentRequest.time)) { alert('Please pick a date and time for your scheduled session.'); return; }
             const when = sessionType === 'immediate' ? 'as soon as possible' : `on ${currentRequest.date} at ${currentRequest.time}`;
-            document.getElementById('requestSummary').innerText = `${currentRequest.subject} — ${currentRequest.topic} (${when})`;
-            await refreshTeachers();
+            const dur = currentRequest.duration;
+            const durLabel = dur < 60 ? `${dur} min` : dur === 60 ? '1 hr' : `${dur / 60} hrs`;
+            document.getElementById('requestSummary').innerText = `${currentRequest.subject} — ${currentRequest.topic} · ${durLabel} (${when})`;
+            let startISO, endISO;
+            if (sessionType === 'scheduled') {
+                const startDt = new Date(`${currentRequest.date}T${currentRequest.time}:00`);
+                const endDt   = new Date(startDt.getTime() + currentRequest.duration * 60000);
+                startISO = startDt.toISOString();
+                endISO   = endDt.toISOString();
+            } else {
+                const now = new Date();
+                startISO = now.toISOString();
+                endISO   = new Date(now.getTime() + currentRequest.duration * 60000).toISOString();
+            }
+            await refreshTeachers(startISO, endISO);
             requestFormView.style.display = 'none';
             teacherBrowseView.style.display = 'block';
             renderAvailableTeachers();

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnConnect — Session Confirmed</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .confirmed-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 40px;
+      padding: 12px 24px;
+      margin-bottom: 32px;
+      color: #166534;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .confirmed-badge i { font-size: 1.2rem; color: #2b7a4b; }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .detail-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 16px 20px;
+    }
+    .detail-card .label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+    .detail-card .value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #0f3b2c;
+    }
+    .detail-card .sub {
+      font-size: 0.82rem;
+      color: #475569;
+      margin-top: 2px;
+    }
+    .link-section {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 20px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .link-section .link-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #2b7a4b;
+      margin-bottom: 10px;
+    }
+    .link-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      border: 1px solid #bbf7d0;
+      border-radius: 16px;
+      padding: 10px 14px;
+    }
+    .link-row span {
+      flex: 1;
+      font-size: 0.82rem;
+      color: #0f3b2c;
+      word-break: break-all;
+    }
+    .copy-btn {
+      flex-shrink: 0;
+      background: #2b7a4b;
+      color: white;
+      border: none;
+      border-radius: 40px;
+      padding: 6px 16px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .email-status {
+      font-size: 0.85rem;
+      color: #475569;
+      margin-bottom: 24px;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+    }
+    .email-status i { margin-right: 6px; }
+    .email-ok   { color: #166534; }
+    .email-fail { color: #dc2626; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    @media (max-width: 540px) {
+      .detail-grid { grid-template-columns: 1fr; }
+      .actions { flex-direction: column; }
+      .actions .btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav class="container navbar">
+      <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+    </nav>
+  </header>
+
+  <main class="form-page">
+    <div class="container form-container">
+
+      <div class="confirmed-badge">
+        <i class="fas fa-circle-check"></i>
+        Session confirmed
+      </div>
+
+      <h1 style="color:#0f3b2c; margin-bottom:6px;" id="pageTitle">Session scheduled</h1>
+      <p class="form-subhead" id="pageSubhead">Your video room is ready. Details are below.</p>
+
+      <!-- Meeting link -->
+      <div class="link-section">
+        <div class="link-label"><i class="fas fa-video"></i> Meeting link</div>
+        <div class="link-row">
+          <span id="meetingUrl">—</span>
+          <button class="copy-btn" id="copyBtn">Copy</button>
+        </div>
+      </div>
+
+      <!-- Session details -->
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="label">Tutor</div>
+          <div class="value" id="tutorName">—</div>
+          <div class="sub"   id="tutorEmail">—</div>
+        </div>
+        <div class="detail-card">
+          <div class="label">Student</div>
+          <div class="value" id="studentName">—</div>
+          <div class="sub"   id="studentEmail">—</div>
+        </div>
+        <div class="detail-card">
+          <div class="label">Date &amp; time</div>
+          <div class="value" id="sessionDate">—</div>
+          <div class="sub"   id="sessionTime"></div>
+        </div>
+        <div class="detail-card">
+          <div class="label">Subject</div>
+          <div class="value" id="subject">—</div>
+          <div class="sub"   id="provider">—</div>
+        </div>
+      </div>
+
+      <div id="requestCard" style="display:none;" class="detail-card" style="margin-bottom:24px;">
+        <div class="label"><i class="fas fa-pen-to-square"></i> Request</div>
+        <div class="value" id="requestText" style="font-weight:400; font-size:0.92rem; line-height:1.5;"></div>
+      </div>
+
+      <!-- Email delivery status -->
+      <div class="email-status" id="emailStatus"></div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <a id="joinBtn" href="#" target="_blank" class="btn btn-primary">
+          Join now <i class="fas fa-arrow-right"></i>
+        </a>
+        <a href="Teacher-dashboard.html" class="btn btn-outline">
+          <i class="fas fa-tachometer-alt"></i> Back to dashboard
+        </a>
+        <a href="meeting.html" class="btn btn-secondary">
+          <i class="fas fa-plus"></i> Schedule another
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+
+  <script>
+    const raw = localStorage.getItem('meetingConfirmation');
+    if (!raw) {
+      document.getElementById('pageTitle').textContent   = 'No confirmation found';
+      document.getElementById('pageSubhead').textContent = 'Please go back and schedule a session first.';
+    } else {
+      const m = JSON.parse(raw);
+
+      const hasMeetingUrl = m.meetingUrl && m.meetingUrl !== '';
+      document.getElementById('pageTitle').textContent    = hasMeetingUrl ? 'Session scheduled' : 'Session request';
+      document.getElementById('pageSubhead').textContent  = hasMeetingUrl ? 'Your video room is ready. Details are below.' : 'Request details from the student.';
+      document.getElementById('meetingUrl').textContent   = hasMeetingUrl ? m.meetingUrl : 'Meeting link not yet generated';
+      document.getElementById('joinBtn').href             = hasMeetingUrl ? m.meetingUrl : '#';
+      if (!hasMeetingUrl) {
+        document.getElementById('joinBtn').style.opacity       = '0.4';
+        document.getElementById('joinBtn').style.pointerEvents = 'none';
+        document.getElementById('copyBtn').style.display       = 'none';
+      }
+
+      document.getElementById('tutorName').textContent    = m.tutorName    || '—';
+      document.getElementById('tutorEmail').textContent   = m.tutorEmail   || '—';
+      document.getElementById('studentName').textContent  = m.studentName  || '—';
+      document.getElementById('studentEmail').textContent = m.studentEmail || '—';
+
+      if (m.sessionType === 'immediate') {
+        document.getElementById('sessionDate').textContent = 'Immediate';
+        document.getElementById('sessionTime').textContent = 'Starting now';
+      } else {
+        let dateStr = m.sessionDate, timeStr = m.sessionTime;
+        try {
+          const d = new Date(`${m.sessionDate}T${m.sessionTime}`);
+          dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+          timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        } catch (_) {}
+        document.getElementById('sessionDate').textContent = dateStr;
+        document.getElementById('sessionTime').textContent = timeStr;
+      }
+
+      document.getElementById('subject').textContent  = m.subject  || '—';
+      document.getElementById('provider').textContent = `via ${m.provider || '—'}`;
+
+      if (m.request) {
+        document.getElementById('requestText').textContent    = m.request;
+        document.getElementById('requestCard').style.display  = 'block';
+      }
+
+      const results = m.emailResults || [];
+      const sent    = results.filter(r => r.ok).map(r => r.to);
+      const failed  = results.filter(r => !r.ok);
+      const statusEl = document.getElementById('emailStatus');
+      if (results.length === 0) {
+        statusEl.innerHTML = '<i class="fas fa-envelope"></i> No email results available.';
+      } else {
+        let html = '';
+        if (sent.length)   html += `<span class="email-ok"><i class="fas fa-envelope-circle-check"></i> Invite sent to: ${sent.join(', ')}</span>`;
+        if (sent.length && failed.length) html += '<br/>';
+        if (failed.length) html += `<span class="email-fail"><i class="fas fa-triangle-exclamation"></i> Could not email: ${failed.map(f => f.to).join(', ')}</span>`;
+        statusEl.innerHTML = html;
+      }
+    }
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      const url = document.getElementById('meetingUrl').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1800);
+      });
+    });
+  </script>
+
+</body>
+</html>

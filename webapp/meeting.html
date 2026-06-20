@@ -5,14 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LearnConnect — Schedule a Session</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../public/design/style.css" />
+  <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
-    .participants-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0 2rem;
-    }
     .provider-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -21,11 +16,9 @@
     }
     .submit-btn { cursor: pointer; font-family: inherit; }
     .submit-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
-
     .spinner {
       display: none;
-      width: 15px;
-      height: 15px;
+      width: 15px; height: 15px;
       border: 2px solid rgba(255,255,255,0.35);
       border-top-color: white;
       border-radius: 50%;
@@ -36,7 +29,6 @@
       border-top-color: #0f3b2c;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     #status {
       margin-top: 1rem;
       padding: 0.85rem 1rem;
@@ -44,23 +36,9 @@
       font-size: 0.9rem;
       display: none;
     }
-    #status.success {
-      background: #f0fdf4;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-      display: block;
-    }
-    #status.error {
-      background: #fef2f2;
-      color: #dc2626;
-      border: 1px solid #fecaca;
-      display: block;
-    }
-
-@media (max-width: 600px) {
-      .provider-row { grid-template-columns: 1fr; }
-      .participants-grid { grid-template-columns: 1fr; }
-    }
+    #status.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; display: block; }
+    #status.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; display: block; }
+    @media (max-width: 500px) { .provider-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -68,6 +46,9 @@
   <header>
     <nav class="container navbar">
       <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+      <ul class="nav-links">
+        <li><a href="Teacher-dashboard.html"><i class="fas fa-arrow-left"></i> Dashboard</a></li>
+      </ul>
     </nav>
   </header>
 
@@ -80,29 +61,26 @@
       <form id="scheduleForm" novalidate>
 
         <div class="form-section">
-          <div class="participants-grid">
-            <div>
-              <h3><i class="fas fa-chalkboard-user"></i> Tutor</h3>
-              <div class="form-group">
-                <label for="tutorName">Tutor name</label>
-                <input id="tutorName" type="text" value="Ms. Campbell" required />
-              </div>
-              <div class="form-group">
-                <label for="tutorEmail">Tutor email</label>
-                <input id="tutorEmail" type="email" value="tutor@learnconnect.com" required />
-              </div>
-            </div>
-            <div>
-              <h3><i class="fas fa-user-graduate"></i> Student</h3>
-              <div class="form-group">
-                <label for="studentName">Student name</label>
-                <input id="studentName" type="text" value="Alex" required />
-              </div>
-              <div class="form-group">
-                <label for="studentEmail">Student email</label>
-                <input id="studentEmail" type="email" value="student@email.com" required />
-              </div>
-            </div>
+          <h3><i class="fas fa-chalkboard-user"></i> Tutor</h3>
+          <div class="form-group">
+            <label for="tutorName">Tutor name</label>
+            <input id="tutorName" type="text" required />
+          </div>
+          <div class="form-group">
+            <label for="tutorEmail">Tutor email</label>
+            <input id="tutorEmail" type="email" required />
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3><i class="fas fa-user-graduate"></i> Student</h3>
+          <div class="form-group">
+            <label for="studentName">Student name</label>
+            <input id="studentName" type="text" required />
+          </div>
+          <div class="form-group">
+            <label for="studentEmail">Student email</label>
+            <input id="studentEmail" type="email" required />
           </div>
         </div>
 
@@ -130,11 +108,12 @@
               </div>
             </div>
           </div>
+
           <div class="form-group">
             <label for="subject">Subject</label>
             <select id="subject">
               <option value="">Select a subject…</option>
-              <option selected>Math</option>
+              <option>Math</option>
               <option>Reading &amp; Writing</option>
               <option>Science</option>
               <option>Robotics</option>
@@ -151,15 +130,28 @@
           </div>
         </div>
 
+        <!-- Existing meeting link (shown when session already has one) -->
+        <div id="existingMeetingSection" style="display:none; margin-bottom:4px;">
+          <div class="form-section" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:20px; padding:20px;">
+            <h3 style="color:#166534; margin-bottom:8px;"><i class="fas fa-video"></i> Meeting room ready</h3>
+            <p style="color:#475569; font-size:0.9rem; margin-bottom:14px;">This session already has a room. Join directly or create a new one below.</p>
+            <a id="existingMeetingLink" href="#" target="_blank"
+               class="btn btn-primary btn-block" style="display:block; text-align:center;">
+              <i class="fas fa-arrow-up-right-from-square"></i> <span id="existingProviderLabel">Join meeting</span>
+            </a>
+          </div>
+          <p style="text-align:center; color:#94a3b8; font-size:0.82rem; margin:16px 0 4px;">— or create a new room —</p>
+        </div>
+
         <div class="provider-row">
           <button type="submit" class="btn btn-primary btn-block submit-btn"
-                  name="provider" value="jitsi" data-label="Start using Jitsi">
-            <span class="btn-text">Start using Jitsi</span>
+                  name="provider" value="jitsi" data-label="Meet using Jitsi">
+            <span class="btn-text">Meet using Jitsi</span>
             <span class="spinner"></span>
           </button>
           <button type="submit" class="btn btn-outline btn-block submit-btn"
-                  name="provider" value="daily" data-label="Start using Daily">
-            <span class="btn-text">Start using Daily</span>
+                  name="provider" value="daily" data-label="Meet using Daily">
+            <span class="btn-text">Meet using Daily</span>
             <span class="spinner"></span>
           </button>
         </div>
@@ -168,30 +160,66 @@
 
       <div id="status"></div>
 
-
     </div>
   </main>
 
   <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
   <script>
     const EDGE_FN_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/create-meeting';
 
-    // ── MEETING PROVIDER INTERFACE ───────────────────────────────────────────
-    // Every provider implements this same shape, so they're interchangeable:
-    //   @typedef MeetingProvider { name: string, createMeeting(payload): Promise }
-    // Each createMeeting() asks the edge function to build a room with THIS
-    // provider; the server holds the secret keys and does the actual work.
+    // Pre-fill tutor fields from the logged-in teacher's stored info
+    const storedName  = localStorage.getItem('teacherFullName') || '';
+    const storedEmail = localStorage.getItem('teacherEmail')    || '';
+    if (storedName)  document.getElementById('tutorName').value  = storedName;
+    if (storedEmail) document.getElementById('tutorEmail').value = storedEmail;
+
+    let sessionType = 'immediate';
+    document.getElementById('sessionDate').valueAsDate = new Date();
+
+    // Pre-fill all fields when navigated from the teacher dashboard
+    const _pending = JSON.parse(localStorage.getItem('teacherPendingRequest') || 'null');
+    if (_pending) {
+        if (_pending.tutorName)    document.getElementById('tutorName').value    = _pending.tutorName;
+        if (_pending.tutorEmail)   document.getElementById('tutorEmail').value   = _pending.tutorEmail;
+        if (_pending.studentName)  document.getElementById('studentName').value  = _pending.studentName;
+        if (_pending.studentEmail) document.getElementById('studentEmail').value = _pending.studentEmail;
+        if (_pending.subject) {
+            const sel = document.getElementById('subject');
+            for (const opt of sel.options) {
+                if (opt.value === _pending.subject || opt.text === _pending.subject) { sel.value = opt.value; break; }
+            }
+        }
+        if (_pending.sessionType === 'scheduled' && _pending.sessionDate) {
+            sessionType = 'scheduled';
+            document.getElementById('typeScheduled').classList.add('selected');
+            document.getElementById('typeImmediate').classList.remove('selected');
+            document.getElementById('dateTimeFields').style.display = 'block';
+            document.getElementById('sessionDate').value = _pending.sessionDate;
+            if (_pending.sessionTime) document.getElementById('sessionTime').value = _pending.sessionTime;
+        }
+        // Show existing meeting link if the session already has one
+        if (_pending.meetingUrl) {
+            const sec = document.getElementById('existingMeetingSection');
+            const lnk = document.getElementById('existingMeetingLink');
+            const lbl = document.getElementById('existingProviderLabel');
+            lnk.href = _pending.meetingUrl;
+            lbl.textContent = _pending.meetingProvider
+                ? `Join on ${_pending.meetingProvider.charAt(0).toUpperCase() + _pending.meetingProvider.slice(1)}`
+                : 'Join meeting';
+            sec.style.display = 'block';
+        }
+        localStorage.removeItem('teacherPendingRequest');
+    }
+
     const PROVIDERS = {
       jitsi: { name: 'jitsi', createMeeting: (payload) => requestMeeting('jitsi', payload) },
       daily: { name: 'daily', createMeeting: (payload) => requestMeeting('daily', payload) },
     };
-
-    // Tracks which submit button the user clicked, so setLoading knows which
-    // one to show the spinner on.
     let activeBtn = null;
 
-    // Sends the request to the edge function, telling it which provider to use.
     async function requestMeeting(providerName, payload) {
       const res = await fetch(EDGE_FN_URL, {
         method: 'POST',
@@ -202,10 +230,6 @@
       if (!res.ok) throw new Error(data.error || 'Something went wrong.');
       return data;
     }
-
-    // Session type toggle (Immediate / Scheduled)
-    let sessionType = 'immediate';
-    document.getElementById('sessionDate').valueAsDate = new Date();
 
     document.getElementById('typeImmediate').addEventListener('click', () => {
       sessionType = 'immediate';
@@ -241,7 +265,6 @@
         return;
       }
 
-      // Resolve the provider from the button that was clicked (e.submitter).
       const providerChoice = e.submitter?.value;
       const provider = PROVIDERS[providerChoice];
       if (!provider) { showStatus('error', `Unknown provider "${providerChoice}".`); return; }
@@ -262,7 +285,6 @@
 
       let confirmation;
       try {
-        // The interface call: whichever button the user clicked.
         const data = await provider.createMeeting(formData);
         confirmation = {
           provider:     data.provider,
@@ -272,7 +294,6 @@
           ...formData
         };
       } catch (_) {
-        // Design fallback: backend unavailable, navigate with placeholder data.
         confirmation = {
           provider:     providerChoice,
           meetingUrl:   `https://meet.learnconnect.com/demo-${Date.now()}`,
@@ -280,6 +301,14 @@
           emailResults: [],
           ...formData
         };
+      }
+
+      // Persist meeting link back to Blocked_Time if we came from a session
+      if (_pending?.session_id) {
+        await supabaseClient
+          .from('Blocked_Time')
+          .update({ meeting_url: confirmation.meetingUrl, meeting_provider: confirmation.provider })
+          .eq('SessionID', _pending.session_id);
       }
 
       setLoading(false);
@@ -291,23 +320,17 @@
       document.querySelectorAll('.submit-btn').forEach(btn => btn.disabled = on);
       if (activeBtn) {
         activeBtn.querySelector('.spinner').style.display = on ? 'inline-block' : 'none';
-        activeBtn.querySelector('.btn-text').textContent = on ? 'Creating…' : activeBtn.dataset.label;
+        activeBtn.querySelector('.btn-text').textContent  = on ? 'Creating…' : activeBtn.dataset.label;
       }
     }
-
     function showStatus(type, msg) {
       const el = document.getElementById('status');
-      el.style.display = '';
-      el.className = type;
-      el.textContent = msg;
+      el.style.display = ''; el.className = type; el.textContent = msg;
     }
-
     function hideStatus() {
       const el = document.getElementById('status');
-      el.className = '';
-      el.style.display = 'none';
+      el.className = ''; el.style.display = 'none';
     }
-
   </script>
 
 </body>
