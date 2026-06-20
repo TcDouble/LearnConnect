@@ -15,7 +15,11 @@
       "mcp__supabase__get_advisors",
       "PowerShell($health = Invoke-RestMethod -Uri \"http://localhost:3000/health\" -Method Get; Write-Output \"HEALTH: $\\($health | ConvertTo-Json -Compress\\)\"; $users = Invoke-RestMethod -Uri \"http://localhost:3000/users\" -Method Get; Write-Output \"USERS: $\\($users | ConvertTo-Json -Compress\\)\"; $teachers = Invoke-RestMethod -Uri \"http://localhost:3000/teachers\" -Method Get; Write-Output \"TEACHERS: $\\($teachers | ConvertTo-Json -Compress\\)\")",
       "PowerShell(try { $body = @{ firstname = \"Test\"; lastname = \"User\"; email = \"test-$\\(Get-Random\\)@example.com\"; role = \"student\" } | ConvertTo-Json; $r = Invoke-RestMethod -Uri \"http://localhost:3000/users\" -Method Post -Body $body -ContentType \"application/json\"; Write-Output \"POST OK: $\\($r | ConvertTo-Json -Compress\\)\" } catch { $resp = $_.ErrorDetails.Message; Write-Output \"POST FAILED \\($\\($_.Exception.Response.StatusCode\\)\\): $resp\" })",
-      "mcp__supabase__execute_sql"
+      "mcp__supabase__execute_sql",
+      "Bash(git pull *)",
+      "Bash(git checkout *)",
+      "PowerShell(supabase functions *)",
+      "Bash(git stash *)"
     ]
   }
 }
