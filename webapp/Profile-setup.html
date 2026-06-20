@@ -53,6 +53,20 @@
         .ls-note { display: block; margin-top: 6px; font-size: 0.78rem; color: #94a3b8; font-style: italic; }
         input[readonly], textarea[readonly], select:disabled { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
         .day.disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; opacity: 0.7; }
+        .subject-picker { position: relative; border: 1px solid #cbd5e1; border-radius: 16px; padding: 8px 12px; background: white; min-height: 44px; cursor: text; }
+        .subject-picker:focus-within { border-color: #2b7a4b; box-shadow: 0 0 0 3px rgba(43,122,75,0.1); }
+        #teacherBlock .subject-picker:focus-within { border-color: #5f4bb6; box-shadow: 0 0 0 3px rgba(95,75,182,0.1); }
+        .picker-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+        .picker-tag { display: flex; align-items: center; gap: 4px; background: #e6f2ec; color: #0f3b2c; padding: 3px 10px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; }
+        #teacherBlock .picker-tag { background: #ece8f7; color: #3b2a7a; }
+        .picker-tag button { background: none; border: none; cursor: pointer; color: #2b7a4b; font-size: 1rem; padding: 0; line-height: 1; }
+        #teacherBlock .picker-tag button { color: #5f4bb6; }
+        input.picker-search { border: none !important; outline: none; min-width: 120px; font-size: 0.9rem; background: transparent; padding: 2px 0 !important; box-shadow: none !important; width: auto; }
+        .picker-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; max-height: 200px; overflow-y: auto; list-style: none; margin: 0; padding: 4px 0; }
+        .picker-dropdown li { padding: 9px 16px; cursor: pointer; font-size: 0.9rem; }
+        .picker-dropdown li:hover { background: #f0fdf4; }
+        #teacherBlock .picker-dropdown li:hover { background: #f3f0fd; }
+        .picker-dropdown li.no-results { color: #94a3b8; cursor: default; }
     </style>
 </head>
 <body>
@@ -94,17 +108,17 @@
                     </div>
                     <div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
                         <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label" style="opacity:0.6; pointer-events:none;">Choose File</span><input type="file" id="profilePhoto" accept="image/*" disabled><span id="fileName" class="file-name">No file chosen</span></div><small class="ls-note">Display only — saving coming soon.</small></div>
-                        <div class="form-group"><label>Short bio</label><textarea rows="3" id="bio" placeholder="Display only — saving coming soon." readonly></textarea></div>
-                        <div class="form-group"><label>Grade level or year</label><select id="gradeLevel"><option>High school — year 9</option><option selected>High school — year 10</option><option>High school — year 11</option><option>High school — year 12</option><option>University freshman</option></select></div>
-                        <div class="form-group"><label>Subjects I need help with</label><div class="subject-tags" id="subjectTags"><span class="tag">Maths <i class="fas fa-times remove-tag"></i></span><span class="tag">English <i class="fas fa-times remove-tag"></i></span><span class="tag">Physics <i class="fas fa-times remove-tag"></i></span><span class="tag">History <i class="fas fa-times remove-tag"></i></span></div><div class="add-subject"><input type="text" id="newSubject" placeholder="e.g. Chemistry"><button type="button" id="addSubjectBtn" class="btn-small">+ Add</button></div></div>
-                        <div class="form-group"><label>Learning goals</label><textarea rows="2" id="goals" placeholder="Display only — saving coming soon." readonly></textarea></div>
+                        <div class="form-group"><label>Short bio</label><textarea rows="3" id="bio" placeholder="Tell teachers a bit about yourself…"></textarea></div>
+                        <div class="form-group"><label>Age</label><input type="number" id="studentAge" min="5" max="100" placeholder="e.g. 16"></div>
+                        <div class="form-group"><label>Education level</label><select id="educationLevel"><option value="">Select…</option><option>Primary school</option><option>High school</option><option>University</option><option>Vocational / TAFE</option><option>Other</option></select></div>
+                        <div class="form-group"><label>Subjects I need help with</label><div id="studentSubjectPicker"></div></div>
+                        <div class="form-group"><label>Learning goals</label><textarea rows="2" id="goals" placeholder="e.g. Pass my year 12 exams, improve essay writing…"></textarea></div>
                     </div>
                     <div class="form-section"><h3><i class="fas fa-calendar-alt"></i> AVAILABILITY <small class="ls-note" style="margin-left:8px;">Display only — saving coming soon.</small></h3>
                         <div class="form-group"><label>Available days</label><div class="days-buttons" id="studentDays"><span class="day disabled" data-day="Mon">Mon</span><span class="day disabled" data-day="Tue">Tue</span><span class="day disabled" data-day="Wed">Wed</span><span class="day disabled" data-day="Thu">Thu</span><span class="day disabled" data-day="Fri">Fri</span><span class="day disabled" data-day="Sat">Sat</span><span class="day disabled" data-day="Sun">Sun</span></div></div>
                         <div class="form-group"><label>Preferred session times</label><select id="sessionTimes" disabled><option>Morning (9am – 12pm)</option><option>Afternoon (1pm – 5pm)</option><option selected>Evening (5pm – 9pm)</option></select></div>
                     </div>
                     <div class="form-section"><h3><i class="fas fa-lock"></i> PRIVATE INFO (ONLY YOU CAN SEE THIS)</h3>
-                        <div class="form-group"><label>Date of birth</label><input type="date" id="dob"></div>
                         <div class="form-group"><label>Parent or guardian email</label><input type="email" id="parentEmail" placeholder="Display only — saving coming soon." readonly></div>
                         <div class="form-group"><label>School or institution</label><input type="text" id="school" placeholder="e.g. Lincoln High School"></div>
                     </div>
@@ -121,8 +135,8 @@
                     </div>
                     <div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
                         <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label" style="opacity:0.6; pointer-events:none;">Choose File</span><input type="file" id="teacherPhoto" accept="image/*" disabled><span id="teacherFileName" class="file-name">No file chosen</span></div><small class="ls-note">Display only — saving coming soon.</small></div>
-                        <div class="form-group"><label>Short bio</label><textarea rows="3" id="teacherBio" placeholder="Display only — saving coming soon." readonly></textarea></div>
-                        <div class="form-group"><label>Subjects / specialties</label><div class="subject-tags" id="teacherSubjects"><span class="tag">Maths <i class="fas fa-times remove-tag"></i></span><span class="tag">English <i class="fas fa-times remove-tag"></i></span><span class="tag">Physics <i class="fas fa-times remove-tag"></i></span><span class="tag">History <i class="fas fa-times remove-tag"></i></span></div><div class="add-subject"><input type="text" id="newTeacherSubject" placeholder="e.g. Chemistry"><button type="button" id="addTeacherSubjectBtn" class="btn-small">+ Add</button></div></div>
+                        <div class="form-group"><label>Short bio</label><textarea rows="3" id="teacherBio" placeholder="Tell students about your background and teaching style…"></textarea></div>
+                        <div class="form-group"><label>Subjects / specialties</label><div id="teacherSubjectPicker"></div></div>
                         <div class="form-group"><label>Years of experience</label><select id="experience"><option>Less than 1 year</option><option>1–2 years</option><option selected>3–5 years</option><option>6–10 years</option><option>10+ years</option></select></div>
                     </div>
                     <div class="form-section"><h3><i class="fas fa-calendar-alt"></i> SCHEDULE & AVAILABILITY <small class="ls-note" style="margin-left:8px;">Display only — saving coming soon.</small></h3>
@@ -210,27 +224,55 @@
             }
         })();
 
-        // ── Student block UI helpers ──────────────────────────────────────────
-        function attachRemoveEvents(scope) {
-            scope.querySelectorAll('.remove-tag').forEach(icon => {
-                icon.removeEventListener('click', removeHandler);
-                icon.addEventListener('click', removeHandler);
-            });
+        // ── Subject picker ────────────────────────────────────────────────────
+        const SUBJECTS = ['Maths','English','Physics','Chemistry','Biology','History','Geography','Economics','Business Studies','Computer Science','Psychology','Legal Studies'];
+
+        function initSubjectPicker(wrapId, initial) {
+            const wrap = document.getElementById(wrapId);
+            if (!wrap) return;
+            wrap.className = 'subject-picker';
+            wrap.innerHTML = '';
+            const tagsEl = Object.assign(document.createElement('div'), { className: 'picker-tags' });
+            const input = Object.assign(document.createElement('input'), { type: 'text', className: 'picker-search', placeholder: 'Search subjects…', autocomplete: 'off' });
+            const dropdown = Object.assign(document.createElement('ul'), { className: 'picker-dropdown' });
+            dropdown.style.display = 'none';
+            wrap.append(tagsEl, input, dropdown);
+            const selected = new Set(initial || []);
+            function renderTags() {
+                tagsEl.innerHTML = '';
+                selected.forEach(s => {
+                    const tag = document.createElement('span');
+                    tag.className = 'picker-tag'; tag.dataset.value = s;
+                    const btn = Object.assign(document.createElement('button'), { type: 'button', textContent: '×' });
+                    btn.addEventListener('click', e => { e.stopPropagation(); selected.delete(s); renderTags(); input.focus(); });
+                    tag.append(document.createTextNode(s + ' '), btn);
+                    tagsEl.appendChild(tag);
+                });
+                input.placeholder = selected.size === 0 ? 'Search subjects…' : 'Add more…';
+            }
+            function showDropdown(query) {
+                const q = (query || '').toLowerCase();
+                const matches = SUBJECTS.filter(s => !selected.has(s) && s.toLowerCase().includes(q));
+                dropdown.innerHTML = '';
+                if (!matches.length) { dropdown.innerHTML = '<li class="no-results">No subjects found</li>'; }
+                else { matches.forEach(s => { const li = Object.assign(document.createElement('li'), { textContent: s }); li.addEventListener('mousedown', e => { e.preventDefault(); selected.add(s); input.value = ''; dropdown.style.display = 'none'; renderTags(); }); dropdown.appendChild(li); }); }
+                dropdown.style.display = 'block';
+            }
+            input.addEventListener('focus', () => showDropdown(input.value));
+            input.addEventListener('input', () => showDropdown(input.value));
+            input.addEventListener('blur', () => setTimeout(() => { dropdown.style.display = 'none'; }, 150));
+            wrap.addEventListener('click', () => input.focus());
+            renderTags();
         }
-        function removeHandler(e) { e.stopPropagation(); this.closest('.tag').remove(); }
-        document.getElementById('addSubjectBtn').addEventListener('click', () => {
-            const input = document.getElementById('newSubject');
-            const subject = input.value.trim();
-            if (!subject) return;
-            const container = document.getElementById('subjectTags');
-            const tag = document.createElement('span');
-            tag.className = 'tag';
-            tag.innerHTML = `${subject} <i class="fas fa-times remove-tag"></i>`;
-            container.appendChild(tag);
-            attachRemoveEvents(container);
-            input.value = '';
-        });
-        attachRemoveEvents(studentBlock);
+
+        function getPickerValues(wrapId) {
+            return Array.from(document.querySelectorAll(`#${wrapId} .picker-tag`)).map(t => t.dataset.value);
+        }
+
+        initSubjectPicker('studentSubjectPicker', []);
+        initSubjectPicker('teacherSubjectPicker', []);
+
+        // ── Availability day toggles ──────────────────────────────────────────
         const studentSelectedDays = new Set();
         document.querySelectorAll('#studentDays .day').forEach(day => {
             day.addEventListener('click', () => {
@@ -241,20 +283,6 @@
             });
         });
 
-        // ── Teacher block UI helpers ──────────────────────────────────────────
-        document.getElementById('addTeacherSubjectBtn').addEventListener('click', () => {
-            const input = document.getElementById('newTeacherSubject');
-            const subject = input.value.trim();
-            if (!subject) return;
-            const container = document.getElementById('teacherSubjects');
-            const tag = document.createElement('span');
-            tag.className = 'tag';
-            tag.innerHTML = `${subject} <i class="fas fa-times remove-tag"></i>`;
-            container.appendChild(tag);
-            attachRemoveEvents(container);
-            input.value = '';
-        });
-        attachRemoveEvents(teacherBlock);
         const teacherSelectedDays = new Set();
         document.querySelectorAll('#teacherDays .day').forEach(day => {
             day.addEventListener('click', () => {
@@ -283,27 +311,20 @@
             const calls = [];
 
             if (saveStudent) {
-                const subjects = Array.from(studentBlock.querySelectorAll('#subjectTags .tag'))
-                    .map(t => t.innerText.replace(/×/g, '').trim()).filter(Boolean);
+                const subjects = getPickerValues('studentSubjectPicker');
                 // Local copy for dashboard fields not stored in DB.
+                const age = parseInt(document.getElementById('studentAge').value, 10) || null;
                 localStorage.setItem('studentProfile', JSON.stringify({
                     bio: document.getElementById('bio').value,
-                    grade: document.getElementById('gradeLevel').value,
+                    educationLevel: document.getElementById('educationLevel').value,
+                    age,
                     subjects,
                     goals: document.getElementById('goals').value,
                     availableDays: Array.from(studentSelectedDays),
                     sessionTime: document.getElementById('sessionTimes').value,
-                    dob: document.getElementById('dob').value,
                     parentEmail: document.getElementById('parentEmail').value,
                     school: document.getElementById('school').value
                 }));
-                let age = null;
-                const dob = document.getElementById('dob').value;
-                if (dob) {
-                    const d = new Date(dob), now = new Date();
-                    age = now.getFullYear() - d.getFullYear();
-                    if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--;
-                }
                 calls.push(fetch(`${SUPABASE_URL}/functions/v1/create-student-profile`, {
                     method: 'POST',
                     headers: {
@@ -313,16 +334,17 @@
                     },
                     body: JSON.stringify({
                         school: document.getElementById('school').value.trim(),
-                        grade_level: document.getElementById('gradeLevel').value,
+                        grade_level: document.getElementById('educationLevel').value || null,
                         age,
-                        subject_list: subjects
+                        subject_list: subjects,
+                        bio: document.getElementById('bio').value.trim() || null,
+                        goals: document.getElementById('goals').value.trim() || null
                     })
                 }).then(async r => ({ which: 'student', ok: r.ok, body: await r.json() })));
             }
 
             if (saveTeacher) {
-                const subjects = Array.from(teacherBlock.querySelectorAll('#teacherSubjects .tag'))
-                    .map(t => t.innerText.replace(/×/g, '').trim()).filter(Boolean);
+                const subjects = getPickerValues('teacherSubjectPicker');
                 localStorage.setItem('teacherProfile', JSON.stringify({
                     bio: document.getElementById('teacherBio').value,
                     subjects,
@@ -342,10 +364,10 @@
                         'Authorization': `Bearer ${session.access_token}`
                     },
                     body: JSON.stringify({
-                        subjects,
                         subject_list: subjects,
                         years_experience: years,
-                        phone_number: document.getElementById('teacherPhone').value.trim()
+                        bio: document.getElementById('teacherBio').value.trim() || null,
+                        phone_number: document.getElementById('teacherPhone').value.trim() || null
                     })
                 }).then(async r => ({ which: 'teacher', ok: r.ok, body: await r.json() })));
             }

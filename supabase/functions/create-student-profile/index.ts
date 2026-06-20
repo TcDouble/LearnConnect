@@ -1,10 +1,10 @@
 // Edge Function: create-student-profile
-// Creates (or updates) the caller's row in public."Students".
+// Creates (or updates) the caller's row in public."Students" and saves bio to public."Users".
 // Auth: requires a logged-in user. The user's JWT is forwarded to Supabase so
 // the existing "Student can insert own row" RLS policy (auth.uid() = UID) applies.
 //
 // POST body (all optional except an authenticated user):
-//   { school?: string, grade_level?: string, age?: number, subject_list?: string[] }
+//   { school?: string, grade_level?: string, age?: number, subject_list?: string[], goals?: string, bio?: string }
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
@@ -42,6 +42,8 @@ Deno.serve(async (req) => {
       grade_level = null,
       age = null,
       subject_list = [],
+      goals = null,
+      bio = null,
     } = body ?? {};
 
     const { data, error } = await supabase
@@ -53,6 +55,7 @@ Deno.serve(async (req) => {
           grade_level: grade_level || null,
           age: age === null || age === "" ? null : Number(age),
           subject_list: Array.isArray(subject_list) ? subject_list : [],
+          goals: goals || null,
         },
         { onConflict: "UID" },
       )
@@ -64,7 +67,7 @@ Deno.serve(async (req) => {
     // Saving the student profile is the moment the user IS a student.
     const { error: flagError } = await supabase
       .from("Users")
-      .update({ is_student: true })
+      .update({ is_student: true, ...(bio !== null ? { bio } : {}) })
       .eq("UID", user.id);
     if (flagError) return jsonResponse({ error: flagError.message }, 400);
 

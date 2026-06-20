@@ -12,7 +12,8 @@
       "mcp__supabase__get_edge_function",
       "PowerShell(Remove-Item *)",
       "PowerShell(git config *)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(xargs grep -l \"Users\\\\|Students\\\\|Teachers\")"
     ]
   }
 }
