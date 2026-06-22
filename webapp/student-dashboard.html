@@ -141,6 +141,19 @@
     <script>
         const SUBJECTS = ['Biology','Business Studies','Chemistry','Computer Science','Economics','English - High Level','English - Low Level','English - Middle Level','Geography','History','Legal Studies','Math - High Level','Math - Low Level','Math - Middle Level','Physics','Psychology','Robotics','Test Prep'];
 
+        // Maps legacy teacher subject names → canonical base used in SUBJECTS
+        const SUBJECT_ALIASES = { 'maths': 'math', 'mathematics': 'math', 'reading & writing': 'english', 'english language': 'english' };
+        function subjectMatches(teacherSubject, requestedSubject) {
+            const t = teacherSubject.toLowerCase().trim();
+            const r = requestedSubject.toLowerCase().trim();
+            if (t === r) return true;
+            const tNorm = SUBJECT_ALIASES[t] || t;
+            // "math - low level" → base "math"; plain subjects stay as-is
+            const rBase = r.includes(' - ') ? r.split(' - ')[0].trim() : r;
+            const rNorm = SUBJECT_ALIASES[rBase] || rBase;
+            return tNorm === rNorm;
+        }
+
         function initSubjectPicker(wrapId, initial) {
             const wrap = document.getElementById(wrapId);
             if (!wrap) return;
@@ -330,7 +343,7 @@
             const container = document.getElementById('availableTeachersGrid'); container.innerHTML = '';
             const requestedSubject = (currentRequest?.subject || '').toLowerCase();
             const filtered = teachers
-                .filter(t => !requestedSubject || (t.subject_list || []).some(s => s.toLowerCase() === requestedSubject))
+                .filter(t => !requestedSubject || (t.subject_list || []).some(s => subjectMatches(s, requestedSubject)))
                 .filter(t => !availableTeacherUIDs || availableTeacherUIDs.has(t.uid));
             if (!filtered.length) { container.innerHTML = `<p>No teachers are available for <strong>${currentRequest?.subject || 'that subject'}</strong> at the requested time.</p>`; return; }
             filtered.forEach(t => {
