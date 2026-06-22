@@ -225,7 +225,7 @@
         })();
 
         // ── Subject picker ────────────────────────────────────────────────────
-        const SUBJECTS = ['Maths','English','Physics','Chemistry','Biology','History','Geography','Economics','Business Studies','Computer Science','Psychology','Legal Studies'];
+        const SUBJECTS = ['Biology','Business Studies','Chemistry','Computer Science','Economics','English - High Level','English - Low Level','English - Middle Level','Geography','History','Legal Studies','Math - High Level','Math - Low Level','Math - Middle Level','Physics','Psychology','Robotics','Test Prep'];
 
         function initSubjectPicker(wrapId, initial) {
             const wrap = document.getElementById(wrapId);
@@ -233,7 +233,7 @@
             wrap.className = 'subject-picker';
             wrap.innerHTML = '';
             const tagsEl = Object.assign(document.createElement('div'), { className: 'picker-tags' });
-            const input = Object.assign(document.createElement('input'), { type: 'text', className: 'picker-search', placeholder: 'Search subjects…', autocomplete: 'off' });
+            const input = Object.assign(document.createElement('input'), { type: 'text', className: 'picker-search', placeholder: 'Click to add subjects…', autocomplete: 'off' });
             const dropdown = Object.assign(document.createElement('ul'), { className: 'picker-dropdown' });
             dropdown.style.display = 'none';
             wrap.append(tagsEl, input, dropdown);
@@ -248,7 +248,7 @@
                     tag.append(document.createTextNode(s + ' '), btn);
                     tagsEl.appendChild(tag);
                 });
-                input.placeholder = selected.size === 0 ? 'Search subjects…' : 'Add more…';
+                input.placeholder = selected.size === 0 ? 'Click to add subjects…' : 'Add more…';
             }
             function showDropdown(query) {
                 const q = (query || '').toLowerCase();
@@ -261,7 +261,7 @@
             input.addEventListener('focus', () => showDropdown(input.value));
             input.addEventListener('input', () => showDropdown(input.value));
             input.addEventListener('blur', () => setTimeout(() => { dropdown.style.display = 'none'; }, 150));
-            wrap.addEventListener('click', () => input.focus());
+            wrap.addEventListener('click', () => { input.focus(); showDropdown(input.value); });
             renderTags();
         }
 

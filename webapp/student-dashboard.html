@@ -93,7 +93,7 @@
                 <div id="requestFormView">
                     <div class="dashboard-header"><h1>Find a teacher</h1><p class="greeting">Tell us what you need help with, then we'll show you teachers.</p></div>
                     <form id="tutorRequestForm" class="profile-form">
-                        <div class="form-row"><label>Subject</label><select id="reqSubject" required><option value="">Select a subject…</option><option>Maths</option><option>English</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>History</option><option>Geography</option><option>Economics</option><option>Business Studies</option><option>Computer Science</option><option>Psychology</option><option>Legal Studies</option></select></div>
+                        <div class="form-row"><label>Subject</label><select id="reqSubject" required><option value="">Select a subject…</option><option>Biology</option><option>Business Studies</option><option>Chemistry</option><option>Computer Science</option><option>Economics</option><option>English - High Level</option><option>English - Low Level</option><option>English - Middle Level</option><option>Geography</option><option>History</option><option>Legal Studies</option><option>Math - High Level</option><option>Math - Low Level</option><option>Math - Middle Level</option><option>Physics</option><option>Psychology</option><option>Robotics</option><option>Test Prep</option></select></div>
                         <div class="form-row"><label>Topic</label><input type="text" id="reqTopic" placeholder="e.g. Quadratic equations" required></div>
                         <div class="form-row"><label>Notes</label><textarea id="reqNotes" rows="3" placeholder="Anything the teacher should know beforehand..."></textarea></div>
                         <div class="form-row"><label>Session type</label>
@@ -139,7 +139,7 @@
     <script src="supabase-client.js"></script>
     <script src="tz.js"></script>
     <script>
-        const SUBJECTS = ['Maths','English','Physics','Chemistry','Biology','History','Geography','Economics','Business Studies','Computer Science','Psychology','Legal Studies'];
+        const SUBJECTS = ['Biology','Business Studies','Chemistry','Computer Science','Economics','English - High Level','English - Low Level','English - Middle Level','Geography','History','Legal Studies','Math - High Level','Math - Low Level','Math - Middle Level','Physics','Psychology','Robotics','Test Prep'];
 
         function initSubjectPicker(wrapId, initial) {
             const wrap = document.getElementById(wrapId);
@@ -162,7 +162,7 @@
                     tag.append(document.createTextNode(s + ' '), btn);
                     tagsEl.appendChild(tag);
                 });
-                input.placeholder = selected.size === 0 ? 'Search subjects…' : 'Add more…';
+                input.placeholder = selected.size === 0 ? 'Click to add subjects…' : 'Add more…';
             }
             function showDropdown(query) {
                 const q = (query || '').toLowerCase();
@@ -175,7 +175,7 @@
             input.addEventListener('focus', () => showDropdown(input.value));
             input.addEventListener('input', () => showDropdown(input.value));
             input.addEventListener('blur', () => setTimeout(() => { dropdown.style.display = 'none'; }, 150));
-            wrap.addEventListener('click', () => input.focus());
+            wrap.addEventListener('click', () => { input.focus(); showDropdown(input.value); });
             renderTags();
         }
 
