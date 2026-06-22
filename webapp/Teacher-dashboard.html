@@ -97,7 +97,7 @@
     </style>
 </head>
 <body>
-    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="homepage.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div></nav></header>
+    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div></nav></header>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="persona-switcher" id="personaSwitcher">
@@ -307,46 +307,20 @@
             buildRequestRows(document.getElementById('fullRequestsBody'), requests);
         }
 
-        async function openScheduledSession(s) {
-            let studentEmail = '';
-            // Blocked_Time has SID; need Students → Users to get email
-            const { data: bt } = await supabaseClient
-                .from('Blocked_Time')
-                .select('SID')
-                .eq('SessionID', s.session_id)
-                .maybeSingle();
-            if (bt?.SID) {
-                const { data: stu } = await supabaseClient
-                    .from('Students')
-                    .select('UID')
-                    .eq('SID', bt.SID)
-                    .maybeSingle();
-                if (stu?.UID) {
-                    const { data: u } = await supabaseClient
-                        .from('Users')
-                        .select('email')
-                        .eq('UID', stu.UID)
-                        .maybeSingle();
-                    studentEmail = u?.email || '';
-                }
-            }
-            localStorage.setItem('teacherPendingRequest', JSON.stringify({
-                session_id:      s.session_id,
-                studentName:     s.counterparty     || '',
-                studentEmail,
-                subject:         s.subject          || '',
-                sessionType:     s.session_date ? 'scheduled' : 'immediate',
-                sessionDate:     s.session_date      || null,
-                sessionTime:     s.starttime         || null,
-                request:         s.request           || '',
-                duration:        s.duration          || null,
-                tutorName:       teacherInfo.fullName,
-                tutorEmail:      teacherInfo.email,
-                meetingUrl:      s.meeting_url       || null,
-                meetingProvider: s.meeting_provider  || null,
-                returnUrl:       'Teacher-dashboard.html'
+        function openScheduledSession(s) {
+            localStorage.setItem('sessionDetails', JSON.stringify({
+                otherName:     s.counterparty    || '',
+                subject:       s.subject         || '',
+                sessionDate:   s.session_date    || null,
+                sessionTime:   s.starttime       || null,
+                duration:      s.duration        || null,
+                notes:         s.request         || '',
+                status:        s.status          || 'scheduled',
+                meetingUrl:    s.meeting_url     || null,
+                meetingProvider: s.meeting_provider || null,
+                returnUrl:     'Teacher-dashboard.html'
             }));
-            window.location.href = 'meeting.html';
+            window.location.href = 'session-details.html';
         }
 
         function joinLink(url) {

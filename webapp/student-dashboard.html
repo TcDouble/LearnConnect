@@ -77,7 +77,7 @@
     </style>
 </head>
 <body>
-    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="homepage.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div></nav></header>
+    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div></nav></header>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="persona-switcher" id="personaSwitcher">
@@ -283,12 +283,30 @@
             return `<span class="status-pill ${m.cls}">${m.label}</span>`;
         }
 
+        function openSessionDetails(s) {
+            localStorage.setItem('sessionDetails', JSON.stringify({
+                otherName:      s.counterparty      || '',
+                subject:        s.subject           || '',
+                sessionDate:    s.session_date      || null,
+                sessionTime:    s.starttime         || null,
+                duration:       s.duration          || null,
+                notes:          s.request           || '',
+                status:         s.status            || 'scheduled',
+                meetingUrl:     s.meeting_url       || null,
+                meetingProvider: s.meeting_provider || null,
+                returnUrl:      'student-dashboard.html'
+            }));
+            window.location.href = 'session-details.html';
+        }
+
         function renderUpcomingSessions() {
             const tbody = document.getElementById('upcomingSessionsBody'); tbody.innerHTML = '';
             const upcoming = sessions.filter(isUpcoming);
             if (!upcoming.length) { tbody.innerHTML = '<tr><td colspan="3">No upcoming sessions.</td></tr>'; return; }
             upcoming.forEach(s => {
                 const r = tbody.insertRow();
+                r.style.cursor = 'pointer';
+                r.addEventListener('click', () => openSessionDetails(s));
                 r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime);
                 r.insertCell(1).innerText = s.counterparty || '—';
                 let statusHtml = statusPill(s.status);
@@ -298,7 +316,7 @@
                 r.insertCell(2).innerHTML = statusHtml;
             });
             tbody.querySelectorAll('.btn-cancel').forEach(btn =>
-                btn.addEventListener('click', () => cancelRequest(btn.getAttribute('data-id'))));
+                btn.addEventListener('click', (e) => { e.stopPropagation(); cancelRequest(btn.getAttribute('data-id')); }));
         }
 
         async function cancelRequest(id) {
@@ -357,6 +375,8 @@
             if (!sessions.length) { tbody.innerHTML = '<tr><td colspan="3">No sessions yet.</td></tr>'; return; }
             sessions.forEach(s => {
                 const r = tbody.insertRow();
+                r.style.cursor = 'pointer';
+                r.addEventListener('click', () => openSessionDetails(s));
                 r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime);
                 r.insertCell(1).innerText = s.counterparty || '—';
                 let statusHtml = statusPill(s.status);
@@ -366,7 +386,7 @@
                 r.insertCell(2).innerHTML = statusHtml;
             });
             tbody.querySelectorAll('.btn-cancel').forEach(btn =>
-                btn.addEventListener('click', () => cancelRequest(btn.getAttribute('data-id'))));
+                btn.addEventListener('click', (e) => { e.stopPropagation(); cancelRequest(btn.getAttribute('data-id')); }));
         }
 
         function loadProfileForm() {

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnConnect — Session Details</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .detail-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 18px 22px;
+      margin-bottom: 10px;
+    }
+    .detail-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 3px;
+    }
+    .detail-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #0f3b2c;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .status-pill.scheduled  { background: #dcfce7; color: #166534; }
+    .status-pill.pending    { background: #fef9c3; color: #854d0e; }
+    .status-pill.canceled   { background: #fee2e2; color: #b91c1c; }
+    .status-pill.completed  { background: #f1f5f9; color: #334155; }
+    .join-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px;
+      background: #2b7a4b;
+      color: white;
+      border-radius: 40px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-top: 8px;
+      transition: background 0.15s;
+    }
+    .join-btn:hover { background: #235f3b; }
+    .no-link-note {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav class="container navbar">
+      <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+    </nav>
+  </header>
+
+  <main class="form-page">
+    <div class="container form-container">
+
+      <a id="backBtn" href="#"
+         style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; color:#2b7a4b; font-weight:600; text-decoration:none; margin-bottom:20px;">
+        <i class="fas fa-arrow-left"></i> Back to dashboard
+      </a>
+
+      <h1 style="color:#0f3b2c; margin-bottom:4px;">Session details</h1>
+      <p class="form-subhead" style="margin-bottom:24px;">Your confirmed session information.</p>
+
+      <div class="form-section">
+        <h3><i class="fas fa-calendar-check"></i> Session</h3>
+
+        <div class="detail-card">
+          <div class="detail-label">With</div>
+          <div class="detail-value" id="detailWith">—</div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-label">Subject</div>
+          <div class="detail-value" id="detailSubject">—</div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-label">Date &amp; time</div>
+          <div class="detail-value" id="detailWhen">—</div>
+        </div>
+
+        <div class="detail-card" id="detailDurationCard" style="display:none;">
+          <div class="detail-label">Duration</div>
+          <div class="detail-value" id="detailDuration">—</div>
+        </div>
+
+        <div class="detail-card" id="detailNotesCard" style="display:none;">
+          <div class="detail-label">Session notes</div>
+          <div class="detail-value" id="detailNotes" style="font-weight:400; color:#334155; line-height:1.5;"></div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-label">Status</div>
+          <div id="detailStatus">—</div>
+        </div>
+      </div>
+
+      <div class="form-section" style="margin-top:8px;">
+        <h3><i class="fas fa-video"></i> Meeting room</h3>
+        <div id="meetingLinkArea"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="tz.js"></script>
+  <script>
+    const raw = localStorage.getItem('sessionDetails');
+    if (!raw) { window.location.href = 'student-dashboard.html'; }
+    const s = JSON.parse(raw);
+
+    document.getElementById('backBtn').href = s.returnUrl || 'student-dashboard.html';
+
+    document.getElementById('detailWith').textContent    = s.otherName || '—';
+    document.getElementById('detailSubject').textContent = s.subject   || '—';
+
+    if (s.sessionDate && s.sessionTime) {
+      document.getElementById('detailWhen').textContent = fmtLocalDateTime(s.sessionDate, s.sessionTime);
+    } else {
+      document.getElementById('detailWhen').innerHTML = '<span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:20px;font-size:0.85rem;font-weight:600;">Immediate</span>';
+    }
+
+    if (s.duration) {
+      const d = s.duration;
+      document.getElementById('detailDuration').textContent = d < 60 ? `${d} min` : d === 60 ? '1 hour' : `${d / 60} hours`;
+      document.getElementById('detailDurationCard').style.display = 'block';
+    }
+
+    if (s.notes) {
+      document.getElementById('detailNotes').textContent = s.notes;
+      document.getElementById('detailNotesCard').style.display = 'block';
+    }
+
+    const statusMap = { scheduled: 'Confirmed', 'waiting for teacher': 'Pending', canceled: 'Cancelled', completed: 'Completed' };
+    const statusClass = { scheduled: 'scheduled', 'waiting for teacher': 'pending', canceled: 'canceled', completed: 'completed' };
+    const statusEl = document.getElementById('detailStatus');
+    const st = s.status || 'scheduled';
+    statusEl.innerHTML = `<span class="status-pill ${statusClass[st] || 'scheduled'}">${statusMap[st] || st}</span>`;
+
+    const linkArea = document.getElementById('meetingLinkArea');
+    if (s.meetingUrl) {
+      const provider = s.meetingProvider ? s.meetingProvider.charAt(0).toUpperCase() + s.meetingProvider.slice(1) : '';
+      linkArea.innerHTML = `
+        <a href="${s.meetingUrl}" target="_blank" class="join-btn">
+          <i class="fas fa-arrow-up-right-from-square"></i>
+          Join${provider ? ' on ' + provider : ' session'}
+        </a>
+      `;
+    } else {
+      linkArea.innerHTML = `<div class="no-link-note"><i class="fas fa-clock" style="margin-right:6px;"></i>No meeting link yet — one will be shared before the session starts.</div>`;
+    }
+  </script>
+
+</body>
+</html>
