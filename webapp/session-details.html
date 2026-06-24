@@ -175,9 +175,35 @@
           <i class="fas fa-arrow-up-right-from-square"></i>
           Join${provider ? ' on ' + provider : ' session'}
         </a>
+        ${s.isTeacher ? `<button onclick="goCreateMeeting()" class="btn btn-outline btn-block" style="margin-top:10px;width:100%;cursor:pointer;font-family:inherit;">
+          <i class="fas fa-rotate-right"></i> Create new meeting link
+        </button>` : ''}
+      `;
+    } else if (s.isTeacher) {
+      linkArea.innerHTML = `
+        <button onclick="goCreateMeeting()" class="btn btn-primary btn-block" style="width:100%;cursor:pointer;font-family:inherit;">
+          <i class="fas fa-video"></i> Create meeting link
+        </button>
       `;
     } else {
       linkArea.innerHTML = `<div class="no-link-note"><i class="fas fa-clock" style="margin-right:6px;"></i>No meeting link yet — one will be shared before the session starts.</div>`;
+    }
+
+    function goCreateMeeting() {
+      localStorage.setItem('teacherPendingRequest', JSON.stringify({
+        session_id:      s.session_id      || null,
+        tutorName:       localStorage.getItem('teacherFullName') || '',
+        tutorEmail:      localStorage.getItem('teacherEmail')    || '',
+        studentName:     s.otherName       || '',
+        studentEmail:    '',
+        subject:         s.subject         || '',
+        sessionType:     s.sessionDate ? 'scheduled' : 'immediate',
+        sessionDate:     s.sessionDate     || null,
+        sessionTime:     s.sessionTime     || null,
+        meetingUrl:      s.meetingUrl      || null,
+        meetingProvider: s.meetingProvider || null,
+      }));
+      window.location.href = 'meeting.html';
     }
   </script>
 

@@ -309,6 +309,8 @@
 
         function openScheduledSession(s) {
             localStorage.setItem('sessionDetails', JSON.stringify({
+                isTeacher:     true,
+                session_id:    s.session_id      || null,
                 otherName:     s.counterparty    || '',
                 subject:       s.subject         || '',
                 sessionDate:   s.session_date    || null,
