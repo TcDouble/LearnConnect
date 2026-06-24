@@ -307,6 +307,12 @@
       activeBtn = e.submitter;
       setLoading(true);
 
+      // Always fetch the real student email from DB — req.studentEmail may be blank
+      if (req.session_id) {
+        const { data: emailData } = await supabaseClient.rpc('get_student_email_for_session', { p_session_id: req.session_id });
+        if (emailData) req.studentEmail = emailData;
+      }
+
       const now = new Date();
       const formData = {
         tutorName:    req.tutorName,

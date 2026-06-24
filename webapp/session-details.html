@@ -189,13 +189,20 @@
       linkArea.innerHTML = `<div class="no-link-note"><i class="fas fa-clock" style="margin-right:6px;"></i>No meeting link yet — one will be shared before the session starts.</div>`;
     }
 
-    function goCreateMeeting() {
+    async function goCreateMeeting() {
+      let studentEmail = '';
+      if (s.session_id) {
+        try {
+          const { data } = await supabaseClient.rpc('get_student_email_for_session', { p_session_id: s.session_id });
+          studentEmail = data || '';
+        } catch (_) {}
+      }
       localStorage.setItem('teacherPendingRequest', JSON.stringify({
         session_id:      s.session_id      || null,
         tutorName:       localStorage.getItem('teacherFullName') || '',
         tutorEmail:      localStorage.getItem('teacherEmail')    || '',
         studentName:     s.otherName       || '',
-        studentEmail:    '',
+        studentEmail,
         subject:         s.subject         || '',
         sessionType:     s.sessionDate ? 'scheduled' : 'immediate',
         sessionDate:     s.sessionDate     || null,
