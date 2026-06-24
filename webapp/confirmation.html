@@ -221,14 +221,24 @@
         document.getElementById('sessionDate').textContent = 'Immediate';
         document.getElementById('sessionTime').textContent = 'Starting now';
       } else {
-        let dateStr = m.sessionDate, timeStr = m.sessionTime;
+        let dateStr = m.sessionDate, timeStr = m.sessionTime, utcStr = '';
         try {
           const d = new Date(`${m.sessionDate}T${m.sessionTime}`);
           dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
           timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          const pad = n => String(n).padStart(2,'0');
+          const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          utcStr = `${days[d.getUTCDay()]}, ${pad(d.getUTCDate())} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
         } catch (_) {}
         document.getElementById('sessionDate').textContent = dateStr;
         document.getElementById('sessionTime').textContent = timeStr;
+        if (utcStr) {
+          const sub2 = document.createElement('div');
+          sub2.className = 'sub'; sub2.style.color = '#94a3b8'; sub2.style.fontSize = '0.75rem';
+          sub2.textContent = utcStr;
+          document.getElementById('sessionTime').insertAdjacentElement('afterend', sub2);
+        }
       }
 
       document.getElementById('subject').textContent  = m.subject  || '—';

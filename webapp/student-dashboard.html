@@ -112,7 +112,8 @@
                         </div>
                         <div id="scheduledFields" style="display:none;">
                             <div class="form-row"><label>Date</label><input type="date" id="reqDate"></div>
-                            <div class="form-row"><label>Time</label><input type="time" id="reqTime"></div>
+                            <div class="form-row"><label>Time (your local time)</label><input type="time" id="reqTime"></div>
+                            <div id="reqUtcPreview" style="font-size:0.78rem;color:#64748b;margin-top:-6px;margin-bottom:8px;padding-left:2px;"></div>
                         </div>
                         <button type="submit" class="btn-save">Find teachers →</button>
                     </form>
@@ -131,7 +132,7 @@
                 </div>
                 <div class="form-row"><label>Full name</label><input type="text" id="studentFullName"></div><div class="form-row"><label>Email</label><input type="email" id="studentEmail" readonly></div><div class="form-row"><label>Short bio</label><textarea id="studentBio" rows="3" readonly></textarea><small class="ls-note">Display only — saving coming soon.</small></div><div class="form-row"><label>Age</label><input type="number" id="studentAge" min="5" max="100"></div><div class="form-row"><label>Education level</label><select id="studentGrade"><option value="">Select…</option><option>Primary school</option><option>High school</option><option>University</option><option>Vocational / TAFE</option><option>Other</option></select></div><div class="form-row"><label>Subjects interested in</label><div id="studentSubjectPicker"></div></div><div class="form-row"><label>Learning goals</label><textarea id="studentGoals" rows="2" readonly></textarea><small class="ls-note">Display only — saving coming soon.</small></div><button id="saveStudentProfileBtn" class="btn-save">Save changes</button>
             </div></div>
-            <div id="settings-section" class="hidden-section"><div class="dashboard-header"><h1>Settings</h1></div><div class="settings-form"><div class="form-row"><label>Email reminders</label><select id="reminderSetting"><option>All sessions</option><option>Only upcoming</option><option>None</option></select></div><div class="form-row"><label>Timezone</label><select id="studentTimezone"><option>Eastern Time</option><option>Central Time</option><option>Pacific Time</option></select></div><button id="saveStudentSettingsBtn" class="btn-save">Save settings</button></div></div>
+            <div id="settings-section" class="hidden-section"><div class="dashboard-header"><h1>Settings</h1></div><div class="settings-form"><div class="form-row"><label>Email reminders</label><select id="reminderSetting"><option>All sessions</option><option>Only upcoming</option><option>None</option></select></div><div class="form-row"><label>Timezone</label><select id="studentTimezone"></select></div><button id="saveStudentSettingsBtn" class="btn-save">Save settings</button></div></div>
         </main>
     </div>
     <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
@@ -456,10 +457,10 @@
             }
             alert('Profile saved!');
         });
-        document.getElementById('saveStudentSettingsBtn').addEventListener('click', () => { localStorage.setItem('studentReminders', document.getElementById('reminderSetting').value); localStorage.setItem('studentTZ', document.getElementById('studentTimezone').value); alert('Settings saved.'); });
+        document.getElementById('saveStudentSettingsBtn').addEventListener('click', async () => { const tz = document.getElementById('studentTimezone').value; localStorage.setItem('studentReminders', document.getElementById('reminderSetting').value); localStorage.setItem('studentTZ', tz); const { data: { session } } = await supabaseClient.auth.getSession(); if (session) await supabaseClient.from('Users').update({ timezone: tz }).eq('UID', session.user.id); alert('Settings saved.'); });
 
         const sections = { dashboard: document.getElementById('dashboard-section'), 'find-teacher': document.getElementById('find-teacher-section'), 'my-sessions': document.getElementById('my-sessions-section'), profile: document.getElementById('profile-section'), settings: document.getElementById('settings-section') };
-        function showSection(sectionId) { Object.keys(sections).forEach(id => sections[id].classList.add('hidden-section')); sections[sectionId].classList.remove('hidden-section'); document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active')); document.querySelector(`.sidebar-nav li[data-section="${sectionId}"]`).classList.add('active'); if (sectionId === 'find-teacher') resetFindTeacher(); if (sectionId === 'my-sessions') renderAllSessions(); if (sectionId === 'profile') loadProfileForm(); }
+        function showSection(sectionId) { Object.keys(sections).forEach(id => sections[id].classList.add('hidden-section')); sections[sectionId].classList.remove('hidden-section'); document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active')); document.querySelector(`.sidebar-nav li[data-section="${sectionId}"]`).classList.add('active'); if (sectionId === 'find-teacher') resetFindTeacher(); if (sectionId === 'my-sessions') renderAllSessions(); if (sectionId === 'profile') loadProfileForm(); if (sectionId === 'settings') buildTzSelect(document.getElementById('studentTimezone'), localStorage.getItem('studentTZ') || USER_TZ); }
         document.querySelectorAll('.sidebar-nav li').forEach(li => li.addEventListener('click', (e) => { e.preventDefault(); showSection(li.getAttribute('data-section')); }));
 
         // ── Notification bell ──────────────────────────────────────────────────
@@ -521,6 +522,15 @@
         function toggleScheduledFields() { const scheduled = reqSessionType.value === 'scheduled'; scheduledFields.style.display = scheduled ? 'block' : 'none'; document.getElementById('reqDate').required = scheduled; document.getElementById('reqTime').required = scheduled; }
         reqSessionType.addEventListener('change', toggleScheduledFields);
         toggleScheduledFields();
+
+        function updateReqUTCPreview() {
+            const d = document.getElementById('reqDate').value;
+            const t = document.getElementById('reqTime').value;
+            const el = document.getElementById('reqUtcPreview');
+            el.textContent = d && t ? `Stored as: ${fmtUTCDateTime(d, t)}` : '';
+        }
+        document.getElementById('reqDate').addEventListener('input', updateReqUTCPreview);
+        document.getElementById('reqTime').addEventListener('input', updateReqUTCPreview);
         document.getElementById('tutorRequestForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const sessionType = reqSessionType.value;

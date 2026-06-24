@@ -160,7 +160,7 @@
                 </div>
             </div>
 
-            <div id="settings-section" class="hidden-section"><div class="dashboard-header"><h1>Settings</h1></div><div class="settings-form"><div class="form-row"><label>Email notifications</label><select id="notifSetting"><option>All updates</option><option>Only session reminders</option><option>None</option></select></div><div class="form-row"><label>Timezone</label><select id="timezone"><option>Eastern Time</option><option>Central Time</option><option>Pacific Time</option></select></div><button id="saveSettingsBtn" class="btn-save">Save settings</button></div></div>
+            <div id="settings-section" class="hidden-section"><div class="dashboard-header"><h1>Settings</h1></div><div class="settings-form"><div class="form-row"><label>Email notifications</label><select id="notifSetting"><option>All updates</option><option>Only session reminders</option><option>None</option></select></div><div class="form-row"><label>Timezone</label><select id="timezone"></select></div><button id="saveSettingsBtn" class="btn-save">Save settings</button></div></div>
 
         </main>
     </div>
@@ -501,9 +501,12 @@
             alert('Availability saved!');
         });
 
-        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+        document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+            const tz = document.getElementById('timezone').value;
             localStorage.setItem('teacherNotif', document.getElementById('notifSetting').value);
-            localStorage.setItem('teacherTimezone', document.getElementById('timezone').value);
+            localStorage.setItem('teacherTimezone', tz);
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) await supabaseClient.from('Users').update({ timezone: tz }).eq('UID', session.user.id);
             alert('Settings saved.');
         });
 
@@ -527,7 +530,7 @@
             if (sectionId === 'profile')      loadProfileForm();
             if (sectionId === 'settings') {
                 document.getElementById('notifSetting').value = localStorage.getItem('teacherNotif') || 'All updates';
-                document.getElementById('timezone').value     = localStorage.getItem('teacherTimezone') || 'Eastern Time';
+                buildTzSelect(document.getElementById('timezone'), localStorage.getItem('teacherTimezone') || USER_TZ);
             }
         }
 
