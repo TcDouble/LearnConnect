@@ -46,36 +46,50 @@ function fmtUTCDateTime(localDateStr, localTimeStr) {
     } catch { return ''; }
 }
 
-// Populate a <select> with all IANA timezones sorted by current UTC offset.
-// Option value is the IANA name (e.g. "America/Los_Angeles").
+// Populate a <select> with common timezones shown as abbreviations.
+// Option value is the IANA name so DST is handled correctly in the DB.
 function buildTzSelect(selectEl, currentTz) {
-    const now = new Date();
-    const allTzs = typeof Intl.supportedValuesOf === 'function'
-        ? Intl.supportedValuesOf('timeZone')
-        : ['UTC','America/New_York','America/Chicago','America/Denver','America/Los_Angeles',
-           'America/Anchorage','Pacific/Honolulu','Europe/London','Europe/Paris','Europe/Berlin',
-           'Europe/Moscow','Asia/Dubai','Asia/Kolkata','Asia/Bangkok','Asia/Shanghai',
-           'Asia/Tokyo','Australia/Sydney','Pacific/Auckland'];
-
-    const items = allTzs.map(tz => {
-        try {
-            const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(now);
-            const offsetStr = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT+0';
-            const m = offsetStr.match(/GMT([+-])(\d+)(?::(\d+))?/);
-            const offsetMin = m ? (m[1] === '+' ? 1 : -1) * (parseInt(m[2]) * 60 + parseInt(m[3] || '0')) : 0;
-            return { tz, offsetMin, label: `${offsetStr} — ${tz.replace(/_/g, ' ')}` };
-        } catch { return null; }
-    }).filter(Boolean).sort((a, b) => a.offsetMin !== b.offsetMin ? a.offsetMin - b.offsetMin : a.tz.localeCompare(b.tz));
+    const TZ_LIST = [
+        { tz: 'Pacific/Midway',           label: 'SST  — Samoa Standard Time       (UTC−11)' },
+        { tz: 'Pacific/Honolulu',          label: 'HST  — Hawaii Standard Time      (UTC−10)' },
+        { tz: 'America/Anchorage',         label: 'AKST — Alaska Time               (UTC−9)'  },
+        { tz: 'America/Los_Angeles',       label: 'PST  — Pacific Time              (UTC−8)'  },
+        { tz: 'America/Phoenix',           label: 'MST  — Mountain Time (no DST)    (UTC−7)'  },
+        { tz: 'America/Denver',            label: 'MDT  — Mountain Time             (UTC−7)'  },
+        { tz: 'America/Chicago',           label: 'CST  — Central Time              (UTC−6)'  },
+        { tz: 'America/New_York',          label: 'EST  — Eastern Time              (UTC−5)'  },
+        { tz: 'America/Halifax',           label: 'AST  — Atlantic Time             (UTC−4)'  },
+        { tz: 'America/St_Johns',          label: 'NST  — Newfoundland Time         (UTC−3:30)'},
+        { tz: 'America/Sao_Paulo',         label: 'BRT  — Brazil Time               (UTC−3)'  },
+        { tz: 'Atlantic/Azores',           label: 'AZOT — Azores Time               (UTC−1)'  },
+        { tz: 'UTC',                        label: 'UTC  — Coordinated Universal Time(UTC+0)'  },
+        { tz: 'Europe/London',             label: 'GMT  — Greenwich Mean Time       (UTC+0)'  },
+        { tz: 'Europe/Paris',              label: 'CET  — Central European Time     (UTC+1)'  },
+        { tz: 'Europe/Helsinki',           label: 'EET  — Eastern European Time     (UTC+2)'  },
+        { tz: 'Europe/Moscow',             label: 'MSK  — Moscow Time               (UTC+3)'  },
+        { tz: 'Asia/Dubai',                label: 'GST  — Gulf Standard Time        (UTC+4)'  },
+        { tz: 'Asia/Karachi',              label: 'PKT  — Pakistan Time             (UTC+5)'  },
+        { tz: 'Asia/Kolkata',              label: 'IST  — India Standard Time       (UTC+5:30)'},
+        { tz: 'Asia/Dhaka',                label: 'BST  — Bangladesh Time           (UTC+6)'  },
+        { tz: 'Asia/Bangkok',              label: 'ICT  — Indochina Time            (UTC+7)'  },
+        { tz: 'Asia/Shanghai',             label: 'CST  — China Standard Time       (UTC+8)'  },
+        { tz: 'Asia/Singapore',            label: 'SGT  — Singapore Time            (UTC+8)'  },
+        { tz: 'Asia/Tokyo',                label: 'JST  — Japan Standard Time       (UTC+9)'  },
+        { tz: 'Australia/Darwin',          label: 'ACST — Australian Central Time   (UTC+9:30)'},
+        { tz: 'Australia/Sydney',          label: 'AEST — Australian Eastern Time   (UTC+10)' },
+        { tz: 'Pacific/Auckland',          label: 'NZST — New Zealand Time          (UTC+12)' },
+    ];
 
     selectEl.innerHTML = '';
-    for (const { tz, label } of items) {
+    let matched = false;
+    for (const { tz, label } of TZ_LIST) {
         const opt = document.createElement('option');
         opt.value = tz;
         opt.textContent = label;
-        if (tz === currentTz) opt.selected = true;
+        if (tz === currentTz) { opt.selected = true; matched = true; }
         selectEl.appendChild(opt);
     }
-    if (currentTz && !selectEl.value) {
+    if (currentTz && !matched) {
         const opt = document.createElement('option');
         opt.value = currentTz; opt.textContent = currentTz; opt.selected = true;
         selectEl.prepend(opt);
