@@ -203,11 +203,12 @@
             const { data, error } = await supabaseClient.rpc('list_teachers');
             teachers = error ? [] : (data || []);
             if (startISO) {
-                const { data: avail } = await supabaseClient.rpc('available_teachers', {
+                const { data: avail, error: availErr } = await supabaseClient.rpc('available_teachers', {
                     session_start: startISO,
                     session_end:   endISO
                 });
-                availableTeacherUIDs = new Set((avail || []).map(a => a.uid));
+                // On RPC error fall back to null (no filter) rather than empty set (no teachers shown)
+                availableTeacherUIDs = availErr ? null : new Set((avail || []).map(a => a.uid));
             } else {
                 availableTeacherUIDs = null;
             }
@@ -556,8 +557,9 @@
                 endISO   = endDt.toISOString();
             } else {
                 const now = new Date();
+                const durMs = (currentRequest.duration || 60) * 60000;
                 startISO = now.toISOString();
-                endISO   = new Date(now.getTime() + currentRequest.duration * 60000).toISOString();
+                endISO   = new Date(now.getTime() + durMs).toISOString();
             }
             await refreshTeachers(startISO, endISO);
             requestFormView.style.display = 'none';
