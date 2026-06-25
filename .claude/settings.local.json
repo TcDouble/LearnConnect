@@ -13,7 +13,13 @@
       "PowerShell(Remove-Item *)",
       "PowerShell(git config *)",
       "Bash(git config *)",
-      "Bash(xargs grep -l \"Users\\\\|Students\\\\|Teachers\")"
+      "Bash(xargs grep -l \"Users\\\\|Students\\\\|Teachers\")",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(git push *)",
+      "Bash(git rm *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
