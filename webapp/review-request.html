@@ -321,7 +321,7 @@
         studentEmail: req.studentEmail || '',
         sessionType,
         sessionDate:  req.sessionDate  ?? now.toISOString().slice(0, 10),
-        sessionTime:  req.sessionTime  ?? now.toTimeString().slice(0, 5),
+        sessionTime:  (req.sessionTime ?? now.toISOString().slice(11, 16)).slice(0, 5),
         subject:      req.subject,
         request:      req.request || ''
       };

@@ -315,6 +315,14 @@
         request
       };
 
+      // Convert session date/time to UTC for storage in meetingConfirmation.
+      // formData keeps local time (used for edge-function email display).
+      const refDt = (sessionType === 'scheduled' && sessionDate && sessionTime)
+          ? new Date(`${sessionDate}T${sessionTime}:00`)
+          : now;
+      const utcDate = refDt.toISOString().slice(0, 10);
+      const utcTime = refDt.toISOString().slice(11, 16);
+
       let confirmation;
       try {
         const data = await provider.createMeeting(formData);
@@ -323,7 +331,9 @@
           meetingUrl:   data.meetingUrl,
           roomName:     data.roomName,
           emailResults: data.emailResults || [],
-          ...formData
+          ...formData,
+          sessionDate: utcDate,
+          sessionTime: utcTime,
         };
       } catch (_) {
         confirmation = {
@@ -331,7 +341,9 @@
           meetingUrl:   `https://meet.learnconnect.com/demo-${Date.now()}`,
           roomName:     'demo-room',
           emailResults: [],
-          ...formData
+          ...formData,
+          sessionDate: utcDate,
+          sessionTime: utcTime,
         };
       }
 

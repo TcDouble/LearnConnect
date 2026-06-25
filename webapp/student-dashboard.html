@@ -8,7 +8,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         .dashboard-container { display: flex; min-height: calc(100vh - 140px); background: #f8fafc; }
-        .sidebar { width: 260px; background: white; border-right: 1px solid #e2e8f0; padding: 32px 0; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e2e8f0; padding: 32px 0; display: flex; flex-direction: column; }
+        .nav-btns { display: flex; align-items: center; gap: 6px; }
+        .profile-avatar-btn { width: 34px; height: 34px; border-radius: 50%; background: #2b7a4b; color: white; border: none; cursor: pointer; font-weight: 700; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
+        .profile-avatar-btn:hover { background: #235f3b; }
+        .sidebar-signout { padding: 16px 24px; border-top: 1px solid #e2e8f0; margin-top: auto; }
+        .btn-signout { width: 100%; padding: 10px 14px; background: none; border: 1px solid #e2e8f0; border-radius: 40px; color: #64748b; cursor: pointer; font-family: inherit; font-size: 0.88rem; display: flex; align-items: center; gap: 8px; transition: all 0.15s; }
+        .btn-signout:hover { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
         .sidebar-nav li { list-style: none; margin-bottom: 4px; }
         .sidebar-nav a { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: #334155; text-decoration: none; font-weight: 500; border-left: 3px solid transparent; }
         .sidebar-nav li.active a { background: #f1f5f9; border-left-color: #2b7a4b; color: #0f3b2c; }
@@ -77,7 +83,7 @@
     </style>
 </head>
 <body>
-    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div></nav></header>
+    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><div class="nav-btns"><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div><button class="profile-avatar-btn" id="profileAvatarBtn" onclick="showSection('profile')" title="My profile"><span id="profileInitials">?</span></button></div></nav></header>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="persona-switcher" id="personaSwitcher">
@@ -85,6 +91,9 @@
                 <a class="persona-pill disabled" id="teacherPill" title="Enable in My profile">Teacher</a>
             </div>
             <ul class="sidebar-nav"><li data-section="dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li data-section="find-teacher"><a href="#"><i class="fas fa-chalkboard-user"></i> Find a teacher</a></li><li data-section="my-sessions"><a href="#"><i class="fas fa-calendar-alt"></i> My sessions</a></li><li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li><li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li></ul>
+            <div class="sidebar-signout">
+                <button class="btn-signout" id="signOutBtn"><i class="fas fa-right-from-bracket"></i> Sign out</button>
+            </div>
         </aside>
         <main class="main-content">
             <div id="dashboard-section"><div class="dashboard-header"><h1>Welcome, <span id="studentNameDisplay">Student</span></h1><p id="sessionAlert">Loading your sessions…</p></div><div class="stats-row"><div class="stat-card"><div class="stat-number" id="myTeachersCount">0</div><div class="stat-label">My teachers</div></div><div class="stat-card"><div class="stat-number" id="subjectsCount">0</div><div class="stat-label">Subjects</div></div><div class="stat-card"><div class="stat-number" id="sessionsCompleted">0</div><div class="stat-label">Sessions completed</div></div><div class="stat-card"><div class="stat-number" id="nextSessionDate">—</div><div class="stat-label">Next session</div><div class="stat-sub" id="nextSessionTime"></div></div></div><div class="section-title">My teachers</div><div id="myTeachersGrid" class="teachers-grid"></div><div class="section-title">Upcoming sessions</div><table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Status</th></tr></thead><tbody id="upcomingSessionsBody"></tbody></table></div>
@@ -243,6 +252,7 @@
             await refreshSessions();
 
             document.getElementById('studentNameDisplay').innerText = studentInfo.fullName.split(' ')[0] || studentInfo.fullName;
+            document.getElementById('profileInitials').textContent = studentInfo.fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
             updateStats(); renderMyTeachers(); renderUpcomingSessions(); updateNotifications();
         }
 
@@ -567,6 +577,11 @@
             renderAvailableTeachers();
         });
         document.getElementById('editRequestBtn').addEventListener('click', resetFindTeacher);
+
+        document.getElementById('signOutBtn').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'index.html';
+        });
 
         init();
     </script>

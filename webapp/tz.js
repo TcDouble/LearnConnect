@@ -1,6 +1,15 @@
 // Centralised timezone utilities.
-// All times in Blocked_Time are stored as UTC; Teacher_Availability is stored
-// in the teacher's own local timezone (matched server-side via available_teachers RPC).
+//
+// Storage contract (what goes into Supabase):
+//   Blocked_Time  — date and starttime/endtime stored as UTC strings ("2026-06-17", "20:00:00").
+//   Teacher_Availability — starttime/endtime stored in the teacher's LOCAL timezone.
+//     Reason: weekly availability is a recurring LOCAL-time concept. DST shifts the UTC offset
+//     twice a year and PST sessions after ~4 pm would cross UTC midnight, breaking day-of-week
+//     matching. The available_teachers RPC converts UTC session times to the teacher's IANA
+//     timezone before comparing, so availability checks remain correct across DST transitions.
+//
+// Display contract:
+//   All date/time values shown to users are converted to their local timezone via fmtLocalDateTime.
 
 const USER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 

@@ -223,7 +223,8 @@
       } else {
         let dateStr = m.sessionDate, timeStr = m.sessionTime, utcStr = '';
         try {
-          const d = new Date(`${m.sessionDate}T${m.sessionTime}`);
+          // sessionDate/Time are always stored as UTC in meetingConfirmation
+          const d = new Date(`${m.sessionDate}T${(m.sessionTime || '00:00').slice(0, 5)}:00Z`);
           dateStr = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
           timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
           const pad = n => String(n).padStart(2,'0');

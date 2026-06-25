@@ -8,7 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         .dashboard-container { display: flex; min-height: calc(100vh - 140px); background: #f8fafc; }
-        .sidebar { width: 260px; background: white; border-right: 1px solid #e2e8f0; padding: 32px 0; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e2e8f0; padding: 32px 0; display: flex; flex-direction: column; }
+        .nav-btns { display: flex; align-items: center; gap: 6px; }
+        .profile-avatar-btn { width: 34px; height: 34px; border-radius: 50%; background: #2b7a4b; color: white; border: none; cursor: pointer; font-weight: 700; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
+        .profile-avatar-btn:hover { background: #235f3b; }
+        .sidebar-nav-wrap { flex: 1; }
+        .sidebar-signout { padding: 16px 24px; border-top: 1px solid #e2e8f0; margin-top: auto; }
+        .btn-signout { width: 100%; padding: 10px 14px; background: none; border: 1px solid #e2e8f0; border-radius: 40px; color: #64748b; cursor: pointer; font-family: inherit; font-size: 0.88rem; display: flex; align-items: center; gap: 8px; transition: all 0.15s; }
+        .btn-signout:hover { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
         .sidebar-nav li { list-style: none; margin-bottom: 4px; }
         .sidebar-nav a { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: #334155; text-decoration: none; font-weight: 500; border-left: 3px solid transparent; }
         .sidebar-nav li.active a { background: #f1f5f9; border-left-color: #2b7a4b; color: #0f3b2c; }
@@ -97,7 +104,7 @@
     </style>
 </head>
 <body>
-    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="about.html">About</a></li><li><a href="pricing.html">Pricing</a></li></ul><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div></nav></header>
+    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><div class="nav-btns"><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div><button class="profile-avatar-btn" id="profileAvatarBtn" onclick="showSection('profile')" title="My profile"><span id="profileInitials">?</span></button></div></nav></header>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="persona-switcher" id="personaSwitcher">
@@ -112,6 +119,9 @@
                 <li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li>
                 <li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li>
             </ul>
+            <div class="sidebar-signout">
+                <button class="btn-signout" id="signOutBtn"><i class="fas fa-right-from-bracket"></i> Sign out</button>
+            </div>
         </aside>
         <main class="main-content">
 
@@ -153,7 +163,7 @@
             </div></div>
 
             <div id="availability-section" class="hidden-section">
-                <div class="dashboard-header"><h1>My availability</h1><p>Set the times you're free each week. Students will only be matched with you during these windows.</p></div>
+                <div class="dashboard-header"><h1>My availability</h1><p>Set the times you're free each week (in your local timezone). Students will only be matched with you during these windows. The UTC equivalent is shown next to each slot.</p></div>
                 <div class="avail-form">
                     <div id="availabilityGrid"></div>
                     <button id="saveAvailabilityBtn" class="btn-save" style="margin-top:24px;">Save availability</button>
@@ -256,6 +266,7 @@
 
             await refreshSessions();
             document.getElementById('teacherNameDisplay').innerText = teacherInfo.fullName.split(' ')[0] || teacherInfo.fullName;
+            document.getElementById('profileInitials').textContent = teacherInfo.fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
             updateStats(); renderDashboardRequests(); renderDashboardSessions(); updateNotifications();
         }
 
@@ -424,6 +435,19 @@
         // ── Availability ──────────────────────────────────────────────────────
         const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
+        function availUTCHint(startVal, endVal) {
+            if (!startVal || !endVal) return '';
+            const ref = '1970-01-05'; // arbitrary Monday for reference
+            const toUTCStr = t => {
+                const d = new Date(`${ref}T${t}:00`);
+                if (isNaN(d)) return '';
+                const pad = n => String(n).padStart(2, '0');
+                return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+            };
+            const su = toUTCStr(startVal), eu = toUTCStr(endVal);
+            return (su && eu) ? `${su} – ${eu}` : '';
+        }
+
         function addSlotRow(container, start, end) {
             const addBtn = container.querySelector('.btn-add-slot');
             const row = document.createElement('div');
@@ -432,8 +456,13 @@
             const lbl = Object.assign(document.createElement('span'), { className: 'to-label', textContent: 'to' });
             const e = Object.assign(document.createElement('input'), { type: 'time', value: end || '17:00' });
             const rm = Object.assign(document.createElement('button'), { type: 'button', className: 'btn-remove-slot', textContent: '×' });
+            const hint = Object.assign(document.createElement('span'), { className: 'to-label', style: 'font-size:0.75rem;color:#94a3b8;margin-left:4px;' });
+            function updateHint() { hint.textContent = availUTCHint(s.value, e.value); }
+            s.addEventListener('change', updateHint);
+            e.addEventListener('change', updateHint);
+            updateHint();
             rm.addEventListener('click', () => row.remove());
-            row.append(s, lbl, e, rm);
+            row.append(s, lbl, e, rm, hint);
             container.insertBefore(row, addBtn);
         }
 
@@ -585,6 +614,11 @@
         }
         document.getElementById('notifBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('open'); });
         document.addEventListener('click', () => document.getElementById('notifDropdown').classList.remove('open'));
+
+        document.getElementById('signOutBtn').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'index.html';
+        });
 
         init();
     </script>
