@@ -69,18 +69,19 @@
         .picker-dropdown li { padding: 9px 16px; cursor: pointer; font-size: 0.9rem; }
         .picker-dropdown li:hover { background: #f3f0fd; }
         .picker-dropdown li.no-results { color: #94a3b8; cursor: default; }
-        .avail-form { max-width: 600px; }
-        .avail-day { border: 1px solid #e2e8f0; border-radius: 16px; margin-bottom: 12px; overflow: hidden; }
-        .avail-day-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #f8fafc; cursor: pointer; user-select: none; }
-        .avail-toggle { width: 18px; height: 18px; accent-color: #5f4bb6; cursor: pointer; flex-shrink: 0; }
-        .avail-day-name { font-weight: 600; min-width: 36px; }
-        .avail-day-status { font-size: 0.82rem; color: #94a3b8; margin-left: auto; }
+        .avail-form { max-width: 900px; }
+        #availabilityGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .avail-day { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+        .avail-day-header { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #f8fafc; cursor: pointer; user-select: none; }
+        .avail-toggle { width: 16px; height: 16px; accent-color: #5f4bb6; cursor: pointer; flex-shrink: 0; }
+        .avail-day-name { font-weight: 600; min-width: 36px; font-size: 0.9rem; }
+        .avail-day-status { font-size: 0.78rem; color: #94a3b8; margin-left: auto; }
         .avail-day.active .avail-day-status { color: #5f4bb6; }
-        .avail-slots { padding: 12px 16px 14px; display: none; border-top: 1px solid #e2e8f0; }
+        .avail-slots { padding: 10px 12px 12px; display: none; border-top: 1px solid #e2e8f0; }
         .avail-day.active .avail-slots { display: block; }
-        .avail-slot { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-        .avail-slot input[type="time"] { border: 1px solid #cbd5e1; border-radius: 10px; padding: 6px 10px; font-size: 0.88rem; width: auto; }
-        .avail-slot .to-label { font-size: 0.82rem; color: #64748b; }
+        .avail-slot { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+        .avail-slot input[type="time"] { border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 8px; font-size: 0.82rem; width: auto; }
+        .avail-slot .to-label { font-size: 0.78rem; color: #64748b; }
         .btn-remove-slot { background: #fee2e2; border: none; border-radius: 20px; color: #b91c1c; padding: 4px 10px; font-size: 0.78rem; cursor: pointer; }
         .btn-add-slot { background: none; border: 1px dashed #cbd5e1; border-radius: 10px; color: #64748b; padding: 6px 14px; font-size: 0.82rem; cursor: pointer; margin-top: 4px; width: 100%; text-align: left; }
         .btn-add-slot:hover { border-color: #5f4bb6; color: #5f4bb6; background: #f3f0fd; }
@@ -174,10 +175,10 @@
             </div></div>
 
             <div id="availability-section" class="hidden-section">
-                <div class="dashboard-header"><h1>My availability</h1><p>Set the times you're free each week (in your local timezone). Students will only be matched with you during these windows. The UTC equivalent is shown next to each slot.</p></div>
+                <div class="dashboard-header"><h1>My availability</h1><p style="font-size:0.85rem;color:#64748b;margin:2px 0 0;">Weekly windows when students can book you (local time — UTC shown per slot).</p></div>
                 <div class="avail-form">
                     <div id="availabilityGrid"></div>
-                    <button id="saveAvailabilityBtn" class="btn-save" style="margin-top:24px;">Save availability</button>
+                    <button id="saveAvailabilityBtn" class="btn-save" style="margin-top:14px;">Save availability</button>
                 </div>
             </div>
 
