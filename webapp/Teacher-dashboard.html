@@ -101,10 +101,19 @@
         .notif-title { font-weight: 600; font-size: 0.85rem; color: #0f3b2c; }
         .notif-sub { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
         .notif-empty { padding: 22px 16px; text-align: center; color: #94a3b8; font-size: 0.85rem; }
+        /* ── Profile dropdown ── */
+        .profile-wrap { position: relative; }
+        .profile-dropdown { position: absolute; right: 0; top: calc(100% + 10px); width: 190px; background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); z-index: 500; display: none; overflow: hidden; }
+        .profile-dropdown.open { display: block; }
+        .profile-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; padding: 11px 16px; font-size: 0.85rem; color: #334155; cursor: pointer; text-align: left; font-family: inherit; }
+        .profile-menu-item:hover { background: #f8fafc; color: #0f3b2c; }
+        .profile-menu-item.danger { color: #b91c1c; }
+        .profile-menu-item.danger:hover { background: #fef2f2; color: #b91c1c; }
+        .profile-menu-divider { height: 1px; background: #f1f5f9; margin: 4px 0; }
     </style>
 </head>
 <body>
-    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><div class="nav-btns"><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div><button class="profile-avatar-btn" id="profileAvatarBtn" onclick="showSection('profile')" title="My profile"><span id="profileInitials">?</span></button></div></nav></header>
+    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><div class="nav-btns"><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div><div class="profile-wrap" id="profileWrap"><button class="profile-avatar-btn" id="profileAvatarBtn" title="Account"><span id="profileInitials">?</span></button><div class="profile-dropdown" id="profileDropdown"><button class="profile-menu-item" id="menuProfile"><i class="fas fa-user-circle"></i> My profile</button><button class="profile-menu-item" id="menuSettings"><i class="fas fa-sliders-h"></i> Settings</button><div class="profile-menu-divider"></div><button class="profile-menu-item danger" id="menuSignOut"><i class="fas fa-right-from-bracket"></i> Sign out</button></div></div></div></nav></header>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="persona-switcher" id="personaSwitcher">
@@ -612,8 +621,12 @@
                 list.appendChild(el);
             });
         }
-        document.getElementById('notifBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('open'); });
-        document.addEventListener('click', () => document.getElementById('notifDropdown').classList.remove('open'));
+        document.getElementById('notifBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('open'); document.getElementById('profileDropdown').classList.remove('open'); });
+        document.getElementById('profileAvatarBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('profileDropdown').classList.toggle('open'); document.getElementById('notifDropdown').classList.remove('open'); });
+        document.getElementById('menuProfile').addEventListener('click', () => { showSection('profile'); document.getElementById('profileDropdown').classList.remove('open'); });
+        document.getElementById('menuSettings').addEventListener('click', () => { showSection('settings'); document.getElementById('profileDropdown').classList.remove('open'); });
+        document.getElementById('menuSignOut').addEventListener('click', async () => { await supabaseClient.auth.signOut(); window.location.href = 'index.html'; });
+        document.addEventListener('click', () => { document.getElementById('notifDropdown').classList.remove('open'); document.getElementById('profileDropdown').classList.remove('open'); });
 
         document.getElementById('signOutBtn').addEventListener('click', async () => {
             await supabaseClient.auth.signOut();
