@@ -71,15 +71,16 @@
         .picker-dropdown li.no-results { color: #94a3b8; cursor: default; }
         .avail-form { max-width: 900px; }
         #availabilityGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .avail-day { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
-        .avail-day-header { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #f8fafc; cursor: pointer; user-select: none; }
+        .avail-day { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; display: flex; align-items: stretch; }
+        .avail-day-header { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #f8fafc; cursor: pointer; user-select: none; flex-shrink: 0; min-width: 148px; }
         .avail-toggle { width: 16px; height: 16px; accent-color: #5f4bb6; cursor: pointer; flex-shrink: 0; }
         .avail-day-name { font-weight: 600; min-width: 36px; font-size: 0.9rem; }
         .avail-day-status { font-size: 0.78rem; color: #94a3b8; margin-left: auto; }
         .avail-day.active .avail-day-status { color: #5f4bb6; }
-        .avail-slots { padding: 10px 12px 12px; display: none; border-top: 1px solid #e2e8f0; }
-        .avail-day.active .avail-slots { display: block; }
-        .avail-slot { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+        .avail-slots { padding: 8px 12px; display: none; border-left: 1px solid #e2e8f0; flex: 1; }
+        .avail-day.active .avail-slots { display: flex; flex-direction: column; justify-content: center; }
+        .avail-slot { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+        .avail-slot:last-of-type { margin-bottom: 0; }
         .avail-slot input[type="time"] { border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 8px; font-size: 0.82rem; width: auto; }
         .avail-slot .to-label { font-size: 0.78rem; color: #64748b; }
         .btn-remove-slot { background: #fee2e2; border: none; border-radius: 20px; color: #b91c1c; padding: 4px 10px; font-size: 0.78rem; cursor: pointer; }
