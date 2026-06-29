@@ -288,7 +288,10 @@
 
     document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      try { await handleSubmit(e); } catch (err) { setLoading(false); showStatus('error', err.message || 'Unexpected error. Please try again.'); }
+    });
 
+    async function handleSubmit(e) {
       const tutorName    = document.getElementById('tutorName').value.trim();
       const tutorEmail   = document.getElementById('tutorEmail').value.trim();
       const studentName  = document.getElementById('studentName').value.trim();
@@ -351,18 +354,19 @@
         return;
       }
 
-      // Persist meeting link back to Blocked_Time if we came from a session
+      // Persist meeting link back to Blocked_Time (fire-and-forget — don't block the redirect)
       if (_pending?.session_id) {
-        await supabaseClient
+        supabaseClient
           .from('Blocked_Time')
           .update({ meeting_url: confirmation.meetingUrl, meeting_provider: confirmation.provider })
-          .eq('SessionID', _pending.session_id);
+          .eq('SessionID', _pending.session_id)
+          .then(() => {});
       }
 
       setLoading(false);
       localStorage.setItem('meetingConfirmation', JSON.stringify(confirmation));
       window.location.href = 'confirmation.html';
-    });
+    }
 
     function setLoading(on) {
       document.querySelectorAll('.submit-btn').forEach(btn => btn.disabled = on);
