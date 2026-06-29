@@ -335,16 +335,10 @@
           sessionDate: utcDate,
           sessionTime: utcTime,
         };
-      } catch (_) {
-        confirmation = {
-          provider:     providerChoice,
-          meetingUrl:   `https://meet.learnconnect.com/demo-${Date.now()}`,
-          roomName:     'demo-room',
-          emailResults: [],
-          ...formData,
-          sessionDate: utcDate,
-          sessionTime: utcTime,
-        };
+      } catch (err) {
+        setLoading(false);
+        showStatus('error', err.message || 'Failed to create meeting room. Please try again.');
+        return;
       }
 
       // Persist meeting link back to Blocked_Time if we came from a session
