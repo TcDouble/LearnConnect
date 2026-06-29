@@ -234,11 +234,21 @@
     let activeBtn = null;
 
     async function requestMeeting(providerName, payload) {
-      const res = await fetch(EDGE_FN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, provider: providerName }),
-      });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000);
+      let res;
+      try {
+        res = await fetch(EDGE_FN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, provider: providerName }),
+          signal: controller.signal,
+        });
+      } catch (e) {
+        throw new Error(e.name === 'AbortError' ? 'Request timed out — please try again.' : 'Network error — check your connection.');
+      } finally {
+        clearTimeout(timer);
+      }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Something went wrong.');
       return data;
