@@ -66,6 +66,66 @@
       font-size: 0.9rem;
       margin-top: 8px;
     }
+    .provider-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .provider-btn {
+      padding: 13px;
+      border-radius: 40px;
+      border: none;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.15s;
+    }
+    .provider-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .provider-btn.primary { background: #2b7a4b; color: white; }
+    .provider-btn.primary:hover:not(:disabled) { background: #235f3b; }
+    .provider-btn.outline { background: white; color: #0f3b2c; border: 1.5px solid #cbd5e1; }
+    .provider-btn.outline:hover:not(:disabled) { border-color: #2b7a4b; color: #2b7a4b; }
+    .spinner-inline {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+    .spinner-inline.dark {
+      border-color: rgba(15,59,44,0.25);
+      border-top-color: #0f3b2c;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .meeting-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: #dc2626;
+      font-size: 0.88rem;
+      margin-top: 8px;
+    }
+    .cancel-link {
+      display: block;
+      text-align: center;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      color: #94a3b8;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      width: 100%;
+    }
+    .cancel-link:hover { color: #64748b; }
   </style>
 </head>
 <body>
@@ -135,6 +195,8 @@
   <script src="supabase-client.js"></script>
   <script src="tz.js"></script>
   <script>
+    const EDGE_FN_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/create-meeting';
+
     const raw = localStorage.getItem('sessionDetails');
     if (!raw) { window.location.href = 'student-dashboard.html'; }
     const s = JSON.parse(raw);
@@ -167,29 +229,65 @@
     const st = s.status || 'scheduled';
     statusEl.innerHTML = `<span class="status-pill ${statusClass[st] || 'scheduled'}">${statusMap[st] || st}</span>`;
 
-    const linkArea = document.getElementById('meetingLinkArea');
-    if (s.meetingUrl) {
-      const provider = s.meetingProvider ? s.meetingProvider.charAt(0).toUpperCase() + s.meetingProvider.slice(1) : '';
-      linkArea.innerHTML = `
-        <a href="${s.meetingUrl}" target="_blank" class="join-btn">
-          <i class="fas fa-arrow-up-right-from-square"></i>
-          Join${provider ? ' on ' + provider : ' session'}
-        </a>
-        ${s.isTeacher ? `<button onclick="goCreateMeeting()" class="btn btn-outline btn-block" style="margin-top:10px;width:100%;cursor:pointer;font-family:inherit;">
-          <i class="fas fa-rotate-right"></i> Create new meeting link
-        </button>` : ''}
-      `;
-    } else if (s.isTeacher) {
-      linkArea.innerHTML = `
-        <button onclick="goCreateMeeting()" class="btn btn-primary btn-block" style="width:100%;cursor:pointer;font-family:inherit;">
-          <i class="fas fa-video"></i> Create meeting link
-        </button>
-      `;
-    } else {
-      linkArea.innerHTML = `<div class="no-link-note"><i class="fas fa-clock" style="margin-right:6px;"></i>No meeting link yet — one will be shared before the session starts.</div>`;
+    // ── Meeting link area ──────────────────────────────────────────────────
+
+    function renderMeetingArea() {
+      const area = document.getElementById('meetingLinkArea');
+      if (s.meetingUrl) {
+        const prov = s.meetingProvider
+          ? s.meetingProvider.charAt(0).toUpperCase() + s.meetingProvider.slice(1)
+          : '';
+        area.innerHTML = `
+          <a href="${s.meetingUrl}" target="_blank" class="join-btn">
+            <i class="fas fa-arrow-up-right-from-square"></i>
+            Join${prov ? ' on ' + prov : ' session'}
+          </a>
+          ${s.isTeacher ? `<button onclick="showProviderPicker()" class="btn btn-outline btn-block"
+              style="margin-top:10px;width:100%;cursor:pointer;font-family:inherit;">
+            <i class="fas fa-rotate-right"></i> Create new meeting link
+          </button>` : ''}
+        `;
+      } else if (s.isTeacher) {
+        area.innerHTML = `
+          <button onclick="showProviderPicker()" class="btn btn-primary btn-block"
+              style="width:100%;cursor:pointer;font-family:inherit;">
+            <i class="fas fa-video"></i> Create meeting link
+          </button>
+        `;
+      } else {
+        area.innerHTML = `<div class="no-link-note">
+          <i class="fas fa-clock" style="margin-right:6px;"></i>
+          No meeting link yet — one will be shared before the session starts.
+        </div>`;
+      }
     }
 
-    async function goCreateMeeting() {
+    function showProviderPicker() {
+      const area = document.getElementById('meetingLinkArea');
+      area.innerHTML = `
+        <p style="font-size:0.88rem;color:#64748b;margin:0 0 10px;">Choose a video platform:</p>
+        <div class="provider-grid">
+          <button id="btnJitsi" class="provider-btn primary" onclick="createMeeting('jitsi')">
+            <i class="fas fa-video"></i> Jitsi
+          </button>
+          <button id="btnDaily" class="provider-btn outline" onclick="createMeeting('daily')">
+            <i class="fas fa-video"></i> Daily
+          </button>
+        </div>
+        <button class="cancel-link" onclick="renderMeetingArea()">Cancel</button>
+      `;
+    }
+
+    async function createMeeting(providerName) {
+      const btnJitsi = document.getElementById('btnJitsi');
+      const btnDaily = document.getElementById('btnDaily');
+      btnJitsi.disabled = true;
+      btnDaily.disabled = true;
+
+      const activeBtn = providerName === 'jitsi' ? btnJitsi : btnDaily;
+      const spinnerClass = providerName === 'jitsi' ? '' : 'dark';
+      activeBtn.innerHTML = `<span class="spinner-inline ${spinnerClass}"></span> Creating…`;
+
       let studentEmail = '';
       if (s.session_id) {
         try {
@@ -197,21 +295,68 @@
           studentEmail = data || '';
         } catch (_) {}
       }
-      localStorage.setItem('teacherPendingRequest', JSON.stringify({
-        session_id:      s.session_id      || null,
-        tutorName:       localStorage.getItem('teacherFullName') || '',
-        tutorEmail:      localStorage.getItem('teacherEmail')    || '',
-        studentName:     s.otherName       || '',
+
+      const now = new Date();
+      const payload = {
+        tutorName:    localStorage.getItem('teacherFullName') || '',
+        tutorEmail:   localStorage.getItem('teacherEmail')    || '',
+        studentName:  s.otherName   || '',
         studentEmail,
-        subject:         s.subject         || '',
-        sessionType:     s.sessionDate ? 'scheduled' : 'immediate',
-        sessionDate:     s.sessionDate     || null,
-        sessionTime:     s.sessionTime     || null,
-        meetingUrl:      s.meetingUrl      || null,
-        meetingProvider: s.meetingProvider || null,
-      }));
-      window.location.href = 'meeting.html';
+        sessionDate:  s.sessionDate || now.toISOString().slice(0, 10),
+        sessionTime:  (s.sessionTime || now.toTimeString()).slice(0, 5),
+        subject:      s.subject     || 'General',
+        provider:     providerName,
+      };
+
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 20000);
+        let res;
+        try {
+          res = await fetch(EDGE_FN_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          });
+        } catch (e) {
+          throw new Error(e.name === 'AbortError' ? 'Request timed out — please try again.' : 'Network error — check your connection.');
+        } finally {
+          clearTimeout(timer);
+        }
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Something went wrong.');
+
+        // Persist to DB (fire-and-forget)
+        if (s.session_id) {
+          supabaseClient
+            .from('Blocked_Time')
+            .update({ meeting_url: result.meetingUrl, meeting_provider: result.provider })
+            .eq('SessionID', s.session_id)
+            .then(() => {});
+        }
+
+        // Update local state and re-render
+        s.meetingUrl = result.meetingUrl;
+        s.meetingProvider = result.provider;
+        renderMeetingArea();
+
+      } catch (err) {
+        const area = document.getElementById('meetingLinkArea');
+        area.innerHTML = `
+          <div class="meeting-error">
+            <i class="fas fa-triangle-exclamation"></i> ${err.message || 'Failed to create meeting link.'}
+          </div>
+          <button onclick="showProviderPicker()" class="btn btn-outline btn-block"
+              style="margin-top:10px;width:100%;cursor:pointer;font-family:inherit;">
+            Try again
+          </button>
+        `;
+      }
     }
+
+    renderMeetingArea();
   </script>
 
 </body>
