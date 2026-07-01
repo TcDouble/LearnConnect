@@ -128,6 +128,7 @@
                 <li data-section="dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                 <li data-section="requests"><a href="#"><i class="fas fa-inbox"></i> My requests</a></li>
                 <li data-section="schedule"><a href="#"><i class="fas fa-calendar-week"></i> Sessions</a></li>
+                <li data-section="past-meetings"><a href="#"><i class="fas fa-history"></i> Past meetings</a></li>
                 <li data-section="availability"><a href="#"><i class="fas fa-clock"></i> Availability</a></li>
                 <li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li>
                 <li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li>
@@ -158,8 +159,13 @@
             </div>
 
             <div id="schedule-section" class="hidden-section">
-                <div class="dashboard-header"><h1>Sessions</h1><p>Your confirmed and past sessions.</p></div>
+                <div class="dashboard-header"><h1>Sessions</h1><p>Your confirmed and upcoming sessions.</p></div>
                 <table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Time / Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table>
+            </div>
+
+            <div id="past-meetings-section" class="hidden-section">
+                <div class="dashboard-header"><h1>Past meetings</h1><p>Completed sessions and reviews.</p></div>
+                <table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Duration</th><th>Student rating</th><th>Your rating</th><th>Notes</th></tr></thead><tbody id="pastMeetingsBody"></tbody></table>
             </div>
             <div id="profile-section" class="hidden-section"><div class="dashboard-header"><h1>My profile</h1></div><div class="profile-form">
                 <div class="opt-in-row" id="alsoLearnRow">
@@ -371,8 +377,8 @@
 
         function renderScheduleSection() {
             const tbody = document.getElementById('scheduleSessionsBody'); tbody.innerHTML = '';
-            const confirmed = sessions.filter(s => s.status !== 'waiting for teacher');
-            if (!confirmed.length) { tbody.innerHTML = '<tr><td colspan="4">No sessions yet.</td></tr>'; return; }
+            const confirmed = sessions.filter(s => s.status !== 'waiting for teacher' && s.status !== 'completed');
+            if (!confirmed.length) { tbody.innerHTML = '<tr><td colspan="4">No upcoming sessions.</td></tr>'; return; }
             confirmed.forEach(s => {
                 const r = tbody.insertRow();
                 r.classList.add('clickable-row');
@@ -553,12 +559,13 @@
         });
 
         const sections = {
-            dashboard:    document.getElementById('dashboard-section'),
-            requests:     document.getElementById('requests-section'),
-            schedule:     document.getElementById('schedule-section'),
-            availability: document.getElementById('availability-section'),
-            profile:      document.getElementById('profile-section'),
-            settings:     document.getElementById('settings-section')
+            dashboard:       document.getElementById('dashboard-section'),
+            requests:        document.getElementById('requests-section'),
+            schedule:        document.getElementById('schedule-section'),
+            'past-meetings': document.getElementById('past-meetings-section'),
+            availability:    document.getElementById('availability-section'),
+            profile:         document.getElementById('profile-section'),
+            settings:        document.getElementById('settings-section')
         };
 
         function showSection(sectionId) {
@@ -566,10 +573,11 @@
             sections[sectionId].classList.remove('hidden-section');
             document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
             document.querySelector(`.sidebar-nav li[data-section="${sectionId}"]`).classList.add('active');
-            if (sectionId === 'requests')     renderFullRequests('');
-            if (sectionId === 'schedule')     renderScheduleSection();
-            if (sectionId === 'availability') loadAvailability();
-            if (sectionId === 'profile')      loadProfileForm();
+            if (sectionId === 'requests')      renderFullRequests('');
+            if (sectionId === 'schedule')      renderScheduleSection();
+            if (sectionId === 'past-meetings') renderPastMeetings();
+            if (sectionId === 'availability')  loadAvailability();
+            if (sectionId === 'profile')       loadProfileForm();
             if (sectionId === 'settings') {
                 document.getElementById('notifSetting').value = localStorage.getItem('teacherNotif') || 'All updates';
                 buildTzSelect(document.getElementById('timezone'), localStorage.getItem('teacherTimezone') || USER_TZ);
@@ -636,6 +644,53 @@
             await supabaseClient.auth.signOut();
             window.location.href = 'index.html';
         });
+
+        function fmtDuration(mins) {
+            if (!mins) return '—';
+            if (mins < 60) return `${mins} min`;
+            const h = Math.floor(mins / 60), m = mins % 60;
+            return m ? `${h}h ${m}m` : `${h}h`;
+        }
+
+        function starsHtml(n, total = 5) {
+            if (!n) return '<span style="color:#94a3b8">—</span>';
+            return '<span style="color:#f59e0b">' + '★'.repeat(n) + '</span><span style="color:#e2e8f0">' + '★'.repeat(total - n) + '</span>';
+        }
+
+        function renderPastMeetings() {
+            const tbody = document.getElementById('pastMeetingsBody');
+            tbody.innerHTML = '';
+            const past = sessions
+                .filter(s => s.status === 'completed')
+                .sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+            if (!past.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>';
+                return;
+            }
+            past.forEach(s => {
+                const r = tbody.insertRow();
+                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
+                r.insertCell(1).innerText = s.counterparty || '—';
+                r.insertCell(2).innerText = s.subject || '—';
+                r.insertCell(3).innerText = fmtDuration(s.actual_duration_minutes ?? s.duration);
+                r.insertCell(4).innerHTML = starsHtml(s.student_rating);
+                const myRatingCell = r.insertCell(5);
+                if (s.teacher_review_submitted_at) {
+                    myRatingCell.innerHTML = starsHtml(s.teacher_rating);
+                } else {
+                    myRatingCell.innerHTML = s.my_review_token
+                        ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" style="color:#2b7a4b;font-weight:600;font-size:0.82rem;white-space:nowrap;">Leave review →</a>`
+                        : '—';
+                }
+                const notesCell = r.insertCell(6);
+                if (s.teacher_notes) {
+                    const short = s.teacher_notes.length > 50 ? s.teacher_notes.slice(0, 50) + '…' : s.teacher_notes;
+                    notesCell.innerHTML = `<span title="${s.teacher_notes.replace(/"/g, '&quot;')}" style="color:#334155;font-size:0.85rem;">${short}</span>`;
+                } else {
+                    notesCell.innerHTML = '<span style="color:#94a3b8">—</span>';
+                }
+            });
+        }
 
         init();
     </script>

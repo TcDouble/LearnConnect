@@ -195,7 +195,8 @@
   <script src="supabase-client.js"></script>
   <script src="tz.js"></script>
   <script>
-    const EDGE_FN_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/create-meeting';
+    const EDGE_FN_URL          = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/create-meeting';
+    const COMPLETE_SESSION_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/complete-session';
 
     const raw = localStorage.getItem('sessionDetails');
     if (!raw) { window.location.href = 'student-dashboard.html'; }
@@ -245,6 +246,10 @@
           ${s.isTeacher ? `<button onclick="showProviderPicker()" class="btn btn-outline btn-block"
               style="margin-top:10px;width:100%;cursor:pointer;font-family:inherit;">
             <i class="fas fa-rotate-right"></i> Create new meeting link
+          </button>` : ''}
+      ${s.isTeacher && s.status === 'scheduled' ? `<button onclick="markComplete()" class="btn btn-outline btn-block"
+              style="margin-top:10px;width:100%;cursor:pointer;font-family:inherit;color:#64748b;border-color:#e2e8f0;">
+            <i class="fas fa-check-circle"></i> Mark session as complete
           </button>` : ''}
         `;
       } else if (s.isTeacher) {
@@ -353,6 +358,35 @@
             Try again
           </button>
         `;
+      }
+    }
+
+    async function markComplete() {
+      const area = document.getElementById('meetingLinkArea');
+      if (!confirm('Mark this session as complete? This will notify both you and the student to leave a review.')) return;
+
+      const { data: { session: authSession } } = await supabaseClient.auth.getSession();
+      if (!authSession) { alert('Please sign in to continue.'); return; }
+
+      const origHtml = area.innerHTML;
+      area.innerHTML = '<p style="color:#64748b;font-size:0.9rem;padding:12px 0;"><i class="fas fa-circle-notch fa-spin"></i> Marking as complete…</p>';
+
+      try {
+        const res = await fetch(COMPLETE_SESSION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authSession.access_token}` },
+          body: JSON.stringify({ session_id: s.session_id }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Could not complete session.');
+
+        s.status = 'completed';
+        const statusEl = document.getElementById('detailStatus');
+        if (statusEl) statusEl.innerHTML = '<span class="status-pill completed">Completed</span>';
+        renderMeetingArea();
+      } catch (err) {
+        area.innerHTML = origHtml;
+        alert(err.message || 'Failed to mark session as complete.');
       }
     }
 

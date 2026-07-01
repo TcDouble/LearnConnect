@@ -102,7 +102,7 @@
                 <span class="persona-pill active">Student</span>
                 <a class="persona-pill disabled" id="teacherPill" title="Enable in My profile">Teacher</a>
             </div>
-            <ul class="sidebar-nav"><li data-section="dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li data-section="find-teacher"><a href="#"><i class="fas fa-chalkboard-user"></i> Find a teacher</a></li><li data-section="my-sessions"><a href="#"><i class="fas fa-calendar-alt"></i> My sessions</a></li><li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li><li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li></ul>
+            <ul class="sidebar-nav"><li data-section="dashboard" class="active"><a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li><li data-section="find-teacher"><a href="#"><i class="fas fa-chalkboard-user"></i> Find a teacher</a></li><li data-section="my-sessions"><a href="#"><i class="fas fa-calendar-alt"></i> My sessions</a></li><li data-section="past-meetings"><a href="#"><i class="fas fa-history"></i> Past meetings</a></li><li data-section="profile"><a href="#"><i class="fas fa-user-circle"></i> My profile</a></li><li data-section="settings"><a href="#"><i class="fas fa-sliders-h"></i> Settings</a></li></ul>
             <div class="sidebar-signout">
                 <button class="btn-signout" id="signOutBtn"><i class="fas fa-right-from-bracket"></i> Sign out</button>
             </div>
@@ -146,6 +146,7 @@
                 </div>
             </div>
             <div id="my-sessions-section" class="hidden-section"><div class="dashboard-header"><h1>My sessions</h1></div><table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Status</th></tr></thead><tbody id="allSessionsBody"></tbody></table></div>
+            <div id="past-meetings-section" class="hidden-section"><div class="dashboard-header"><h1>Past meetings</h1><p>Completed sessions and your reviews.</p></div><table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Subject</th><th>Duration</th><th>Your rating</th></tr></thead><tbody id="pastMeetingsBody"></tbody></table></div>
             <div id="profile-section" class="hidden-section"><div class="dashboard-header"><h1>My profile</h1></div><div class="profile-form">
                 <div class="opt-in-row" id="alsoTeachRow">
                     <input type="checkbox" id="alsoTeach">
@@ -482,8 +483,8 @@
         });
         document.getElementById('saveStudentSettingsBtn').addEventListener('click', async () => { const tz = document.getElementById('studentTimezone').value; localStorage.setItem('studentReminders', document.getElementById('reminderSetting').value); localStorage.setItem('studentTZ', tz); const { data: { session } } = await supabaseClient.auth.getSession(); if (session) await supabaseClient.from('Users').update({ timezone: tz }).eq('UID', session.user.id); alert('Settings saved.'); });
 
-        const sections = { dashboard: document.getElementById('dashboard-section'), 'find-teacher': document.getElementById('find-teacher-section'), 'my-sessions': document.getElementById('my-sessions-section'), profile: document.getElementById('profile-section'), settings: document.getElementById('settings-section') };
-        function showSection(sectionId) { Object.keys(sections).forEach(id => sections[id].classList.add('hidden-section')); sections[sectionId].classList.remove('hidden-section'); document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active')); document.querySelector(`.sidebar-nav li[data-section="${sectionId}"]`).classList.add('active'); if (sectionId === 'find-teacher') resetFindTeacher(); if (sectionId === 'my-sessions') renderAllSessions(); if (sectionId === 'profile') loadProfileForm(); if (sectionId === 'settings') buildTzSelect(document.getElementById('studentTimezone'), localStorage.getItem('studentTZ') || USER_TZ); }
+        const sections = { dashboard: document.getElementById('dashboard-section'), 'find-teacher': document.getElementById('find-teacher-section'), 'my-sessions': document.getElementById('my-sessions-section'), 'past-meetings': document.getElementById('past-meetings-section'), profile: document.getElementById('profile-section'), settings: document.getElementById('settings-section') };
+        function showSection(sectionId) { Object.keys(sections).forEach(id => sections[id].classList.add('hidden-section')); sections[sectionId].classList.remove('hidden-section'); document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active')); document.querySelector(`.sidebar-nav li[data-section="${sectionId}"]`).classList.add('active'); if (sectionId === 'find-teacher') resetFindTeacher(); if (sectionId === 'my-sessions') renderAllSessions(); if (sectionId === 'past-meetings') renderPastMeetings(); if (sectionId === 'profile') loadProfileForm(); if (sectionId === 'settings') buildTzSelect(document.getElementById('studentTimezone'), localStorage.getItem('studentTZ') || USER_TZ); }
         document.querySelectorAll('.sidebar-nav li').forEach(li => li.addEventListener('click', (e) => { e.preventDefault(); showSection(li.getAttribute('data-section')); }));
 
         // ── Notification bell ──────────────────────────────────────────────────
@@ -598,6 +599,45 @@
             await supabaseClient.auth.signOut();
             window.location.href = 'index.html';
         });
+
+        function fmtDuration(mins) {
+            if (!mins) return '—';
+            if (mins < 60) return `${mins} min`;
+            const h = Math.floor(mins / 60), m = mins % 60;
+            return m ? `${h}h ${m}m` : `${h}h`;
+        }
+
+        function starsHtml(n, total = 5) {
+            if (!n) return '<span style="color:#94a3b8">—</span>';
+            return '<span style="color:#f59e0b">' + '★'.repeat(n) + '</span><span style="color:#e2e8f0">' + '★'.repeat(total - n) + '</span>';
+        }
+
+        function renderPastMeetings() {
+            const tbody = document.getElementById('pastMeetingsBody');
+            tbody.innerHTML = '';
+            const past = sessions
+                .filter(s => s.status === 'completed')
+                .sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+            if (!past.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>';
+                return;
+            }
+            past.forEach(s => {
+                const r = tbody.insertRow();
+                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
+                r.insertCell(1).innerText = s.counterparty || '—';
+                r.insertCell(2).innerText = s.subject || '—';
+                r.insertCell(3).innerText = fmtDuration(s.actual_duration_minutes ?? s.duration);
+                const myRatingCell = r.insertCell(4);
+                if (s.student_review_submitted_at) {
+                    myRatingCell.innerHTML = starsHtml(s.student_rating);
+                } else {
+                    myRatingCell.innerHTML = s.my_review_token
+                        ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" style="color:#2b7a4b;font-weight:600;font-size:0.82rem;white-space:nowrap;">Leave review →</a>`
+                        : '—';
+                }
+            });
+        }
 
         init();
     </script>

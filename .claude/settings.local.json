@@ -19,7 +19,9 @@
       "Bash(git push *)",
       "Bash(git rm *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(xargs grep -l \"Blocked_Time\")",
+      "Bash(xargs cat)"
     ]
   }
 }

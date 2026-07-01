@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnConnect — Session Review</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .review-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 20px 22px;
+      margin-bottom: 16px;
+    }
+    .review-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+    .review-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #0f3b2c;
+    }
+    .stars-row {
+      display: flex;
+      gap: 8px;
+      margin: 6px 0 4px;
+    }
+    .star {
+      font-size: 2rem;
+      cursor: pointer;
+      color: #e2e8f0;
+      line-height: 1;
+      transition: color 0.1s, transform 0.1s;
+      user-select: none;
+    }
+    .star:hover { transform: scale(1.1); }
+    .star.lit { color: #f59e0b; }
+    .star-hint {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-top: 4px;
+      min-height: 1.2em;
+    }
+    .notes-area {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: #334155;
+      resize: vertical;
+      transition: border-color 0.15s;
+      margin-top: 6px;
+    }
+    .notes-area:focus { outline: none; border-color: #2b7a4b; }
+    .submit-btn {
+      width: 100%;
+      padding: 15px;
+      background: #2b7a4b;
+      color: white;
+      border: none;
+      border-radius: 40px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s;
+    }
+    .submit-btn:hover:not(:disabled) { background: #235f3b; }
+    .submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .spinner {
+      display: none;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .thankyou-icon { font-size: 3rem; margin-bottom: 12px; }
+    .static-stars { color: #f59e0b; font-size: 1.4rem; letter-spacing: 2px; }
+    #errorState {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 16px;
+      padding: 20px;
+      color: #dc2626;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav class="container navbar">
+      <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+    </nav>
+  </header>
+
+  <main class="form-page">
+    <div class="container form-container">
+
+      <!-- Loading -->
+      <div id="loadingState" style="text-align:center; padding:40px 0; color:#64748b;">
+        <i class="fas fa-circle-notch fa-spin" style="font-size:1.5rem; color:#2b7a4b;"></i>
+        <p style="margin-top:12px;">Loading your review…</p>
+      </div>
+
+      <!-- Error -->
+      <div id="errorState" style="display:none;">
+        <i class="fas fa-triangle-exclamation" style="font-size:2rem; margin-bottom:10px;"></i>
+        <p id="errorMsg">Something went wrong. Please try again.</p>
+      </div>
+
+      <!-- Already submitted -->
+      <div id="alreadyState" style="display:none; text-align:center;">
+        <div class="thankyou-icon">✅</div>
+        <h1 style="color:#0f3b2c; margin-bottom:8px;">Already submitted</h1>
+        <p style="color:#64748b;">You've already left a review for this session. Thanks!</p>
+        <div id="alreadyRating" class="static-stars" style="margin-top:16px;"></div>
+        <p id="alreadyNotes" style="color:#334155; font-style:italic; margin-top:12px; display:none;"></p>
+      </div>
+
+      <!-- Review form -->
+      <div id="reviewState" style="display:none;">
+        <h1 style="color:#0f3b2c; margin-bottom:4px;">Rate your session</h1>
+        <p class="form-subhead" id="reviewSubhead" style="margin-bottom:24px;"></p>
+
+        <div class="form-section">
+          <h3><i class="fas fa-calendar-check"></i> Session</h3>
+          <div class="review-card">
+            <div class="review-label">Subject</div>
+            <div class="review-value" id="rSubject">—</div>
+          </div>
+          <div class="review-card">
+            <div class="review-label">With</div>
+            <div class="review-value" id="rWith">—</div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3><i class="fas fa-star"></i> Your rating</h3>
+          <div class="stars-row" id="starsRow">
+            <span class="star" data-v="1">★</span>
+            <span class="star" data-v="2">★</span>
+            <span class="star" data-v="3">★</span>
+            <span class="star" data-v="4">★</span>
+            <span class="star" data-v="5">★</span>
+          </div>
+          <div class="star-hint" id="starHint">Click a star to rate</div>
+        </div>
+
+        <div class="form-section" id="notesSection" style="display:none;">
+          <h3><i class="fas fa-pen-to-square"></i> Session notes</h3>
+          <p style="font-size:0.88rem; color:#64748b; margin:0 0 6px;">What did you cover? Any notes for your records.</p>
+          <textarea class="notes-area" id="notesArea" rows="5" placeholder="e.g. Covered quadratic equations, worked through 3 practice problems. Student is making good progress…"></textarea>
+        </div>
+
+        <button class="submit-btn" id="submitBtn" disabled>
+          <span class="spinner" id="submitSpinner"></span>
+          <span id="submitLabel">Select a rating to continue</span>
+        </button>
+      </div>
+
+      <!-- Thank you -->
+      <div id="thankYouState" style="display:none; text-align:center; padding:20px 0;">
+        <div class="thankyou-icon">🎉</div>
+        <h1 style="color:#0f3b2c; margin-bottom:8px;">Thanks for your review!</h1>
+        <p style="color:#64748b;">Your feedback helps make LearnConnect better.</p>
+        <a href="index.html" class="btn btn-primary" style="display:inline-block; margin-top:20px;">
+          Back to LearnConnect
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+
+  <script>
+    const SUBMIT_REVIEW_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/submit-review';
+    const STAR_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
+
+    const token = new URLSearchParams(location.search).get('token');
+
+    function show(id) {
+      ['loadingState', 'errorState', 'alreadyState', 'reviewState', 'thankYouState']
+        .forEach(s => document.getElementById(s).style.display = s === id ? '' : 'none');
+    }
+
+    function showError(msg) {
+      document.getElementById('errorMsg').textContent = msg || 'Something went wrong.';
+      show('errorState');
+    }
+
+    // ── Star rating ───────────────────────────────────────────────────────────
+    let selectedRating = 0;
+    const stars = document.querySelectorAll('.star');
+
+    function paintStars(upTo) {
+      stars.forEach(s => s.classList.toggle('lit', parseInt(s.dataset.v) <= upTo));
+    }
+
+    stars.forEach(star => {
+      star.addEventListener('mouseenter', () => paintStars(parseInt(star.dataset.v)));
+      star.addEventListener('click', () => {
+        selectedRating = parseInt(star.dataset.v);
+        paintStars(selectedRating);
+        document.getElementById('starHint').textContent = STAR_LABELS[selectedRating] || '';
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitLabel').textContent = 'Submit review';
+      });
+    });
+    document.getElementById('starsRow').addEventListener('mouseleave', () => paintStars(selectedRating));
+
+    // ── Load session ──────────────────────────────────────────────────────────
+    async function load() {
+      if (!token) { showError('No review token found in the link.'); return; }
+
+      let data;
+      try {
+        const res = await fetch(SUBMIT_REVIEW_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_session', token }),
+        });
+        data = await res.json();
+        if (!res.ok) { showError(data.error || 'Invalid or expired review link.'); return; }
+      } catch (_) {
+        showError('Network error — please check your connection.');
+        return;
+      }
+
+      if (data.alreadySubmitted) {
+        const ratingEl = document.getElementById('alreadyRating');
+        ratingEl.textContent = data.existingRating
+          ? '★'.repeat(data.existingRating) + '☆'.repeat(5 - data.existingRating)
+          : '';
+        if (data.existingNotes) {
+          const n = document.getElementById('alreadyNotes');
+          n.textContent = `"${data.existingNotes}"`;
+          n.style.display = '';
+        }
+        show('alreadyState');
+        return;
+      }
+
+      const otherName = data.role === 'teacher' ? data.studentName : data.teacherName;
+      document.getElementById('rSubject').textContent = data.subject || '—';
+      document.getElementById('rWith').textContent    = otherName  || '—';
+      document.getElementById('reviewSubhead').textContent =
+        data.role === 'teacher'
+          ? `How did your session with ${otherName} go?`
+          : `How was your session with ${otherName}?`;
+
+      if (data.role === 'teacher') {
+        document.getElementById('notesSection').style.display = '';
+      }
+
+      show('reviewState');
+    }
+
+    // ── Submit ────────────────────────────────────────────────────────────────
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      if (!selectedRating) return;
+
+      const btn     = document.getElementById('submitBtn');
+      const spinner = document.getElementById('submitSpinner');
+      const label   = document.getElementById('submitLabel');
+
+      btn.disabled       = true;
+      spinner.style.display = 'inline-block';
+      label.textContent  = 'Submitting…';
+
+      const notes = document.getElementById('notesArea').value.trim() || undefined;
+
+      try {
+        const res = await fetch(SUBMIT_REVIEW_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'submit', token, rating: selectedRating, notes }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          spinner.style.display = 'none';
+          btn.disabled = false;
+          label.textContent = 'Try again';
+          showError(data.error || 'Failed to submit. Please try again.');
+          return;
+        }
+        show('thankYouState');
+      } catch (_) {
+        spinner.style.display = 'none';
+        btn.disabled = false;
+        label.textContent = 'Try again';
+        showError('Network error — please check your connection.');
+      }
+    });
+
+    load();
+  </script>
+
+</body>
+</html>
