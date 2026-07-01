@@ -132,6 +132,7 @@
         <p style="color:#64748b;">You've already left a review for this session. Thanks!</p>
         <div id="alreadyRating" class="static-stars" style="margin-top:16px;"></div>
         <p id="alreadyNotes" style="color:#334155; font-style:italic; margin-top:12px; display:none;"></p>
+        <a id="alreadyDashLink" href="#" class="btn btn-primary" style="display:inline-block; margin-top:20px;">Back to dashboard</a>
       </div>
 
       <!-- Review form -->
@@ -180,8 +181,8 @@
         <div class="thankyou-icon">🎉</div>
         <h1 style="color:#0f3b2c; margin-bottom:8px;">Thanks for your review!</h1>
         <p style="color:#64748b;">Your feedback helps make LearnConnect better.</p>
-        <a href="index.html" class="btn btn-primary" style="display:inline-block; margin-top:20px;">
-          Back to LearnConnect
+        <a id="thankYouDashLink" href="#" class="btn btn-primary" style="display:inline-block; margin-top:20px;">
+          Back to dashboard
         </a>
       </div>
 
@@ -195,6 +196,7 @@
     const STAR_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
 
     const token = new URLSearchParams(location.search).get('token');
+    let userRole = null;
 
     function show(id) {
       ['loadingState', 'errorState', 'alreadyState', 'reviewState', 'thankYouState']
@@ -244,6 +246,8 @@
         return;
       }
 
+      userRole = data.role;
+
       if (data.alreadySubmitted) {
         const ratingEl = document.getElementById('alreadyRating');
         ratingEl.textContent = data.existingRating
@@ -254,6 +258,7 @@
           n.textContent = `"${data.existingNotes}"`;
           n.style.display = '';
         }
+        document.getElementById('alreadyDashLink').href = data.role === 'teacher' ? 'Teacher-dashboard.html' : 'student-dashboard.html';
         show('alreadyState');
         return;
       }
@@ -301,6 +306,7 @@
           showError(data.error || 'Failed to submit. Please try again.');
           return;
         }
+        document.getElementById('thankYouDashLink').href = userRole === 'teacher' ? 'Teacher-dashboard.html' : 'student-dashboard.html';
         show('thankYouState');
       } catch (_) {
         spinner.style.display = 'none';

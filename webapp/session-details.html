@@ -243,7 +243,7 @@
             <i class="fas fa-arrow-up-right-from-square"></i>
             Join${prov ? ' on ' + prov : ' session'}
           </a>
-          ${s.isTeacher ? `<button onclick="showProviderPicker()" class="btn btn-outline btn-block"
+          ${s.isTeacher && s.status !== 'completed' ? `<button onclick="showProviderPicker()" class="btn btn-outline btn-block"
               style="margin-top:10px;width:100%;cursor:pointer;font-family:inherit;">
             <i class="fas fa-rotate-right"></i> Create new meeting link
           </button>` : ''}
@@ -252,7 +252,7 @@
             <i class="fas fa-check-circle"></i> Mark session as complete
           </button>` : ''}
         `;
-      } else if (s.isTeacher) {
+      } else if (s.isTeacher && s.status !== 'completed') {
         area.innerHTML = `
           <button onclick="showProviderPicker()" class="btn btn-primary btn-block"
               style="width:100%;cursor:pointer;font-family:inherit;">
@@ -380,10 +380,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Could not complete session.');
 
-        s.status = 'completed';
-        const statusEl = document.getElementById('detailStatus');
-        if (statusEl) statusEl.innerHTML = '<span class="status-pill completed">Completed</span>';
-        renderMeetingArea();
+        window.location.href = `post-meeting-review.html?token=${data.teacher_review_token}`;
       } catch (err) {
         area.innerHTML = origHtml;
         alert(err.message || 'Failed to mark session as complete.');

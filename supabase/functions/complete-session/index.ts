@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
       ));
     }
 
-    return jsonResponse({ ok: true, results });
+    return jsonResponse({ ok: true, teacher_review_token: bt.teacher_review_token, results });
   } catch (e) {
     return jsonResponse({ error: (e as Error).message }, 500);
   }
