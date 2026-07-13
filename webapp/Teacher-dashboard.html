@@ -17,19 +17,19 @@
         .btn-signout { width: 100%; padding: 10px 14px; background: none; border: 1px solid #e2e8f0; border-radius: 40px; color: #64748b; cursor: pointer; font-family: inherit; font-size: 0.88rem; display: flex; align-items: center; gap: 8px; transition: all 0.15s; }
         .btn-signout:hover { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
         .sidebar-nav li { list-style: none; margin-bottom: 4px; }
-        .sidebar-nav a { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: #334155; text-decoration: none; font-weight: 500; border-left: 3px solid transparent; }
+        .sidebar-nav a { display: flex; align-items: center; gap: 10px; padding: 9px 20px; color: #334155; text-decoration: none; font-weight: 500; border-left: 3px solid transparent; }
         .sidebar-nav li.active a { background: #f1f5f9; border-left-color: #2b7a4b; color: #0f3b2c; }
-        .main-content { flex: 1; padding: 20px 28px; }
-        .dashboard-header { margin-bottom: 14px; }
-        .dashboard-header h1 { margin: 0 0 2px; font-size: 1.45rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
-        .stat-card { background: white; border-radius: 18px; padding: 14px 16px; border: 1px solid #e2e8f0; text-align: center; }
-        .stat-value { font-size: 1.8rem; font-weight: 700; color: #0f3b2c; }
-        .section-title { font-size: 1rem; font-weight: 600; margin: 18px 0 10px; color: #0f3b2c; text-transform: uppercase; letter-spacing: 0.04em; }
-        .search-bar { padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 40px; width: 240px; }
-        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 20px; overflow: hidden; }
-        .data-table th { text-align: left; padding: 14px 20px; background: #f1f5f9; }
-        .data-table td { padding: 12px 20px; border-bottom: 1px solid #eef2f6; }
+        .main-content { flex: 1; padding: 16px 22px; }
+        .dashboard-header { margin-bottom: 10px; }
+        .dashboard-header h1 { margin: 0 0 2px; font-size: 1.35rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
+        .stat-card { background: white; border-radius: 16px; padding: 10px 14px; border: 1px solid #e2e8f0; text-align: center; }
+        .stat-value { font-size: 1.6rem; font-weight: 700; color: #0f3b2c; }
+        .section-title { font-size: 0.85rem; font-weight: 600; margin: 12px 0 6px; color: #0f3b2c; text-transform: uppercase; letter-spacing: 0.04em; }
+        .search-bar { padding: 7px 14px; border: 1px solid #cbd5e1; border-radius: 40px; width: 220px; }
+        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
+        .data-table th { text-align: left; padding: 10px 16px; background: #f1f5f9; }
+        .data-table td { padding: 9px 16px; border-bottom: 1px solid #eef2f6; }
         .badge-subject { background: #eef2ff; padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; display: inline-block; margin-right: 5px; }
         .badge-status { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; display: inline-block; background: #f1f5f9; color: #334155; }
         .hidden-section { display: none; }
@@ -117,7 +117,7 @@
     </style>
 </head>
 <body>
-    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><div class="nav-btns"><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div><div class="profile-wrap" id="profileWrap"><button class="profile-avatar-btn" id="profileAvatarBtn" title="Account"><span id="profileInitials">?</span></button><div class="profile-dropdown" id="profileDropdown"><button class="profile-menu-item" id="menuProfile"><i class="fas fa-user-circle"></i> My profile</button><button class="profile-menu-item" id="menuSettings"><i class="fas fa-sliders-h"></i> Settings</button><div class="profile-menu-divider"></div><button class="profile-menu-item danger" id="menuSignOut"><i class="fas fa-right-from-bracket"></i> Sign out</button></div></div></div></nav></header>
+    <header><nav class="container navbar"><div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div><div class="nav-btns"><div class="notif-wrap"><button class="notif-btn" id="notifBtn" title="Notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge"></span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-header">Notifications</div><div id="notifList"></div></div></div><div class="profile-wrap" id="profileWrap"><button class="profile-avatar-btn" id="profileAvatarBtn" title="Account"><span id="profileInitials">?</span></button><div class="profile-dropdown" id="profileDropdown"><button class="profile-menu-item" id="menuProfile"><i class="fas fa-chalkboard-user"></i> Teacher profile</button><button class="profile-menu-item" id="menuStudentProfile"><i class="fas fa-graduation-cap"></i> Student profile</button><button class="profile-menu-item" id="menuSettings"><i class="fas fa-sliders-h"></i> Settings</button><div class="profile-menu-divider"></div><button class="profile-menu-item danger" id="menuSignOut"><i class="fas fa-right-from-bracket"></i> Sign out</button></div></div></div></nav></header>
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="persona-switcher" id="personaSwitcher">
@@ -285,6 +285,8 @@
             document.getElementById('teacherNameDisplay').innerText = teacherInfo.fullName.split(' ')[0] || teacherInfo.fullName;
             document.getElementById('profileInitials').textContent = teacherInfo.fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
             updateStats(); renderDashboardRequests(); renderDashboardSessions(); updateNotifications();
+            const pending = localStorage.getItem('pendingSection');
+            if (pending) { localStorage.removeItem('pendingSection'); showSection(pending); }
         }
 
         function updateStats() {
@@ -634,6 +636,7 @@
         document.getElementById('notifBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('open'); document.getElementById('profileDropdown').classList.remove('open'); });
         document.getElementById('profileAvatarBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('profileDropdown').classList.toggle('open'); document.getElementById('notifDropdown').classList.remove('open'); });
         document.getElementById('menuProfile').addEventListener('click', () => { showSection('profile'); document.getElementById('profileDropdown').classList.remove('open'); });
+        document.getElementById('menuStudentProfile').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); localStorage.setItem('pendingSection', 'profile'); window.location.href = 'student-dashboard.html'; });
         document.getElementById('menuSettings').addEventListener('click', () => { showSection('settings'); document.getElementById('profileDropdown').classList.remove('open'); });
         document.getElementById('menuSignOut').addEventListener('click', async () => { await supabaseClient.auth.signOut(); window.location.href = 'index.html'; });
         document.addEventListener('click', () => { document.getElementById('notifDropdown').classList.remove('open'); document.getElementById('profileDropdown').classList.remove('open'); });
