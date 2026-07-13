@@ -53,21 +53,21 @@ main { flex: 1; }
 }
 .hero {
     text-align: center;
-    padding: 32px 20px 20px;
+    padding: 20px 20px 14px;
 }
 .hero h1 {
-    font-size: 2.5rem;
+    font-size: 2.3rem;
     font-weight: 700;
     background: linear-gradient(135deg, #0f3b2c, #2b7a4b);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 .tagline {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     color: #475569;
-    margin-bottom: 24px;
+    margin-bottom: 14px;
 }
 .role-selector {
     display: flex;
@@ -109,12 +109,12 @@ main { flex: 1; }
 }
 .quick-nav {
     text-align: center;
-    margin: 32px auto;
-    padding: 22px 20px;
+    margin: 16px auto;
+    padding: 16px 20px;
     background: #f8fafc;
-    border-radius: 40px;
+    border-radius: 32px;
 }
-.quick-nav h2 { font-size: 1.6rem; margin-bottom: 16px; }
+.quick-nav h2 { font-size: 1.4rem; margin-bottom: 12px; }
 .quick-buttons {
     display: flex;
     gap: 14px;
@@ -263,12 +263,12 @@ footer {
 /* Form pages */
 .form-page { background: #f9fafb; min-height: 70vh; }
 .form-container {
-    max-width: 700px;
-    margin: 1.25rem auto;
+    max-width: 680px;
+    margin: 0.75rem auto;
     background: white;
-    border-radius: 28px;
-    padding: 24px 32px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+    border-radius: 24px;
+    padding: 20px 28px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
 }
 .steps {
     display: flex;
@@ -294,7 +294,7 @@ footer {
     font-size: 0.97rem;
 }
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 .form-group label {
     display: block;

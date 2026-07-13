@@ -114,6 +114,18 @@
         .profile-menu-item.danger { color: #b91c1c; }
         .profile-menu-item.danger:hover { background: #fef2f2; color: #b91c1c; }
         .profile-menu-divider { height: 1px; background: #f1f5f9; margin: 4px 0; }
+        /* ── Profile modal ── */
+        .pm-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center; }
+        .pm-overlay.open { display:flex; }
+        .pm-modal { background:white; border-radius:22px; width:min(560px,94vw); max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+        .pm-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #e2e8f0; position:sticky; top:0; background:white; z-index:1; border-radius:22px 22px 0 0; gap:8px; }
+        .pm-tabs { display:flex; gap:4px; flex-wrap:wrap; }
+        .pm-tab { padding:5px 11px; border-radius:40px; border:1px solid #e2e8f0; background:white; color:#64748b; font-weight:600; font-size:0.78rem; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; transition:all 0.15s; }
+        .pm-tab.active { background:#0f3b2c; color:white; border-color:#0f3b2c; }
+        .pm-tab:hover:not(.active) { border-color:#2b7a4b; color:#2b7a4b; }
+        .pm-close { background:none; border:none; font-size:1.2rem; color:#94a3b8; cursor:pointer; padding:4px 8px; border-radius:8px; line-height:1; }
+        .pm-close:hover { color:#334155; background:#f1f5f9; }
+        .pm-body { padding:16px 20px; }
     </style>
 </head>
 <body>
@@ -285,8 +297,6 @@
             document.getElementById('teacherNameDisplay').innerText = teacherInfo.fullName.split(' ')[0] || teacherInfo.fullName;
             document.getElementById('profileInitials').textContent = teacherInfo.fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
             updateStats(); renderDashboardRequests(); renderDashboardSessions(); updateNotifications();
-            const pending = localStorage.getItem('pendingSection');
-            if (pending) { localStorage.removeItem('pendingSection'); showSection(pending); }
         }
 
         function updateStats() {
@@ -635,9 +645,9 @@
         }
         document.getElementById('notifBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('open'); document.getElementById('profileDropdown').classList.remove('open'); });
         document.getElementById('profileAvatarBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('profileDropdown').classList.toggle('open'); document.getElementById('notifDropdown').classList.remove('open'); });
-        document.getElementById('menuProfile').addEventListener('click', () => { showSection('profile'); document.getElementById('profileDropdown').classList.remove('open'); });
-        document.getElementById('menuStudentProfile').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); localStorage.setItem('pendingSection', 'profile'); window.location.href = 'student-dashboard.html'; });
-        document.getElementById('menuSettings').addEventListener('click', () => { showSection('settings'); document.getElementById('profileDropdown').classList.remove('open'); });
+        document.getElementById('menuProfile').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); openProfileModal('teacher'); });
+        document.getElementById('menuStudentProfile').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); openProfileModal('student'); });
+        document.getElementById('menuSettings').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); openProfileModal('settings'); });
         document.getElementById('menuSignOut').addEventListener('click', async () => { await supabaseClient.auth.signOut(); window.location.href = 'index.html'; });
         document.addEventListener('click', () => { document.getElementById('notifDropdown').classList.remove('open'); document.getElementById('profileDropdown').classList.remove('open'); });
 
@@ -693,7 +703,139 @@
             });
         }
 
+        // ── Profile Modal ──────────────────────────────────────────────────────
+        let pmLoaded = {};
+
+        function openProfileModal(tab) {
+            pmLoaded = {};
+            document.getElementById('profileModal').classList.add('open');
+            switchModalTab(tab);
+        }
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('open');
+        }
+        function switchModalTab(tab) {
+            document.querySelectorAll('.pm-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            document.getElementById('pmTeacherTab').style.display  = tab === 'teacher'  ? '' : 'none';
+            document.getElementById('pmStudentTab').style.display   = tab === 'student'  ? '' : 'none';
+            document.getElementById('pmSettingsTab').style.display  = tab === 'settings' ? '' : 'none';
+            if (!pmLoaded[tab]) { pmLoadTab(tab); pmLoaded[tab] = true; }
+        }
+        async function pmLoadTab(tab) {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) return;
+            const uid = session.user.id;
+            if (tab === 'teacher') {
+                document.getElementById('pmTchName').value = teacherInfo.fullName;
+                document.getElementById('pmTchEmail').value = teacherInfo.email;
+                document.getElementById('pmTchExperience').value = teacherInfo.experience || 'Less than 1 year';
+                initSubjectPicker('pmTchSubjectPicker', (teacherInfo.subjects || '').split(',').map(s => s.trim()).filter(Boolean));
+                document.getElementById('pmAlsoLearn').checked  = personas.isStudent;
+                document.getElementById('pmAlsoLearn').disabled = personas.isStudent;
+            }
+            if (tab === 'student') {
+                const { data: s } = await supabaseClient.from('Students').select('age, grade_level, subject_list').eq('UID', uid).maybeSingle();
+                if (!s && !personas.isStudent) {
+                    document.getElementById('pmNoStudentMsg').style.display = '';
+                    document.getElementById('pmStudentFields').style.display = 'none';
+                } else {
+                    document.getElementById('pmNoStudentMsg').style.display = 'none';
+                    document.getElementById('pmStudentFields').style.display = '';
+                    document.getElementById('pmStuName').value  = teacherInfo.fullName;
+                    document.getElementById('pmStuEmail').value = teacherInfo.email;
+                    document.getElementById('pmStuAge').value   = s?.age || '';
+                    document.getElementById('pmStuGrade').value = s?.grade_level || '';
+                    initSubjectPicker('pmStuSubjectPicker', s?.subject_list || []);
+                }
+            }
+            if (tab === 'settings') {
+                document.getElementById('pmNotifSetting').value = localStorage.getItem('teacherNotif') || 'All updates';
+                buildTzSelect(document.getElementById('pmTimezone'), localStorage.getItem('teacherTimezone') || USER_TZ);
+            }
+        }
+        async function pmSaveTeacher() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) return;
+            const uid = session.user.id;
+            const fullName = document.getElementById('pmTchName').value.trim();
+            if (!fullName) { alert('Name is required.'); return; }
+            const { firstname, lastname } = splitFullName(fullName);
+            const subjectsArr = getPickerValues('pmTchSubjectPicker');
+            const years = rangeToYears(document.getElementById('pmTchExperience').value);
+            const { error: uErr } = await supabaseClient.from('Users').update({ firstname, lastname }).eq('UID', uid);
+            if (uErr) { alert(uErr.message); return; }
+            if (TID) await supabaseClient.from('Teachers').update({ subject_list: subjectsArr, years_experience: years }).eq('UID', uid);
+            teacherInfo.fullName = fullName; teacherInfo.subjects = subjectsArr.join(', '); teacherInfo.experience = document.getElementById('pmTchExperience').value;
+            localStorage.setItem('teacherFullName', fullName); localStorage.setItem('studentFullName', fullName);
+            document.getElementById('teacherNameDisplay').innerText = fullName.split(' ')[0] || fullName;
+            document.getElementById('profileInitials').textContent = fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+            const alsoLearn = document.getElementById('pmAlsoLearn');
+            if (alsoLearn.checked && !alsoLearn.disabled) { localStorage.setItem('editAddPersona', 'student'); window.location.href = 'Profile-setup.html'; return; }
+            alert('Teacher profile saved!');
+        }
+        async function pmSaveStudent() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) return;
+            const uid = session.user.id;
+            const fullName = document.getElementById('pmStuName').value.trim();
+            const { firstname, lastname } = splitFullName(fullName);
+            const subjectsArr = getPickerValues('pmStuSubjectPicker');
+            const grade = document.getElementById('pmStuGrade').value;
+            const age = parseInt(document.getElementById('pmStuAge').value, 10) || null;
+            await supabaseClient.from('Users').update({ firstname, lastname }).eq('UID', uid);
+            const { error } = await supabaseClient.from('Students').upsert({ UID: uid, grade_level: grade || null, age, subject_list: subjectsArr }, { onConflict: 'UID' });
+            if (error) { alert(error.message); return; }
+            localStorage.setItem('studentFullName', fullName);
+            alert('Student profile saved!');
+        }
+        async function pmSaveSettings() {
+            const tz = document.getElementById('pmTimezone').value;
+            const notif = document.getElementById('pmNotifSetting').value;
+            localStorage.setItem('teacherNotif', notif); localStorage.setItem('teacherTimezone', tz);
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) await supabaseClient.from('Users').update({ timezone: tz }).eq('UID', session.user.id);
+            alert('Settings saved.');
+        }
+
         init();
     </script>
+
+    <!-- Profile / Settings modal -->
+    <div id="profileModal" class="pm-overlay" onclick="if(event.target===this)closeProfileModal()">
+      <div class="pm-modal">
+        <div class="pm-header">
+          <div class="pm-tabs">
+            <button class="pm-tab active" data-tab="teacher" onclick="switchModalTab('teacher')"><i class="fas fa-chalkboard-user"></i> Teacher</button>
+            <button class="pm-tab" data-tab="student" onclick="switchModalTab('student')"><i class="fas fa-graduation-cap"></i> Student</button>
+            <button class="pm-tab" data-tab="settings" onclick="switchModalTab('settings')"><i class="fas fa-sliders-h"></i> Settings</button>
+          </div>
+          <button class="pm-close" onclick="closeProfileModal()">✕</button>
+        </div>
+        <div id="pmTeacherTab" class="pm-body">
+          <div class="form-row"><label>Full name</label><input type="text" id="pmTchName"></div>
+          <div class="form-row"><label>Email</label><input type="email" id="pmTchEmail" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;"></div>
+          <div class="form-row"><label>Subjects / specialties</label><div id="pmTchSubjectPicker"></div></div>
+          <div class="form-row"><label>Years of experience</label><select id="pmTchExperience"><option>Less than 1 year</option><option>1–2 years</option><option>3–5 years</option><option>6–10 years</option><option>10+ years</option></select></div>
+          <div class="opt-in-row" style="margin-top:10px;"><input type="checkbox" id="pmAlsoLearn"><label for="pmAlsoLearn">I also want to learn on LearnConnect</label></div>
+          <button class="btn-save" style="margin-top:14px;" onclick="pmSaveTeacher()">Save teacher profile</button>
+        </div>
+        <div id="pmStudentTab" class="pm-body" style="display:none;">
+          <div id="pmNoStudentMsg" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:12px;color:#64748b;font-size:0.88rem;">You don't have a student profile yet. Tick "I also want to learn" in the Teacher tab to create one.</div>
+          <div id="pmStudentFields">
+            <div class="form-row"><label>Full name</label><input type="text" id="pmStuName"></div>
+            <div class="form-row"><label>Email</label><input type="email" id="pmStuEmail" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;"></div>
+            <div class="form-row"><label>Age</label><input type="number" id="pmStuAge" min="5" max="100"></div>
+            <div class="form-row"><label>Education level</label><select id="pmStuGrade"><option value="">Select…</option><option>Primary school</option><option>High school</option><option>University</option><option>Vocational / TAFE</option><option>Other</option></select></div>
+            <div class="form-row"><label>Subjects interested in</label><div id="pmStuSubjectPicker"></div></div>
+            <button class="btn-save" style="margin-top:14px;" onclick="pmSaveStudent()">Save student profile</button>
+          </div>
+        </div>
+        <div id="pmSettingsTab" class="pm-body" style="display:none;">
+          <div class="form-row"><label>Email notifications</label><select id="pmNotifSetting"><option>All updates</option><option>Only session reminders</option><option>None</option></select></div>
+          <div class="form-row"><label>Timezone</label><select id="pmTimezone"></select></div>
+          <button class="btn-save" style="margin-top:14px;" onclick="pmSaveSettings()">Save settings</button>
+        </div>
+      </div>
+    </div>
 </body>
 </html>
