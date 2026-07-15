@@ -1,17 +1,30 @@
 // Edge Function: send-session-email
 // Sends notification or reminder emails for a Blocked_Time session.
 //
-// POST body: { type: 'confirmation' | 'reminder', session_id: string }
+// POST body: { type: 'confirmation' | 'reminder' | 'request', session_id: string }
 //   confirmation — student is emailed when their request is accepted (no meeting room)
+//   request      — teacher is emailed when a student sends a new tutoring request
 //   reminder     — both parties are emailed when session is starting soon
 //
 // Uses RESEND_API_KEY + FROM_EMAIL (same env vars as create-meeting).
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL     = Deno.env.get("FROM_EMAIL") ?? "onboarding@resend.dev";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function jsonResponse(payload: unknown, status = 200): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 async function sendEmail(to: string, subject: string, html: string) {
   if (!RESEND_API_KEY) return { to, ok: false, error: "RESEND_API_KEY not set" };
@@ -46,6 +59,19 @@ function confirmationHtml(studentName: string, teacherName: string, subject: str
       📅 <strong>${when}</strong>
     </div>
     <p style="font-size:13px;color:#64748b">Log in to LearnConnect to view your session details. You'll receive a reminder before it starts.</p>
+  `);
+}
+
+function requestHtml(teacherName: string, studentName: string, subject: string, when: string) {
+  return brand(`
+    <h2 style="color:#0f3b2c;margin:0 0 12px">New tutoring request 📬</h2>
+    <p style="color:#334155">Hi ${teacherName},</p>
+    <p style="color:#334155"><strong>${studentName}</strong> has requested a session with you.</p>
+    <div style="background:#fef9c3;border-radius:12px;padding:16px;margin:16px 0;color:#0f3b2c">
+      📚 <strong>${subject}</strong><br>
+      📅 <strong>${when}</strong>
+    </div>
+    <p style="font-size:13px;color:#64748b">Log in to LearnConnect to accept or decline this request.</p>
   `);
 }
 
@@ -91,7 +117,7 @@ Deno.serve(async (req) => {
 
     const { type, session_id } = await req.json().catch(() => ({}));
     if (!session_id) return jsonResponse({ error: "session_id required" }, 400);
-    if (type !== "confirmation" && type !== "reminder") return jsonResponse({ error: "type must be confirmation or reminder" }, 400);
+    if (type !== "confirmation" && type !== "reminder" && type !== "request") return jsonResponse({ error: "type must be confirmation, request, or reminder" }, 400);
 
     // Fetch session row
     const { data: bt } = await admin
@@ -138,6 +164,14 @@ Deno.serve(async (req) => {
           studentEmail,
           `Session confirmed: ${subject} with ${teacherName}`,
           confirmationHtml(studentName, teacherName, subject, when),
+        ));
+      }
+    } else if (type === "request") {
+      if (teacherEmail) {
+        results.push(await sendEmail(
+          teacherEmail,
+          `New request: ${subject} from ${studentName}`,
+          requestHtml(teacherName, studentName, subject, when),
         ));
       }
     } else {

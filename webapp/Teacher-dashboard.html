@@ -641,9 +641,15 @@
             const soonCutoff = new Date(now.getTime() + 60 * 60 * 1000);
             const notifs = [];
             const sentReminders = new Set(JSON.parse(localStorage.getItem('lcSentReminders') || '[]'));
+            const sentRequests = new Set(JSON.parse(localStorage.getItem('lcSentRequests') || '[]'));
             // Pending student requests
             sessions.filter(s => s.status === 'waiting for teacher').forEach(s => {
                 notifs.push({ type: 'request', icon: 'fa-envelope', title: `New request from ${s.counterparty || 'a student'}`, sub: s.subject || '', action: () => showSection('requests') });
+                if (!sentRequests.has(s.session_id)) {
+                    sentRequests.add(s.session_id);
+                    localStorage.setItem('lcSentRequests', JSON.stringify([...sentRequests]));
+                    callSessionEmail('request', s.session_id);
+                }
             });
             // Sessions starting within the next 60 minutes
             sessions.filter(s => s.status === 'scheduled' && s.session_date && s.starttime).forEach(s => {

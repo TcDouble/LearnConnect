@@ -76,7 +76,8 @@
       "Bash(node avail_test.js)",
       "Bash(chromium-cli --help)",
       "Bash(node -e \"require\\('playwright'\\)\")",
-      "Bash(pkill -f \"http.server 8791\")"
+      "Bash(pkill -f \"http.server 8791\")",
+      "mcp__supabase__list_migrations"
     ]
   }
 }

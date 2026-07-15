@@ -115,14 +115,6 @@
                         <div class="form-group"><label>Subjects I need help with</label><div id="studentSubjectPicker"></div></div>
                         <div class="form-group"><label>Learning goals</label><textarea rows="2" id="goals" placeholder="e.g. Pass my year 12 exams, improve essay writing…"></textarea></div>
                     </div>
-                    <div class="form-section"><h3><i class="fas fa-calendar-alt"></i> AVAILABILITY <small class="ls-note" style="margin-left:8px;">Display only — saving coming soon.</small></h3>
-                        <div class="form-group"><label>Available days</label><div class="days-buttons" id="studentDays"><span class="day disabled" data-day="Mon">Mon</span><span class="day disabled" data-day="Tue">Tue</span><span class="day disabled" data-day="Wed">Wed</span><span class="day disabled" data-day="Thu">Thu</span><span class="day disabled" data-day="Fri">Fri</span><span class="day disabled" data-day="Sat">Sat</span><span class="day disabled" data-day="Sun">Sun</span></div></div>
-                        <div class="form-group"><label>Preferred session times</label><select id="sessionTimes" disabled><option>Morning (9am – 12pm)</option><option>Afternoon (1pm – 5pm)</option><option selected>Evening (5pm – 9pm)</option></select></div>
-                    </div>
-                    <div class="form-section"><h3><i class="fas fa-lock"></i> PRIVATE INFO (ONLY YOU CAN SEE THIS)</h3>
-                        <div class="form-group"><label>Parent or guardian email</label><input type="email" id="parentEmail" placeholder="Display only — saving coming soon." readonly></div>
-                        <div class="form-group"><label>School or institution</label><input type="text" id="school" placeholder="e.g. Lincoln High School"></div>
-                    </div>
                 </div>
 
                 <!-- Teacher fields -->
@@ -139,14 +131,6 @@
                         <div class="form-group"><label>Short bio</label><textarea rows="3" id="teacherBio" placeholder="Tell students about your background and teaching style…"></textarea></div>
                         <div class="form-group"><label>Subjects / specialties</label><div id="teacherSubjectPicker"></div></div>
                         <div class="form-group"><label>Years of experience</label><select id="experience"><option>Less than 1 year</option><option>1–2 years</option><option selected>3–5 years</option><option>6–10 years</option><option>10+ years</option></select></div>
-                    </div>
-                    <div class="form-section"><h3><i class="fas fa-calendar-alt"></i> SCHEDULE & AVAILABILITY <small class="ls-note" style="margin-left:8px;">Display only — saving coming soon.</small></h3>
-                        <div class="form-group"><label>Available days</label><div class="days-buttons" id="teacherDays"><span class="day disabled" data-day="Mon">Mon</span><span class="day disabled" data-day="Tue">Tue</span><span class="day disabled" data-day="Wed">Wed</span><span class="day disabled" data-day="Thu">Thu</span><span class="day disabled" data-day="Fri">Fri</span><span class="day disabled" data-day="Sat">Sat</span><span class="day disabled" data-day="Sun">Sun</span></div></div>
-                        <div class="form-group"><label>Preferred session times</label><select id="teacherSessionTimes" disabled><option>Morning (9am – 12pm)</option><option selected>Afternoon (12pm – 5pm)</option><option>Evening (5pm – 9pm)</option></select></div>
-                    </div>
-                    <div class="form-section"><h3><i class="fas fa-lock"></i> PRIVATE INFO (ONLY YOU CAN SEE THIS)</h3>
-                        <div class="form-group"><label>Phone number</label><input type="tel" id="teacherPhone" placeholder="+1 (555) 000-0000"></div>
-                        <div class="form-group"><label>Institution or school</label><input type="text" id="teacherSchool" placeholder="Display only — saving coming soon." readonly></div>
                     </div>
                 </div>
 
@@ -273,27 +257,6 @@
         initSubjectPicker('studentSubjectPicker', []);
         initSubjectPicker('teacherSubjectPicker', []);
 
-        // ── Availability day toggles ──────────────────────────────────────────
-        const studentSelectedDays = new Set();
-        document.querySelectorAll('#studentDays .day').forEach(day => {
-            day.addEventListener('click', () => {
-                if (day.classList.contains('disabled')) return;
-                const name = day.getAttribute('data-day');
-                if (studentSelectedDays.has(name)) { studentSelectedDays.delete(name); day.classList.remove('selected'); }
-                else { studentSelectedDays.add(name); day.classList.add('selected'); }
-            });
-        });
-
-        const teacherSelectedDays = new Set();
-        document.querySelectorAll('#teacherDays .day').forEach(day => {
-            day.addEventListener('click', () => {
-                if (day.classList.contains('disabled')) return;
-                const name = day.getAttribute('data-day');
-                if (teacherSelectedDays.has(name)) { teacherSelectedDays.delete(name); day.classList.remove('selected'); }
-                else { teacherSelectedDays.add(name); day.classList.add('selected'); }
-            });
-        });
-
         // ── Submit ────────────────────────────────────────────────────────────
         profileForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -320,11 +283,7 @@
                     educationLevel: document.getElementById('educationLevel').value,
                     age,
                     subjects,
-                    goals: document.getElementById('goals').value,
-                    availableDays: Array.from(studentSelectedDays),
-                    sessionTime: document.getElementById('sessionTimes').value,
-                    parentEmail: document.getElementById('parentEmail').value,
-                    school: document.getElementById('school').value
+                    goals: document.getElementById('goals').value
                 }));
                 calls.push(fetch(`${SUPABASE_URL}/functions/v1/create-student-profile`, {
                     method: 'POST',
@@ -334,7 +293,6 @@
                         'Authorization': `Bearer ${session.access_token}`
                     },
                     body: JSON.stringify({
-                        school: document.getElementById('school').value.trim(),
                         grade_level: document.getElementById('educationLevel').value || null,
                         age,
                         subject_list: subjects,
@@ -349,11 +307,7 @@
                 localStorage.setItem('teacherProfile', JSON.stringify({
                     bio: document.getElementById('teacherBio').value,
                     subjects,
-                    experience: document.getElementById('experience').value,
-                    availableDays: Array.from(teacherSelectedDays),
-                    sessionTimes: document.getElementById('teacherSessionTimes').value,
-                    phone: document.getElementById('teacherPhone').value,
-                    school: document.getElementById('teacherSchool').value
+                    experience: document.getElementById('experience').value
                 }));
                 const expText = document.getElementById('experience').value;
                 const years = /less than/i.test(expText) ? 0 : (expText.match(/\d+/) ? parseInt(expText.match(/\d+/)[0], 10) : 0);
@@ -367,8 +321,7 @@
                     body: JSON.stringify({
                         subject_list: subjects,
                         years_experience: years,
-                        bio: document.getElementById('teacherBio').value.trim() || null,
-                        phone_number: document.getElementById('teacherPhone').value.trim() || null
+                        bio: document.getElementById('teacherBio').value.trim() || null
                     })
                 }).then(async r => ({ which: 'teacher', ok: r.ok, body: await r.json() })));
             }

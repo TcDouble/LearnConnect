@@ -520,10 +520,16 @@
             const notifs = [];
             const seenConfirmed = new Set(JSON.parse(localStorage.getItem('lcSeenConfirmed') || '[]'));
             const sentReminders = new Set(JSON.parse(localStorage.getItem('lcSentReminders') || '[]'));
+            const sentConfirmations = new Set(JSON.parse(localStorage.getItem('lcSentConfirmations') || '[]'));
 
             // Newly-confirmed sessions the student hasn't dismissed yet
             sessions.filter(s => s.status === 'scheduled' && !seenConfirmed.has(s.session_id)).forEach(s => {
                 notifs.push({ type: 'confirmed', icon: 'fa-check-circle', title: `Session confirmed!`, sub: `${s.counterparty || 'Your teacher'} accepted your ${s.subject || ''} request`, action: () => { seenConfirmed.add(s.session_id); localStorage.setItem('lcSeenConfirmed', JSON.stringify([...seenConfirmed])); showSection('my-sessions'); } });
+                if (!sentConfirmations.has(s.session_id)) {
+                    sentConfirmations.add(s.session_id);
+                    localStorage.setItem('lcSentConfirmations', JSON.stringify([...sentConfirmations]));
+                    callSessionEmail('confirmation', s.session_id);
+                }
             });
 
             // Sessions starting within 60 minutes
