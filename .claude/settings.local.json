@@ -77,7 +77,10 @@
       "Bash(chromium-cli --help)",
       "Bash(node -e \"require\\('playwright'\\)\")",
       "Bash(pkill -f \"http.server 8791\")",
-      "mcp__supabase__list_migrations"
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__get_logs",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__get_publishable_keys"
     ]
   }
 }
