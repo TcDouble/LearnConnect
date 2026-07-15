@@ -6,6 +6,7 @@
     <title>LearnConnect — Teacher Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         .dashboard-container { display: flex; min-height: calc(100vh - 140px); background: #f8fafc; }
         .sidebar { width: 240px; background: white; border-right: 1px solid #e2e8f0; padding: 16px 0; display: flex; flex-direction: column; }
@@ -25,17 +26,21 @@
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
         .stat-card { background: white; border-radius: 16px; padding: 10px 14px; border: 1px solid #e2e8f0; text-align: center; }
         .stat-value { font-size: 1.6rem; font-weight: 700; color: #0f3b2c; }
+        .stat-label { font-size: 0.78rem; font-weight: 500; color: #64748b; margin-top: 4px; }
+        .stat-sub { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
+        .greeting { font-size: 0.85rem; font-weight: 400; color: #64748b; margin: 2px 0 0; }
+        .action-link { color: #2b7a4b; font-weight: 600; font-size: 0.82rem; white-space: nowrap; text-decoration: none; }
         .section-title { font-size: 0.85rem; font-weight: 600; margin: 12px 0 6px; color: #0f3b2c; text-transform: uppercase; letter-spacing: 0.04em; }
         .search-bar { padding: 7px 14px; border: 1px solid #cbd5e1; border-radius: 40px; width: 220px; }
         .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
         .data-table th { text-align: left; padding: 10px 16px; background: #f1f5f9; }
         .data-table td { padding: 9px 16px; border-bottom: 1px solid #eef2f6; }
-        .badge-subject { background: #eef2ff; padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; display: inline-block; margin-right: 5px; }
-        .badge-status { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; display: inline-block; background: #f1f5f9; color: #334155; }
+        .badge-subject { background: #eef2ff; padding: 4px 8px; border-radius: 20px; font-size: 0.72rem; display: inline-block; margin-right: 5px; }
+        .badge-status { padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; display: inline-block; background: #f1f5f9; color: #334155; }
         .hidden-section { display: none; }
         .profile-form, .settings-form { max-width: 600px; background: white; padding: 18px 20px; border-radius: 18px; }
         .form-row { margin-bottom: 14px; }
-        .form-row label { font-weight: 500; display: block; margin-bottom: 6px; }
+        .form-row label { font-weight: 600; display: block; margin-bottom: 6px; }
         .form-row input, .form-row textarea, .form-row select { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 16px; }
         .btn-save { background: #2b7a4b; color: white; border: none; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
         .btn-mini { border: none; border-radius: 20px; padding: 5px 12px; font-size: 0.75rem; cursor: pointer; margin-right: 6px; }
@@ -154,7 +159,7 @@
         <main class="main-content">
 
             <div id="dashboard-section">
-                <div class="dashboard-header"><h1>Welcome, <span id="teacherNameDisplay">Teacher</span></h1><p>Here's what's on.</p></div>
+                <div class="dashboard-header"><h1>Welcome, <span id="teacherNameDisplay">Teacher</span></h1><p class="greeting">Here's what's on.</p></div>
                 <div class="stats-grid">
                     <div class="stat-card"><div class="stat-value" id="pendingRequests">0</div><div class="stat-label">Pending requests</div></div>
                     <div class="stat-card" style="cursor:pointer;" onclick="showSection('schedule')"><div class="stat-value" id="weeklySessions">0</div><div class="stat-label">Upcoming sessions</div></div>
@@ -173,12 +178,12 @@
             </div>
 
             <div id="schedule-section" class="hidden-section">
-                <div class="dashboard-header"><h1>Sessions</h1><p>Your confirmed and upcoming sessions.</p></div>
+                <div class="dashboard-header"><h1>Sessions</h1><p class="greeting">Your confirmed and upcoming sessions.</p></div>
                 <table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Time / Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table>
             </div>
 
             <div id="past-meetings-section" class="hidden-section">
-                <div class="dashboard-header"><h1>Past meetings</h1><p>Completed sessions and reviews.</p></div>
+                <div class="dashboard-header"><h1>Past meetings</h1><p class="greeting">Completed sessions and reviews.</p></div>
                 <table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Duration</th><th>Student rating</th><th>Your rating</th><th>Notes</th></tr></thead><tbody id="pastMeetingsBody"></tbody></table>
             </div>
             <div id="profile-section" class="hidden-section"><div class="dashboard-header"><h1>My profile</h1></div><div class="profile-form">
@@ -196,7 +201,7 @@
             </div></div>
 
             <div id="availability-section" class="hidden-section">
-                <div class="dashboard-header"><h1>My availability</h1><p style="font-size:0.85rem;color:#64748b;margin:2px 0 0;">Weekly windows when students can book you. Set a start and end time, then add the slot — added slots can be removed but not edited.</p></div>
+                <div class="dashboard-header"><h1>My availability</h1><p class="greeting">Weekly windows when students can book you. Set a start and end time, then add the slot — added slots can be removed but not edited.</p></div>
                 <div class="avail-form">
                     <div id="availabilityGrid"></div>
                     <button id="saveAvailabilityBtn" class="btn-save" style="margin-top:14px;">Save availability</button>
@@ -337,7 +342,7 @@
                 r.insertCell(0).innerText = s.counterparty || '—';
                 r.insertCell(1).innerHTML = s.subject ? `<span class="badge-subject">${s.subject}</span>` : '—';
                 r.insertCell(2).innerText = s.session_date ? fmtLocalDateTime(s.session_date, s.starttime || '00:00') : 'Immediate';
-                r.insertCell(3).innerHTML = '<span style="color:#2b7a4b; font-size:0.85rem; font-weight:600;">View →</span>';
+                r.insertCell(3).innerHTML = '<span class="action-link">View →</span>';
             });
         }
 
@@ -372,7 +377,7 @@
         function joinLink(url) {
             if (!url) return '';
             return ` <a href="${url}" target="_blank" onclick="event.stopPropagation()"
-                        style="margin-left:8px; color:#2b7a4b; font-size:0.8rem; font-weight:600; white-space:nowrap;">Join →</a>`;
+                        class="action-link" style="margin-left:8px;">Join →</a>`;
         }
 
         function renderDashboardSessions() {
@@ -712,7 +717,7 @@
                     myRatingCell.innerHTML = starsHtml(s.teacher_rating);
                 } else {
                     myRatingCell.innerHTML = s.my_review_token
-                        ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" style="color:#2b7a4b;font-weight:600;font-size:0.82rem;white-space:nowrap;">Leave review →</a>`
+                        ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" class="action-link">Leave review →</a>`
                         : '—';
                 }
                 const notesCell = r.insertCell(6);
@@ -842,7 +847,7 @@
           <button class="btn-save" style="margin-top:14px;" onclick="pmSaveTeacher()">Save teacher profile</button>
         </div>
         <div id="pmStudentTab" class="pm-body" style="display:none;">
-          <div id="pmNoStudentMsg" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:12px;color:#64748b;font-size:0.88rem;">You don't have a student profile yet. Tick "I also want to learn" in the Teacher tab to create one.</div>
+          <div id="pmNoStudentMsg" class="greeting" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:12px;">You don't have a student profile yet. Tick "I also want to learn" in the Teacher tab to create one.</div>
           <div id="pmStudentFields">
             <div class="form-row"><label>Full name</label><input type="text" id="pmStuName"></div>
             <div class="form-row"><label>Email</label><input type="email" id="pmStuEmail" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;"></div>
