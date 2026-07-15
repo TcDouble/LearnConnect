@@ -83,9 +83,13 @@
         .avail-slot:last-of-type { margin-bottom: 0; }
         .avail-slot input[type="time"] { border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 8px; font-size: 0.82rem; width: auto; }
         .avail-slot .to-label { font-size: 0.78rem; color: #64748b; }
+        .avail-locked-list { display: flex; flex-direction: column; gap: 4px; }
+        .avail-locked-list:not(:empty) { margin-bottom: 6px; }
+        .slot-time-text { font-size: 0.82rem; font-weight: 600; color: #1e293b; background: #ece8f7; padding: 4px 10px; border-radius: 20px; }
         .btn-remove-slot { background: #fee2e2; border: none; border-radius: 20px; color: #b91c1c; padding: 4px 10px; font-size: 0.78rem; cursor: pointer; }
-        .btn-add-slot { background: none; border: 1px dashed #cbd5e1; border-radius: 10px; color: #64748b; padding: 6px 14px; font-size: 0.82rem; cursor: pointer; margin-top: 4px; width: 100%; text-align: left; }
-        .btn-add-slot:hover { border-color: #5f4bb6; color: #5f4bb6; background: #f3f0fd; }
+        .btn-confirm-slot { background: #5f4bb6; border: none; border-radius: 20px; color: white; padding: 4px 14px; font-size: 0.78rem; cursor: pointer; }
+        .btn-confirm-slot:hover { background: #4d3b96; }
+        .slot-error { width: 100%; font-size: 0.75rem; color: #b91c1c; margin-top: 2px; }
         @media (max-width: 768px) { .dashboard-container { flex-direction: column; } .sidebar { width: 100%; } .main-content { padding: 24px; } }
         /* ── Notification bell ── */
         .notif-wrap { position: relative; }
@@ -192,7 +196,7 @@
             </div></div>
 
             <div id="availability-section" class="hidden-section">
-                <div class="dashboard-header"><h1>My availability</h1><p style="font-size:0.85rem;color:#64748b;margin:2px 0 0;">Weekly windows when students can book you (local time — UTC shown per slot).</p></div>
+                <div class="dashboard-header"><h1>My availability</h1><p style="font-size:0.85rem;color:#64748b;margin:2px 0 0;">Weekly windows when students can book you. Set a start and end time, then add the slot — added slots can be removed but not edited.</p></div>
                 <div class="avail-form">
                     <div id="availabilityGrid"></div>
                     <button id="saveAvailabilityBtn" class="btn-save" style="margin-top:14px;">Save availability</button>
@@ -464,35 +468,21 @@
         // ── Availability ──────────────────────────────────────────────────────
         const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-        function availUTCHint(startVal, endVal) {
-            if (!startVal || !endVal) return '';
-            const ref = '1970-01-05'; // arbitrary Monday for reference
-            const toUTCStr = t => {
-                const d = new Date(`${ref}T${t}:00`);
-                if (isNaN(d)) return '';
-                const pad = n => String(n).padStart(2, '0');
-                return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
-            };
-            const su = toUTCStr(startVal), eu = toUTCStr(endVal);
-            return (su && eu) ? `${su} – ${eu}` : '';
+        function slotsOverlap(aStart, aEnd, bStart, bEnd) {
+            return aStart < bEnd && aEnd > bStart;
         }
 
-        function addSlotRow(container, start, end) {
-            const addBtn = container.querySelector('.btn-add-slot');
+        function addLockedSlotRow(lockedList, start, end, onChange) {
             const row = document.createElement('div');
-            row.className = 'avail-slot';
-            const s = Object.assign(document.createElement('input'), { type: 'time', value: start || '09:00' });
-            const lbl = Object.assign(document.createElement('span'), { className: 'to-label', textContent: 'to' });
-            const e = Object.assign(document.createElement('input'), { type: 'time', value: end || '17:00' });
+            row.className = 'avail-slot locked';
+            row.dataset.start = start;
+            row.dataset.end = end;
+            const text = Object.assign(document.createElement('span'), { className: 'slot-time-text', textContent: `${start} – ${end}` });
             const rm = Object.assign(document.createElement('button'), { type: 'button', className: 'btn-remove-slot', textContent: '×' });
-            const hint = Object.assign(document.createElement('span'), { className: 'to-label', style: 'font-size:0.75rem;color:#94a3b8;margin-left:4px;' });
-            function updateHint() { hint.textContent = availUTCHint(s.value, e.value); }
-            s.addEventListener('change', updateHint);
-            e.addEventListener('change', updateHint);
-            updateHint();
-            rm.addEventListener('click', () => row.remove());
-            row.append(s, lbl, e, rm, hint);
-            container.insertBefore(row, addBtn);
+            rm.addEventListener('click', () => { row.remove(); onChange(); });
+            row.append(text, rm);
+            lockedList.appendChild(row);
+            return row;
         }
 
         function renderAvailabilityForm(slots) {
@@ -506,25 +496,58 @@
                 const dayEl = document.createElement('div');
                 dayEl.className = 'avail-day' + (isActive ? ' active' : '');
                 dayEl.dataset.day = d;
+
                 const header = document.createElement('div');
                 header.className = 'avail-day-header';
                 const toggle = Object.assign(document.createElement('input'), { type: 'checkbox', className: 'avail-toggle', checked: isActive });
                 const nameEl = Object.assign(document.createElement('span'), { className: 'avail-day-name', textContent: DAY_SHORT[d] });
                 const statusEl = Object.assign(document.createElement('span'), { className: 'avail-day-status', textContent: isActive ? 'Available' : 'Not set' });
-                toggle.addEventListener('change', () => {
-                    dayEl.classList.toggle('active', toggle.checked);
-                    statusEl.textContent = toggle.checked ? 'Available' : 'Not set';
-                    if (toggle.checked && !slotsEl.querySelector('.avail-slot')) addSlotRow(slotsEl, '09:00', '17:00');
-                });
-                header.addEventListener('click', e => { if (e.target !== toggle) { toggle.checked = !toggle.checked; toggle.dispatchEvent(new Event('change')); } });
-                header.append(toggle, nameEl, statusEl);
+
                 const slotsEl = document.createElement('div');
                 slotsEl.className = 'avail-slots';
-                if (isActive) daySlots.forEach(sl => addSlotRow(slotsEl, (sl.starttime || '').slice(0,5), (sl.endtime || '').slice(0,5)));
-                else addSlotRow(slotsEl, '09:00', '17:00');
-                const addBtn = Object.assign(document.createElement('button'), { type: 'button', className: 'btn-add-slot', textContent: '+ Add another slot' });
-                addBtn.addEventListener('click', () => addSlotRow(slotsEl, '09:00', '17:00'));
-                slotsEl.appendChild(addBtn);
+                const lockedList = document.createElement('div');
+                lockedList.className = 'avail-locked-list';
+
+                function refreshStatus() {
+                    const hasSlots = !!lockedList.querySelector('.avail-slot.locked');
+                    statusEl.textContent = (toggle.checked && hasSlots) ? 'Available' : 'Not set';
+                }
+
+                daySlots.forEach(sl => addLockedSlotRow(lockedList, (sl.starttime || '').slice(0,5), (sl.endtime || '').slice(0,5), refreshStatus));
+
+                const draftRow = document.createElement('div');
+                draftRow.className = 'avail-slot draft';
+                const s = Object.assign(document.createElement('input'), { type: 'time', value: '09:00' });
+                const lbl = Object.assign(document.createElement('span'), { className: 'to-label', textContent: 'to' });
+                const e = Object.assign(document.createElement('input'), { type: 'time', value: '17:00' });
+                const addBtn = Object.assign(document.createElement('button'), { type: 'button', className: 'btn-confirm-slot', textContent: '+ Add slot' });
+                draftRow.append(s, lbl, e, addBtn);
+
+                const errorEl = document.createElement('div');
+                errorEl.className = 'slot-error';
+
+                addBtn.addEventListener('click', () => {
+                    errorEl.textContent = '';
+                    const startVal = s.value, endVal = e.value;
+                    if (!startVal || !endVal) { errorEl.textContent = 'Set both a start and end time.'; return; }
+                    if (startVal >= endVal) { errorEl.textContent = 'End time must be after start time.'; return; }
+                    const overlaps = Array.from(lockedList.querySelectorAll('.avail-slot.locked'))
+                        .some(row => slotsOverlap(startVal, endVal, row.dataset.start, row.dataset.end));
+                    if (overlaps) { errorEl.textContent = 'This overlaps an existing slot on this day.'; return; }
+                    addLockedSlotRow(lockedList, startVal, endVal, refreshStatus);
+                    dayEl.classList.add('active');
+                    toggle.checked = true;
+                    refreshStatus();
+                });
+
+                toggle.addEventListener('change', () => {
+                    dayEl.classList.toggle('active', toggle.checked);
+                    refreshStatus();
+                });
+                header.addEventListener('click', ev => { if (ev.target !== toggle) { toggle.checked = !toggle.checked; toggle.dispatchEvent(new Event('change')); } });
+                header.append(toggle, nameEl, statusEl);
+
+                slotsEl.append(lockedList, draftRow, errorEl);
                 dayEl.append(header, slotsEl);
                 grid.appendChild(dayEl);
             }
@@ -544,9 +567,8 @@
             const newSlots = [];
             document.querySelectorAll('#availabilityGrid .avail-day.active').forEach(dayEl => {
                 const day = parseInt(dayEl.dataset.day, 10);
-                dayEl.querySelectorAll('.avail-slot').forEach(row => {
-                    const times = row.querySelectorAll('input[type="time"]');
-                    const start = times[0]?.value; const end = times[1]?.value;
+                dayEl.querySelectorAll('.avail-slot.locked').forEach(row => {
+                    const start = row.dataset.start, end = row.dataset.end;
                     if (start && end) newSlots.push({ UID: uid, day, starttime: start, endtime: end });
                 });
             });

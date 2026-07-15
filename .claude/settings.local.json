@@ -72,7 +72,8 @@
       "Bash(taskkill //F //PID 32300)",
       "Bash(find 'C:\\\\Users\\\\thiru/AppData/Local/npm-cache/_npx' -maxdepth 2 -iname *playwright*)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5555/pricing.html)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 2 http://localhost:5555/pricing.html)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 2 http://localhost:5555/pricing.html)",
+      "Bash(node avail_test.js)"
     ]
   }
 }
