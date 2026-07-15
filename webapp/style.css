@@ -405,6 +405,15 @@ input[type="file"] { display: none; }
     background: #2b7a4b;
     color: white;
 }
+/* Home / About / Pricing: lock the viewport height so the footer sits just
+   below the content with no page scroll (desktop only — mobile still scrolls,
+   see the max-width: 768px overrides below). */
+.home-page,
+.about-page,
+.pricing-page {
+    height: 100vh;
+    overflow: hidden;
+}
 /* About & Pricing: wider container, bigger headings, more spacing, and
    explicitly centered grids/boxes so content fills the viewport. */
 .about-page .container,
@@ -414,13 +423,15 @@ input[type="file"] { display: none; }
 .about-page main,
 .pricing-page main {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    overflow: hidden;
 }
 .about-page .page-header,
 .pricing-page .page-header {
-    padding: 64px 0 36px;
+    padding: 24px 0 16px;
 }
 .about-page .page-header h1,
 .pricing-page .page-header h1 {
@@ -433,12 +444,12 @@ input[type="file"] { display: none; }
 }
 .about-page .features-grid {
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 36px;
-    margin: 52px auto 68px;
+    gap: 28px;
+    margin: 28px auto;
     justify-content: center;
 }
 .about-page .feature-card {
-    padding: 44px 32px;
+    padding: 28px 26px;
     border-radius: 26px;
 }
 .about-page .feature-card i {
@@ -452,35 +463,40 @@ input[type="file"] { display: none; }
     font-size: 1.05rem;
 }
 .about-page .cta-center {
-    margin: 32px auto 56px;
+    margin: 16px auto 24px;
     gap: 20px;
 }
 .pricing-page .pricing-grid {
     grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 36px;
-    margin: 52px auto 72px;
+    gap: 28px;
+    margin: 16px auto;
     justify-content: center;
 }
 .pricing-page .pricing-card {
-    padding: 40px 32px;
+    padding: 18px 28px;
     border-radius: 30px;
 }
 .pricing-page .pricing-card h3 {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
+    margin: 8px 0 4px;
 }
 .pricing-page .price {
-    font-size: 2.6rem;
+    font-size: 2.2rem;
+    margin: 6px 0;
 }
 .pricing-page .price.custom-price {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
 }
 .pricing-page .plan-description {
-    font-size: 1.05rem;
-    margin-bottom: 22px;
+    font-size: 1.02rem;
+    margin-bottom: 12px;
+}
+.pricing-page .feature-list {
+    margin: 8px 0 12px;
 }
 .pricing-page .feature-list li {
-    font-size: 1rem;
-    margin: 12px 0;
+    font-size: 0.97rem;
+    margin: 6px 0;
 }
 .about-page .btn,
 .pricing-page .btn {
@@ -494,21 +510,23 @@ input[type="file"] { display: none; }
 }
 .home-page main {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    overflow: hidden;
 }
 .home-page .hero {
-    padding: 64px 20px 48px;
+    padding: 32px 20px 24px;
 }
 .home-page .hero h1 {
-    font-size: 3.6rem;
-    margin-bottom: 22px;
+    font-size: 3.4rem;
+    margin-bottom: 18px;
 }
 .home-page .tagline {
-    font-size: 1.35rem;
+    font-size: 1.3rem;
     max-width: 760px;
-    margin: 0 auto 32px;
+    margin: 0 auto 24px;
 }
 .home-page .hero-cta {
     display: flex;
@@ -519,12 +537,12 @@ input[type="file"] { display: none; }
 }
 .home-page .quick-nav {
     max-width: 900px;
-    margin: 56px auto 72px;
-    padding: 44px 36px;
+    margin: 32px auto;
+    padding: 28px 36px;
 }
 .home-page .quick-nav h2 {
-    font-size: 2rem;
-    margin-bottom: 24px;
+    font-size: 1.9rem;
+    margin-bottom: 16px;
 }
 .home-page .quick-buttons {
     gap: 22px;
@@ -534,6 +552,12 @@ input[type="file"] { display: none; }
     font-size: 1.05rem;
 }
 @media (max-width: 768px) {
+    .home-page,
+    .about-page,
+    .pricing-page {
+        height: auto;
+        overflow: visible;
+    }
     .navbar { flex-direction: column; text-align: center; }
     .hero h1 { font-size: 1.8rem; }
     .role-card { width: 200px; padding: 18px 14px; }

@@ -65,7 +65,14 @@
       "PowerShell(try { Stop-Process -Id 46760 -Force -ErrorAction Stop; \"stopped 46760\" } catch { \"err: $_\" })",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 3 http://localhost:5555/about.html)",
       "Bash(node -e \"require.resolve\\('playwright'\\)\")",
-      "Bash(node verify_overflow.js)"
+      "Bash(node verify_overflow.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5555/index.html)",
+      "Bash(node -e \"require\\('playwright'\\); console.log\\('playwright ok'\\)\")",
+      "Bash(taskkill //F //IM python.exe //FI \"WINDOWTITLE eq *\")",
+      "Bash(taskkill //F //PID 32300)",
+      "Bash(find 'C:\\\\Users\\\\thiru/AppData/Local/npm-cache/_npx' -maxdepth 2 -iname *playwright*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5555/pricing.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 2 http://localhost:5555/pricing.html)"
     ]
   }
 }
