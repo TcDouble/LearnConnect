@@ -405,6 +405,88 @@ input[type="file"] { display: none; }
     background: #2b7a4b;
     color: white;
 }
+/* About & Pricing: wider container, bigger headings, more spacing, and
+   explicitly centered grids/boxes so content fills the viewport. */
+.about-page .container,
+.pricing-page .container {
+    max-width: 1440px;
+}
+.about-page main,
+.pricing-page main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.about-page .page-header,
+.pricing-page .page-header {
+    padding: 64px 0 36px;
+}
+.about-page .page-header h1,
+.pricing-page .page-header h1 {
+    font-size: 3.2rem;
+}
+.about-page .subheading,
+.pricing-page .subheading {
+    font-size: 1.3rem;
+    max-width: 800px;
+}
+.about-page .features-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 36px;
+    margin: 52px auto 68px;
+    justify-content: center;
+}
+.about-page .feature-card {
+    padding: 44px 32px;
+    border-radius: 26px;
+}
+.about-page .feature-card i {
+    margin-bottom: 18px;
+}
+.about-page .feature-card h3 {
+    font-size: 1.55rem;
+    margin-bottom: 12px;
+}
+.about-page .feature-card p {
+    font-size: 1.05rem;
+}
+.about-page .cta-center {
+    margin: 32px auto 56px;
+    gap: 20px;
+}
+.pricing-page .pricing-grid {
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 36px;
+    margin: 52px auto 72px;
+    justify-content: center;
+}
+.pricing-page .pricing-card {
+    padding: 40px 32px;
+    border-radius: 30px;
+}
+.pricing-page .pricing-card h3 {
+    font-size: 1.8rem;
+}
+.pricing-page .price {
+    font-size: 2.6rem;
+}
+.pricing-page .price.custom-price {
+    font-size: 1.25rem;
+}
+.pricing-page .plan-description {
+    font-size: 1.05rem;
+    margin-bottom: 22px;
+}
+.pricing-page .feature-list li {
+    font-size: 1rem;
+    margin: 12px 0;
+}
+.about-page .btn,
+.pricing-page .btn {
+    padding: 13px 28px;
+    font-size: 1.02rem;
+}
 /* Homepage: wider container and bigger, more spaced-out hero so content
    fills the viewport instead of leaving whitespace at the sides/bottom. */
 .home-page .container {
@@ -460,4 +542,12 @@ input[type="file"] { display: none; }
     .home-page .hero h1 { font-size: 2.1rem; }
     .home-page .tagline { font-size: 1.05rem; }
     .home-page .quick-nav { padding: 28px 20px; }
+    .about-page .page-header h1,
+    .pricing-page .page-header h1 { font-size: 2.1rem; }
+    .about-page .subheading,
+    .pricing-page .subheading { font-size: 1.05rem; }
+    .about-page .feature-card,
+    .pricing-page .pricing-card { padding: 28px 20px; }
+    .about-page .features-grid,
+    .pricing-page .pricing-grid { grid-template-columns: 1fr; }
 }

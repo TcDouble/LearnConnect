@@ -57,7 +57,15 @@
       "Bash(powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 5555 -State Listen | Select-Object -ExpandProperty OwningProcess\")",
       "Bash(powershell -NoProfile -Command \"Get-Process -Id \\(Get-NetTCPConnection -LocalPort 5555 -State Listen\\).OwningProcess | Select-Object Id,ProcessName\")",
       "Bash(powershell -NoProfile -Command \"Stop-Process -Id 12756 -Force\")",
-      "Bash(curl -s -o /dev/null -w \"post-stop status: %{http_code}\\\\n\" --max-time 3 http://localhost:5555/index.html)"
+      "Bash(curl -s -o /dev/null -w \"post-stop status: %{http_code}\\\\n\" --max-time 3 http://localhost:5555/index.html)",
+      "Bash(curl -s -o /dev/null -w \"about.html: %{http_code}\\\\n\" http://localhost:5555/about.html)",
+      "Bash(curl -s -o /dev/null -w \"pricing.html: %{http_code}\\\\n\" http://localhost:5555/pricing.html)",
+      "Bash(node verify.js)",
+      "PowerShell($conn = Get-NetTCPConnection -LocalPort 5555 -ErrorAction SilentlyContinue; if \\($conn\\) { Stop-Process -Id $conn.OwningProcess -Force; \"stopped pid $\\($conn.OwningProcess\\)\" } else { \"no listener found on 5555\" })",
+      "PowerShell(try { Stop-Process -Id 46760 -Force -ErrorAction Stop; \"stopped 46760\" } catch { \"err: $_\" })",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 3 http://localhost:5555/about.html)",
+      "Bash(node -e \"require.resolve\\('playwright'\\)\")",
+      "Bash(node verify_overflow.js)"
     ]
   }
 }
