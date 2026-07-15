@@ -405,10 +405,59 @@ input[type="file"] { display: none; }
     background: #2b7a4b;
     color: white;
 }
+/* Homepage: wider container and bigger, more spaced-out hero so content
+   fills the viewport instead of leaving whitespace at the sides/bottom. */
+.home-page .container {
+    max-width: 1440px;
+}
+.home-page main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.home-page .hero {
+    padding: 64px 20px 48px;
+}
+.home-page .hero h1 {
+    font-size: 3.6rem;
+    margin-bottom: 22px;
+}
+.home-page .tagline {
+    font-size: 1.35rem;
+    max-width: 760px;
+    margin: 0 auto 32px;
+}
+.home-page .hero-cta {
+    display: flex;
+    gap: 22px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+.home-page .quick-nav {
+    max-width: 900px;
+    margin: 56px auto 72px;
+    padding: 44px 36px;
+}
+.home-page .quick-nav h2 {
+    font-size: 2rem;
+    margin-bottom: 24px;
+}
+.home-page .quick-buttons {
+    gap: 22px;
+}
+.home-page .btn {
+    padding: 14px 30px;
+    font-size: 1.05rem;
+}
 @media (max-width: 768px) {
     .navbar { flex-direction: column; text-align: center; }
     .hero h1 { font-size: 1.8rem; }
     .role-card { width: 200px; padding: 18px 14px; }
     .pricing-grid { gap: 16px; }
     .btn { padding: 9px 18px; }
+    .home-page .hero h1 { font-size: 2.1rem; }
+    .home-page .tagline { font-size: 1.05rem; }
+    .home-page .quick-nav { padding: 28px 20px; }
 }
