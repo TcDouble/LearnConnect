@@ -1,0 +1,251 @@
+/* profile-setup.css — wide-form onboarding page, layered on top of style.css + auth.css */
+
+body.profile-setup-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f6f9f6;
+}
+.profile-setup-page header {
+    background: transparent;
+    padding: 6px 0;
+}
+.profile-setup-page .form-page {
+    background: transparent;
+    padding: 12px 20px 56px;
+}
+.profile-setup-page .form-container {
+    max-width: 760px;
+    margin: 18px auto 0;
+    padding: 34px 40px 36px;
+    border-radius: 28px;
+}
+.profile-setup-page .form-container h1 {
+    font-size: 1.7rem;
+    color: #0f3b2c;
+}
+.profile-setup-page .form-subhead { margin-bottom: 24px; }
+
+/* ---------- Persona picker ---------- */
+#personaPickerSection h3 {
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.persona-cards {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.persona-card {
+    flex: 1;
+    min-width: 220px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 18px 20px;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.persona-card:hover { border-color: #cbd5e1; }
+.persona-card input[type="checkbox"] {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+.persona-card-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: #eaf6ef;
+    color: #2b7a4b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+.persona-card.teacher .persona-card-icon { background: #f1edfb; color: #5f4bb6; }
+.persona-card-body h4 { font-size: 1rem; color: #1e293b; margin-bottom: 2px; }
+.persona-card-body p { font-size: 0.85rem; color: #64748b; margin: 0; }
+.persona-card-check {
+    margin-left: auto;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    font-size: 0.7rem;
+    transition: all 0.15s ease;
+}
+.persona-card.selected {
+    border-color: #2b7a4b;
+    background: #f6fbf8;
+    box-shadow: 0 0 0 3px rgba(43,122,75,0.08);
+}
+.persona-card.selected .persona-card-check {
+    background: #2b7a4b;
+    border-color: #2b7a4b;
+    color: white;
+}
+.persona-card.teacher.selected {
+    border-color: #5f4bb6;
+    background: #faf9fe;
+    box-shadow: 0 0 0 3px rgba(95,75,182,0.08);
+}
+.persona-card.teacher.selected .persona-card-check {
+    background: #5f4bb6;
+    border-color: #5f4bb6;
+}
+#personaPickerSection > small {
+    display: block;
+    margin-top: 12px;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+/* ---------- Persona blocks ---------- */
+.persona-block {
+    background: #fafdfb;
+    border: 1px solid #d9e7e0;
+    border-radius: 20px;
+    padding: 26px 28px;
+    margin: 24px 0;
+    position: relative;
+}
+.persona-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 24px; right: 24px;
+    height: 4px;
+    border-radius: 0 0 4px 4px;
+    background: #2b7a4b;
+}
+#teacherBlock { background: #faf9fd; border-color: #ddd6ee; }
+#teacherBlock::before { background: #5f4bb6; }
+.persona-block-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.persona-block-header .persona-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e6f2ec;
+    color: #2b7a4b;
+    font-size: 1.2rem;
+}
+#teacherBlock .persona-block-header .persona-icon { background: #ece8f7; color: #5f4bb6; }
+.persona-block-header h2 { font-size: 1.2rem; color: #0f3b2c; margin: 0; }
+.persona-block-header small { color: #64748b; display: block; margin-top: 2px; }
+.persona-block .form-section {
+    border-bottom-color: #e2e8f0;
+}
+.persona-block .form-section h3 {
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.persona-block .form-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+.persona-block.hidden { display: none; }
+
+/* ---------- Field polish ---------- */
+.ls-note {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: #94a3b8;
+    font-style: italic;
+}
+input[readonly], textarea[readonly], select:disabled {
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: not-allowed;
+}
+.file-input-wrapper { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.file-label.disabled {
+    opacity: 0.55;
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.coming-soon-badge {
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 40px;
+}
+
+/* ---------- Subject picker ---------- */
+.subject-picker {
+    position: relative;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 8px 12px;
+    background: white;
+    min-height: 44px;
+    cursor: text;
+}
+.subject-picker:focus-within { border-color: #2b7a4b; box-shadow: 0 0 0 3px rgba(43,122,75,0.1); }
+#teacherBlock .subject-picker:focus-within { border-color: #5f4bb6; box-shadow: 0 0 0 3px rgba(95,75,182,0.1); }
+.picker-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.picker-tag { display: flex; align-items: center; gap: 4px; background: #e6f2ec; color: #0f3b2c; padding: 3px 10px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; }
+#teacherBlock .picker-tag { background: #ece8f7; color: #3b2a7a; }
+.picker-tag button { background: none; border: none; cursor: pointer; color: #2b7a4b; font-size: 1rem; padding: 0; line-height: 1; }
+#teacherBlock .picker-tag button { color: #5f4bb6; }
+input.picker-search { border: none !important; outline: none; min-width: 120px; font-size: 0.9rem; background: transparent; padding: 2px 0 !important; box-shadow: none !important; width: auto; }
+.picker-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; max-height: 200px; overflow-y: auto; list-style: none; margin: 0; padding: 4px 0; }
+.picker-dropdown li { padding: 9px 16px; cursor: pointer; font-size: 0.9rem; }
+.picker-dropdown li:hover { background: #f0fdf4; }
+#teacherBlock .picker-dropdown li:hover { background: #f3f0fd; }
+.picker-dropdown li.no-results { color: #94a3b8; cursor: default; }
+
+/* ---------- Days / misc leftovers used elsewhere on this page ---------- */
+.day.disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; opacity: 0.7; }
+
+.picker-remember {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+    font-weight: 500;
+    color: #334155;
+}
+.picker-remember input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+
+@media (max-width: 768px) {
+    .profile-setup-page .form-container { padding: 26px 22px 30px; }
+    .persona-cards { flex-direction: column; }
+    .persona-block { padding: 20px 18px; }
+}

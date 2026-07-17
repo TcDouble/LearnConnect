@@ -132,8 +132,8 @@ body.auth-page {
 }
 .auth-page .form-subhead { margin-bottom: 26px; }
 
-/* Progress steps */
-.auth-page .steps {
+/* Progress steps (reusable — not scoped to .auth-page) */
+.steps {
     display: flex;
     align-items: center;
     gap: 0;
@@ -141,25 +141,29 @@ body.auth-page {
     padding-bottom: 0;
     margin-bottom: 24px;
 }
-.auth-page .step {
+.step {
     display: flex;
     align-items: center;
     gap: 8px;
     background: none;
     padding: 0;
+    border-radius: 0;
+    font-weight: 500;
     color: #94a3b8;
     font-size: 0.88rem;
 }
-.auth-page .step::before {
+.step::before {
     content: '';
     width: 20px; height: 20px;
     border-radius: 50%;
     background: #e2e8f0;
     flex-shrink: 0;
 }
-.auth-page .step.active { color: #0f3b2c; }
-.auth-page .step.active::before { background: #2b7a4b; }
-.auth-page .step-line {
+.step.active { background: none; color: #0f3b2c; font-weight: 600; }
+.step.active::before { background: #2b7a4b; }
+.step.done { background: none; color: #1f5e45; }
+.step.done::before { background: #2b7a4b; }
+.step-line {
     flex: 1;
     height: 2px;
     background: #e2e8f0;

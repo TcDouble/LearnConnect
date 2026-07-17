@@ -5,95 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LearnConnect — Profile Setup</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="auth.css">
+    <link rel="stylesheet" href="profile-setup.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        .persona-picker { display: flex; gap: 24px; flex-wrap: wrap; }
-        .persona-picker label { display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; }
-        .persona-picker input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-        .persona-block.hidden { display: none; }
-        .persona-block {
-            background: #fafdfb;
-            border: 1px solid #d9e7e0;
-            border-radius: 20px;
-            padding: 24px 28px;
-            margin: 24px 0;
-            position: relative;
-        }
-        .persona-block::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 24px; right: 24px;
-            height: 4px;
-            border-radius: 0 0 4px 4px;
-            background: #2b7a4b;
-        }
-        #teacherBlock { background: #faf9fd; border-color: #ddd6ee; }
-        #teacherBlock::before { background: #5f4bb6; }
-        .persona-block-header {
-            display: flex; align-items: center; gap: 12px;
-            margin: 4px 0 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .persona-block-header .persona-icon {
-            width: 44px; height: 44px;
-            border-radius: 50%;
-            display: inline-flex; align-items: center; justify-content: center;
-            background: #e6f2ec; color: #2b7a4b;
-            font-size: 1.2rem;
-        }
-        #teacherBlock .persona-block-header .persona-icon { background: #ece8f7; color: #5f4bb6; }
-        .persona-block-header h2 { font-size: 1.25rem; color: #0f3b2c; margin: 0; }
-        .persona-block-header small { color: #64748b; display: block; margin-top: 2px; }
-        .persona-block .form-section { border-bottom-color: #e2e8f0; }
-        .persona-block .form-section:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
-        .picker-remember { display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 20px; font-weight: 500; color: #334155; }
-        .picker-remember input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-        .role-card { cursor: pointer; }
-        .ls-note { display: block; margin-top: 6px; font-size: 0.78rem; color: #94a3b8; font-style: italic; }
-        input[readonly], textarea[readonly], select:disabled { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
-        .day.disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; opacity: 0.7; }
-        .subject-picker { position: relative; border: 1px solid #cbd5e1; border-radius: 16px; padding: 8px 12px; background: white; min-height: 44px; cursor: text; }
-        .subject-picker:focus-within { border-color: #2b7a4b; box-shadow: 0 0 0 3px rgba(43,122,75,0.1); }
-        #teacherBlock .subject-picker:focus-within { border-color: #5f4bb6; box-shadow: 0 0 0 3px rgba(95,75,182,0.1); }
-        .picker-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
-        .picker-tag { display: flex; align-items: center; gap: 4px; background: #e6f2ec; color: #0f3b2c; padding: 3px 10px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; }
-        #teacherBlock .picker-tag { background: #ece8f7; color: #3b2a7a; }
-        .picker-tag button { background: none; border: none; cursor: pointer; color: #2b7a4b; font-size: 1rem; padding: 0; line-height: 1; }
-        #teacherBlock .picker-tag button { color: #5f4bb6; }
-        input.picker-search { border: none !important; outline: none; min-width: 120px; font-size: 0.9rem; background: transparent; padding: 2px 0 !important; box-shadow: none !important; width: auto; }
-        .picker-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; max-height: 200px; overflow-y: auto; list-style: none; margin: 0; padding: 4px 0; }
-        .picker-dropdown li { padding: 9px 16px; cursor: pointer; font-size: 0.9rem; }
-        .picker-dropdown li:hover { background: #f0fdf4; }
-        #teacherBlock .picker-dropdown li:hover { background: #f3f0fd; }
-        .picker-dropdown li.no-results { color: #94a3b8; cursor: default; }
-    </style>
 </head>
-<body>
+<body class="profile-setup-page">
     <header>
-        <nav class="container navbar">
+        <div class="container auth-header-inner">
             <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
-            <ul class="nav-links">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="pricing.html">Pricing</a></li>
-            </ul>
-        </nav>
+            <a href="index.html" class="auth-back"><i class="fas fa-arrow-left"></i> Back to home</a>
+        </div>
     </header>
     <main class="form-page">
         <div class="container form-container" id="profileContainer">
-            <div class="steps"><div class="step">Account</div><div class="step active">Profile</div></div>
+            <div class="steps">
+                <div class="step done">Account</div>
+                <div class="step-line"></div>
+                <div class="step active">Profile</div>
+            </div>
             <h1>Set up your profile</h1>
             <p class="form-subhead" id="formSubhead">Pick one or both — you can change this later from your dashboard.</p>
+
+            <div class="form-error" id="formError" hidden><i class="fas fa-circle-exclamation"></i> <span id="formErrorText"></span></div>
 
             <form id="profileForm">
                 <!-- Persona picker -->
                 <div class="form-section" id="personaPickerSection">
                     <h3><i class="fas fa-user-tag"></i> WHAT DO YOU WANT TO DO?</h3>
-                    <div class="persona-picker">
-                        <label><input type="checkbox" id="wantStudent"> I want to learn (be a student)</label>
-                        <label><input type="checkbox" id="wantTeacher"> I want to teach (be a teacher)</label>
+                    <div class="persona-cards">
+                        <label class="persona-card student" id="studentPersonaCard">
+                            <input type="checkbox" id="wantStudent">
+                            <span class="persona-card-icon"><i class="fas fa-user-graduate"></i></span>
+                            <span class="persona-card-body">
+                                <h4>I want to learn</h4>
+                                <p>Find teachers, book sessions</p>
+                            </span>
+                            <span class="persona-card-check"><i class="fas fa-check"></i></span>
+                        </label>
+                        <label class="persona-card teacher" id="teacherPersonaCard">
+                            <input type="checkbox" id="wantTeacher">
+                            <span class="persona-card-icon"><i class="fas fa-chalkboard-user"></i></span>
+                            <span class="persona-card-body">
+                                <h4>I want to teach</h4>
+                                <p>List your subjects, manage students</p>
+                            </span>
+                            <span class="persona-card-check"><i class="fas fa-check"></i></span>
+                        </label>
                     </div>
                     <small>At least one is required. You can enable the other later from My profile.</small>
                 </div>
@@ -108,7 +66,7 @@
                         </div>
                     </div>
                     <div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
-                        <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label" style="opacity:0.6; pointer-events:none;">Choose File</span><input type="file" id="profilePhoto" accept="image/*" disabled><span id="fileName" class="file-name">No file chosen</span></div><small class="ls-note">Display only — saving coming soon.</small></div>
+                        <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label disabled"><i class="fas fa-cloud-arrow-up"></i> Choose file</span><input type="file" id="profilePhoto" accept="image/*" disabled><span id="fileName" class="file-name">No file chosen</span><span class="coming-soon-badge">Coming soon</span></div></div>
                         <div class="form-group"><label>Short bio</label><textarea rows="3" id="bio" placeholder="Tell teachers a bit about yourself…"></textarea></div>
                         <div class="form-group"><label>Age</label><input type="number" id="studentAge" min="5" max="100" placeholder="e.g. 16"></div>
                         <div class="form-group"><label>Education level</label><select id="educationLevel"><option value="">Select…</option><option>Primary school</option><option>High school</option><option>University</option><option>Vocational / TAFE</option><option>Other</option></select></div>
@@ -127,14 +85,14 @@
                         </div>
                     </div>
                     <div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
-                        <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label" style="opacity:0.6; pointer-events:none;">Choose File</span><input type="file" id="teacherPhoto" accept="image/*" disabled><span id="teacherFileName" class="file-name">No file chosen</span></div><small class="ls-note">Display only — saving coming soon.</small></div>
+                        <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label disabled"><i class="fas fa-cloud-arrow-up"></i> Choose file</span><input type="file" id="teacherPhoto" accept="image/*" disabled><span id="teacherFileName" class="file-name">No file chosen</span><span class="coming-soon-badge">Coming soon</span></div></div>
                         <div class="form-group"><label>Short bio</label><textarea rows="3" id="teacherBio" placeholder="Tell students about your background and teaching style…"></textarea></div>
                         <div class="form-group"><label>Subjects / specialties</label><div id="teacherSubjectPicker"></div></div>
                         <div class="form-group"><label>Years of experience</label><select id="experience"><option>Less than 1 year</option><option>1–2 years</option><option selected>3–5 years</option><option>6–10 years</option><option>10+ years</option></select></div>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Finish and go to dashboard →</button>
+                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Finish and go to dashboard <i class="fas fa-arrow-right"></i></button>
             </form>
         </div>
 
@@ -170,13 +128,21 @@
         const wantTeacher = document.getElementById('wantTeacher');
         const studentBlock = document.getElementById('studentBlock');
         const teacherBlock = document.getElementById('teacherBlock');
+        const studentPersonaCard = document.getElementById('studentPersonaCard');
+        const teacherPersonaCard = document.getElementById('teacherPersonaCard');
         const profileForm = document.getElementById('profileForm');
         const profileContainer = document.getElementById('profileContainer');
         const dashboardPicker = document.getElementById('dashboardPicker');
+        const formError = document.getElementById('formError');
+        const formErrorText = document.getElementById('formErrorText');
+        function showError(msg) { formErrorText.textContent = msg; formError.hidden = false; formError.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        function clearError() { formError.hidden = true; }
 
         function syncBlocks() {
             studentBlock.classList.toggle('hidden', !wantStudent.checked);
             teacherBlock.classList.toggle('hidden', !wantTeacher.checked);
+            studentPersonaCard.classList.toggle('selected', wantStudent.checked);
+            teacherPersonaCard.classList.toggle('selected', wantTeacher.checked);
         }
         wantStudent.addEventListener('change', syncBlocks);
         wantTeacher.addEventListener('change', syncBlocks);
@@ -258,19 +224,28 @@
         initSubjectPicker('teacherSubjectPicker', []);
 
         // ── Submit ────────────────────────────────────────────────────────────
+        const submitBtn = document.getElementById('submitBtn');
         profileForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            clearError();
 
             const saveStudent = wantStudent.checked && !studentBlock.classList.contains('hidden');
             const saveTeacher = wantTeacher.checked && !teacherBlock.classList.contains('hidden');
 
             if (!wantStudent.checked && !wantTeacher.checked) {
-                alert('Pick at least one: I want to learn and/or I want to teach.');
+                showError('Pick at least one: I want to learn and/or I want to teach.');
                 return;
             }
 
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) { alert('Please sign in.'); window.location.href = 'student-login.html'; return; }
+            if (!session) { showError('Please sign in.'); window.location.href = 'student-login.html'; return; }
+
+            submitBtn.classList.add('is-loading');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving your profile…';
+            const resetBtn = () => {
+                submitBtn.classList.remove('is-loading');
+                submitBtn.innerHTML = 'Finish and go to dashboard <i class="fas fa-arrow-right"></i>';
+            };
 
             const calls = [];
 
@@ -329,9 +304,10 @@
             try {
                 const results = await Promise.all(calls);
                 const failed = results.find(r => !r.ok);
-                if (failed) { alert(failed.body.error || `Could not save your ${failed.which} profile.`); return; }
+                if (failed) { showError(failed.body.error || `Could not save your ${failed.which} profile.`); resetBtn(); return; }
             } catch (err) {
-                alert('Network error saving profile: ' + err.message);
+                showError('Network error saving profile: ' + err.message);
+                resetBtn();
                 return;
             }
 

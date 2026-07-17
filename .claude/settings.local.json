@@ -93,7 +93,8 @@
       "Bash(node shot.js 'C:\\\\Users\\\\thiru\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-thiru-OneDrive-TutorCoding\\\\dd6f4a5f-dd8d-406c-a86c-c369f3c55f21\\\\scratchpad/shots')",
       "Bash(node debug6.js)",
       "WebFetch(domain:www.notion.com)",
-      "Bash(node auth-shot.js 'C:\\\\Users\\\\thiru\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-thiru-OneDrive-TutorCoding\\\\dd6f4a5f-dd8d-406c-a86c-c369f3c55f21\\\\scratchpad/shots')"
+      "Bash(node auth-shot.js 'C:\\\\Users\\\\thiru\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-thiru-OneDrive-TutorCoding\\\\dd6f4a5f-dd8d-406c-a86c-c369f3c55f21\\\\scratchpad/shots')",
+      "Bash(node profile-shot.js 'C:\\\\Users\\\\thiru\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-thiru-OneDrive-TutorCoding\\\\dd6f4a5f-dd8d-406c-a86c-c369f3c55f21\\\\scratchpad/shots')"
     ]
   }
 }
