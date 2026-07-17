@@ -117,6 +117,43 @@ body.profile-setup-page {
     font-size: 0.85rem;
 }
 
+/* ---------- Wizard step visibility ---------- */
+.wizard-step { display: none; }
+.wizard-step.current { display: block; }
+.wizard-nav {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+.wizard-nav #submitBtn { flex: 1; }
+.wizard-nav #backBtn { flex: 0 0 auto; }
+/* style.css's .btn{display:inline-flex} outranks the UA [hidden] rule
+   (author styles always beat the user-agent stylesheet), so a hidden
+   .btn stays visible unless we force it back off here. */
+.btn[hidden] { display: none; }
+
+/* General-info step header (neutral, not persona-tinted) */
+.general-block-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.general-block-header .persona-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 1.2rem;
+}
+.general-block-header h2 { font-size: 1.2rem; color: #0f3b2c; margin: 0; }
+.general-block-header small { color: #64748b; display: block; margin-top: 2px; }
+
 /* ---------- Persona blocks ---------- */
 .persona-block {
     background: #fafdfb;
@@ -174,7 +211,6 @@ body.profile-setup-page {
     padding-bottom: 0;
     margin-bottom: 0;
 }
-.persona-block.hidden { display: none; }
 
 /* ---------- Field polish ---------- */
 .ls-note {

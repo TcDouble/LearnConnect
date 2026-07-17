@@ -19,45 +19,58 @@
     </header>
     <main class="form-page">
         <div class="container form-container" id="profileContainer">
-            <div class="steps">
-                <div class="step done">Account</div>
-                <div class="step-line"></div>
-                <div class="step active">Profile</div>
-            </div>
+            <div class="steps" id="wizardSteps"></div>
             <h1>Set up your profile</h1>
             <p class="form-subhead" id="formSubhead">Pick one or both — you can change this later from your dashboard.</p>
 
             <div class="form-error" id="formError" hidden><i class="fas fa-circle-exclamation"></i> <span id="formErrorText"></span></div>
 
             <form id="profileForm">
-                <!-- Persona picker -->
-                <div class="form-section" id="personaPickerSection">
-                    <h3><i class="fas fa-user-tag"></i> WHAT DO YOU WANT TO DO?</h3>
-                    <div class="persona-cards">
-                        <label class="persona-card student" id="studentPersonaCard">
-                            <input type="checkbox" id="wantStudent">
-                            <span class="persona-card-icon"><i class="fas fa-user-graduate"></i></span>
-                            <span class="persona-card-body">
-                                <h4>I want to learn</h4>
-                                <p>Find teachers, book sessions</p>
-                            </span>
-                            <span class="persona-card-check"><i class="fas fa-check"></i></span>
-                        </label>
-                        <label class="persona-card teacher" id="teacherPersonaCard">
-                            <input type="checkbox" id="wantTeacher">
-                            <span class="persona-card-icon"><i class="fas fa-chalkboard-user"></i></span>
-                            <span class="persona-card-body">
-                                <h4>I want to teach</h4>
-                                <p>List your subjects, manage students</p>
-                            </span>
-                            <span class="persona-card-check"><i class="fas fa-check"></i></span>
-                        </label>
+                <!-- Step 1: General info -->
+                <div class="wizard-step" data-step="general" id="generalStep">
+                    <div class="general-block-header">
+                        <span class="persona-icon"><i class="fas fa-id-badge"></i></span>
+                        <div>
+                            <h2>About you</h2>
+                            <small>Shared across your student and teacher profile.</small>
+                        </div>
                     </div>
-                    <small>At least one is required. You can enable the other later from My profile.</small>
+
+                    <div class="form-section" id="personaPickerSection">
+                        <h3><i class="fas fa-user-tag"></i> WHAT DO YOU WANT TO DO?</h3>
+                        <div class="persona-cards">
+                            <label class="persona-card student" id="studentPersonaCard">
+                                <input type="checkbox" id="wantStudent">
+                                <span class="persona-card-icon"><i class="fas fa-user-graduate"></i></span>
+                                <span class="persona-card-body">
+                                    <h4>I want to learn</h4>
+                                    <p>Find teachers, book sessions</p>
+                                </span>
+                                <span class="persona-card-check"><i class="fas fa-check"></i></span>
+                            </label>
+                            <label class="persona-card teacher" id="teacherPersonaCard">
+                                <input type="checkbox" id="wantTeacher">
+                                <span class="persona-card-icon"><i class="fas fa-chalkboard-user"></i></span>
+                                <span class="persona-card-body">
+                                    <h4>I want to teach</h4>
+                                    <p>List your subjects, manage students</p>
+                                </span>
+                                <span class="persona-card-check"><i class="fas fa-check"></i></span>
+                            </label>
+                        </div>
+                        <small>At least one is required. You can enable the other later from My profile.</small>
+                    </div>
+
+                    <div class="form-section">
+                        <h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
+                        <div class="form-group"><label>Full name</label><input type="text" id="fullName" required></div>
+                        <div class="form-group"><label>Age</label><input type="number" id="age" min="5" max="100" placeholder="e.g. 16"></div>
+                        <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label disabled"><i class="fas fa-cloud-arrow-up"></i> Choose file</span><input type="file" id="profilePhoto" accept="image/*" disabled><span id="fileName" class="file-name">No file chosen</span><span class="coming-soon-badge">Coming soon</span></div></div>
+                    </div>
                 </div>
 
-                <!-- Student fields -->
-                <div id="studentBlock" class="persona-block">
+                <!-- Step 2: Student info -->
+                <div class="wizard-step persona-block" data-step="student" id="studentBlock">
                     <div class="persona-block-header">
                         <span class="persona-icon"><i class="fas fa-user-graduate"></i></span>
                         <div>
@@ -65,18 +78,16 @@
                             <small>What teachers will see when you request a session.</small>
                         </div>
                     </div>
-                    <div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
-                        <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label disabled"><i class="fas fa-cloud-arrow-up"></i> Choose file</span><input type="file" id="profilePhoto" accept="image/*" disabled><span id="fileName" class="file-name">No file chosen</span><span class="coming-soon-badge">Coming soon</span></div></div>
+                    <div class="form-section"><h3><i class="fas fa-book-open"></i> LEARNING INFO</h3>
                         <div class="form-group"><label>Short bio</label><textarea rows="3" id="bio" placeholder="Tell teachers a bit about yourself…"></textarea></div>
-                        <div class="form-group"><label>Age</label><input type="number" id="studentAge" min="5" max="100" placeholder="e.g. 16"></div>
                         <div class="form-group"><label>Education level</label><select id="educationLevel"><option value="">Select…</option><option>Primary school</option><option>High school</option><option>University</option><option>Vocational / TAFE</option><option>Other</option></select></div>
                         <div class="form-group"><label>Subjects I need help with</label><div id="studentSubjectPicker"></div></div>
                         <div class="form-group"><label>Learning goals</label><textarea rows="2" id="goals" placeholder="e.g. Pass my year 12 exams, improve essay writing…"></textarea></div>
                     </div>
                 </div>
 
-                <!-- Teacher fields -->
-                <div id="teacherBlock" class="persona-block">
+                <!-- Step 3: Teacher info -->
+                <div class="wizard-step persona-block" data-step="teacher" id="teacherBlock">
                     <div class="persona-block-header">
                         <span class="persona-icon"><i class="fas fa-chalkboard-user"></i></span>
                         <div>
@@ -84,15 +95,17 @@
                             <small>What students will see when browsing teachers.</small>
                         </div>
                     </div>
-                    <div class="form-section"><h3><i class="fas fa-globe"></i> PUBLIC INFO</h3>
-                        <div class="form-group"><label>Profile photo</label><div class="file-input-wrapper"><span class="file-label disabled"><i class="fas fa-cloud-arrow-up"></i> Choose file</span><input type="file" id="teacherPhoto" accept="image/*" disabled><span id="teacherFileName" class="file-name">No file chosen</span><span class="coming-soon-badge">Coming soon</span></div></div>
+                    <div class="form-section"><h3><i class="fas fa-book-open"></i> TEACHING INFO</h3>
                         <div class="form-group"><label>Short bio</label><textarea rows="3" id="teacherBio" placeholder="Tell students about your background and teaching style…"></textarea></div>
                         <div class="form-group"><label>Subjects / specialties</label><div id="teacherSubjectPicker"></div></div>
                         <div class="form-group"><label>Years of experience</label><select id="experience"><option>Less than 1 year</option><option>1–2 years</option><option selected>3–5 years</option><option>6–10 years</option><option>10+ years</option></select></div>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Finish and go to dashboard <i class="fas fa-arrow-right"></i></button>
+                <div class="wizard-nav">
+                    <button type="button" class="btn btn-outline" id="backBtn" hidden><i class="fas fa-arrow-left"></i> Back</button>
+                    <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Continue <i class="fas fa-arrow-right"></i></button>
+                </div>
             </form>
         </div>
 
@@ -123,11 +136,10 @@
         // checks the opt-in for the other persona. Tells this page to only
         // collect the new persona's fields and route back to the source dashboard.
         const editAddPersona = localStorage.getItem('editAddPersona'); // 'student' | 'teacher' | null
+        const wizardMode = !editAddPersona; // false = single-screen add-persona mode, no step chrome
 
         const wantStudent = document.getElementById('wantStudent');
         const wantTeacher = document.getElementById('wantTeacher');
-        const studentBlock = document.getElementById('studentBlock');
-        const teacherBlock = document.getElementById('teacherBlock');
         const studentPersonaCard = document.getElementById('studentPersonaCard');
         const teacherPersonaCard = document.getElementById('teacherPersonaCard');
         const profileForm = document.getElementById('profileForm');
@@ -135,17 +147,57 @@
         const dashboardPicker = document.getElementById('dashboardPicker');
         const formError = document.getElementById('formError');
         const formErrorText = document.getElementById('formErrorText');
+        const backBtn = document.getElementById('backBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const wizardStepsEl = document.getElementById('wizardSteps');
+
         function showError(msg) { formErrorText.textContent = msg; formError.hidden = false; formError.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
         function clearError() { formError.hidden = true; }
 
-        function syncBlocks() {
-            studentBlock.classList.toggle('hidden', !wantStudent.checked);
-            teacherBlock.classList.toggle('hidden', !wantTeacher.checked);
+        function syncPersonaCards() {
             studentPersonaCard.classList.toggle('selected', wantStudent.checked);
             teacherPersonaCard.classList.toggle('selected', wantTeacher.checked);
         }
-        wantStudent.addEventListener('change', syncBlocks);
-        wantTeacher.addEventListener('change', syncBlocks);
+        wantStudent.addEventListener('change', syncPersonaCards);
+        wantTeacher.addEventListener('change', syncPersonaCards);
+
+        // ── Wizard navigation ───────────────────────────────────────────────────
+        // steps: ordered list of step names currently in the flow. 'general' is
+        // always first (unless editAddPersona skips straight to one persona step);
+        // the persona steps are decided once, when leaving 'general'.
+        let steps = wizardMode ? ['general'] : [editAddPersona];
+        let stepIndex = 0;
+
+        const STEP_LABELS = { general: 'General', student: 'Student', teacher: 'Teacher' };
+
+        function renderProgress() {
+            if (!wizardMode) { wizardStepsEl.hidden = true; return; }
+            wizardStepsEl.hidden = false;
+            wizardStepsEl.innerHTML = steps.map((s, i) => {
+                const cls = i < stepIndex ? 'done' : (i === stepIndex ? 'active' : '');
+                const dot = `<div class="step ${cls}">${STEP_LABELS[s]}</div>`;
+                return i < steps.length - 1 ? dot + '<div class="step-line"></div>' : dot;
+            }).join('');
+        }
+
+        function showStep(name) {
+            document.querySelectorAll('.wizard-step').forEach(el => el.classList.toggle('current', el.dataset.step === name));
+            const isLast = name !== 'general' && stepIndex === steps.length - 1;
+            backBtn.hidden = !wizardMode || stepIndex === 0;
+            submitBtn.innerHTML = isLast
+                ? 'Finish and go to dashboard <i class="fas fa-arrow-right"></i>'
+                : 'Continue <i class="fas fa-arrow-right"></i>';
+            submitBtn.dataset.mode = isLast ? 'finish' : 'next';
+            renderProgress();
+            clearError();
+            profileContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        backBtn.addEventListener('click', () => {
+            if (stepIndex === 0) return;
+            stepIndex--;
+            showStep(steps[stepIndex]);
+        });
 
         // ── Initial state: signup pre-check OR editAddPersona mode ────────────
         (async function initPersonaState() {
@@ -153,26 +205,29 @@
             if (!session) { window.location.href = 'student-login.html'; return; }
 
             const { data: userRow } = await supabaseClient
-                .from('Users').select('role, is_student, is_teacher').eq('UID', session.user.id).maybeSingle();
+                .from('Users').select('role, is_student, is_teacher, firstname, lastname').eq('UID', session.user.id).maybeSingle();
             const role = userRow?.role || session.user.user_metadata?.role || 'student';
 
+            const firstname = userRow?.firstname || session.user.user_metadata?.firstname || '';
+            const lastname = userRow?.lastname || session.user.user_metadata?.lastname || '';
+            document.getElementById('fullName').value = [firstname, lastname].filter(Boolean).join(' ');
+
             if (editAddPersona === 'student' || editAddPersona === 'teacher') {
-                // Add-persona mode: pre-check both, hide the existing block + the picker.
+                // Add-persona mode: pre-check both, skip straight to the relevant persona step.
                 wantStudent.checked = true;
                 wantTeacher.checked = true;
-                document.getElementById('personaPickerSection').style.display = 'none';
                 document.getElementById('formSubhead').textContent =
                     editAddPersona === 'teacher'
                         ? "Tell students how you'd like to teach."
                         : "Tell teachers a bit about how you'd like to learn.";
-                if (editAddPersona === 'teacher') studentBlock.classList.add('hidden');
-                else teacherBlock.classList.add('hidden');
             } else {
                 // First-time setup: pre-check the box matching the signup role.
                 wantStudent.checked = role !== 'teacher' || !!userRow?.is_student;
                 wantTeacher.checked = role === 'teacher' || !!userRow?.is_teacher;
-                syncBlocks();
+                syncPersonaCards();
             }
+
+            showStep(steps[stepIndex]);
         })();
 
         // ── Subject picker ────────────────────────────────────────────────────
@@ -223,19 +278,44 @@
         initSubjectPicker('studentSubjectPicker', []);
         initSubjectPicker('teacherSubjectPicker', []);
 
-        // ── Submit ────────────────────────────────────────────────────────────
-        const submitBtn = document.getElementById('submitBtn');
+        // ── Submit / advance ─────────────────────────────────────────────────
         profileForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             clearError();
 
-            const saveStudent = wantStudent.checked && !studentBlock.classList.contains('hidden');
-            const saveTeacher = wantTeacher.checked && !teacherBlock.classList.contains('hidden');
+            const currentStep = steps[stepIndex];
 
-            if (!wantStudent.checked && !wantTeacher.checked) {
-                showError('Pick at least one: I want to learn and/or I want to teach.');
+            if (currentStep === 'general') {
+                if (!wantStudent.checked && !wantTeacher.checked) {
+                    showError('Pick at least one: I want to learn and/or I want to teach.');
+                    return;
+                }
+                if (!document.getElementById('fullName').value.trim()) {
+                    showError('Please enter your name.');
+                    return;
+                }
+                // Persona steps are decided once, on the way out of General.
+                steps = ['general'];
+                if (wantStudent.checked) steps.push('student');
+                if (wantTeacher.checked) steps.push('teacher');
+                stepIndex = 1;
+                showStep(steps[stepIndex]);
                 return;
             }
+
+            const isLast = stepIndex === steps.length - 1;
+            if (!isLast) {
+                stepIndex++;
+                showStep(steps[stepIndex]);
+                return;
+            }
+
+            await finishAndSave();
+        });
+
+        async function finishAndSave() {
+            const saveStudent = wantStudent.checked;
+            const saveTeacher = wantTeacher.checked;
 
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { showError('Please sign in.'); window.location.href = 'student-login.html'; return; }
@@ -247,12 +327,15 @@
                 submitBtn.innerHTML = 'Finish and go to dashboard <i class="fas fa-arrow-right"></i>';
             };
 
+            const fullName = document.getElementById('fullName').value.trim();
+            const { firstname, lastname } = splitFullName(fullName);
+            const age = parseInt(document.getElementById('age').value, 10) || null;
+
             const calls = [];
 
             if (saveStudent) {
                 const subjects = getPickerValues('studentSubjectPicker');
                 // Local copy for dashboard fields not stored in DB.
-                const age = parseInt(document.getElementById('studentAge').value, 10) || null;
                 localStorage.setItem('studentProfile', JSON.stringify({
                     bio: document.getElementById('bio').value,
                     educationLevel: document.getElementById('educationLevel').value,
@@ -272,7 +355,8 @@
                         age,
                         subject_list: subjects,
                         bio: document.getElementById('bio').value.trim() || null,
-                        goals: document.getElementById('goals').value.trim() || null
+                        goals: document.getElementById('goals').value.trim() || null,
+                        firstname, lastname
                     })
                 }).then(async r => ({ which: 'student', ok: r.ok, body: await r.json() })));
             }
@@ -282,6 +366,7 @@
                 localStorage.setItem('teacherProfile', JSON.stringify({
                     bio: document.getElementById('teacherBio').value,
                     subjects,
+                    age,
                     experience: document.getElementById('experience').value
                 }));
                 const expText = document.getElementById('experience').value;
@@ -296,7 +381,9 @@
                     body: JSON.stringify({
                         subject_list: subjects,
                         years_experience: years,
-                        bio: document.getElementById('teacherBio').value.trim() || null
+                        age,
+                        bio: document.getElementById('teacherBio').value.trim() || null,
+                        firstname, lastname
                     })
                 }).then(async r => ({ which: 'teacher', ok: r.ok, body: await r.json() })));
             }
@@ -311,7 +398,8 @@
                 return;
             }
 
-            // Cache persona flags for the dashboards.
+            // Cache persona flags + name for the dashboards.
+            if (fullName) { localStorage.setItem('studentFullName', fullName); localStorage.setItem('teacherFullName', fullName); }
             if (wantStudent.checked) localStorage.setItem('isStudent', 'true');
             if (wantTeacher.checked) localStorage.setItem('isTeacher', 'true');
 
@@ -332,7 +420,7 @@
             }
 
             window.location.href = wantTeacher.checked ? 'Teacher-dashboard.html' : 'student-dashboard.html';
-        });
+        }
 
         // ── Dashboard picker handlers ─────────────────────────────────────────
         document.querySelectorAll('#dashboardPicker .role-card').forEach(card => {
