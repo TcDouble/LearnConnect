@@ -80,7 +80,18 @@
       "mcp__supabase__list_migrations",
       "mcp__supabase__get_logs",
       "mcp__supabase__get_project_url",
-      "mcp__supabase__get_publishable_keys"
+      "mcp__supabase__get_publishable_keys",
+      "Bash(curl *)",
+      "Bash(node -e \"console.log\\(new Date\\(1784160043*1000\\).toISOString\\(\\)\\)\")",
+      "WebFetch(domain:linear.app)",
+      "WebFetch(domain:www.preply.com)",
+      "WebFetch(domain:stripe.com)",
+      "WebFetch(domain:www.wyzant.com)",
+      "Bash(command -v chromium-cli)",
+      "Bash(python -c \"import playwright\")",
+      "Bash(mkdir -p shots)",
+      "Bash(node shot.js 'C:\\\\Users\\\\thiru\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-thiru-OneDrive-TutorCoding\\\\dd6f4a5f-dd8d-406c-a86c-c369f3c55f21\\\\scratchpad/shots')",
+      "Bash(node debug6.js)"
     ]
   }
 }

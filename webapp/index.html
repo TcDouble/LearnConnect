@@ -3,39 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LearnConnect — Home</title>
+    <title>LearnConnect — Find the right teacher, on your schedule</title>
+    <meta name="description" content="LearnConnect matches students with real teachers for one-on-one learning. Browse teachers, book sessions, and meet over built-in video — all in one place.">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="landing.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="home-page">
-    <header>
+<body class="landing-page">
+    <header id="siteHeader">
         <nav class="container navbar">
             <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
-            <ul class="nav-links">
-                <li><a href="index.html" class="active">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="pricing.html">Pricing</a></li>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home" class="active">Home</a></li>
+                <li><a href="#how-it-works">How it works</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li class="nav-auth-mobile"><a href="student-login.html">Sign in</a></li>
+                <li class="nav-auth-mobile"><a href="signup.html">Sign up</a></li>
             </ul>
+            <div class="nav-auth">
+                <a href="student-login.html" class="btn btn-outline">Sign in</a>
+                <a href="signup.html" class="btn btn-primary">Get started</a>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
         </nav>
     </header>
+
     <main>
-        <section class="hero container">
-            <h1>Connect students with great teachers</h1>
-            <p class="tagline">A simple platform for finding the right teacher — or being one yourself.<br>Pick what you want to do after you sign up.</p>
-            <div class="hero-cta">
-                <a href="signup.html" class="btn btn-primary">Sign up</a>
-                <a href="student-login.html" class="btn btn-outline">Sign in</a>
+        <!-- Hero -->
+        <section class="hero-landing" id="home">
+            <div class="container hero-grid">
+                <div class="hero-copy">
+                    <span class="eyebrow"><i class="fas fa-bolt"></i> Now matching students &amp; teachers</span>
+                    <h1>Find the right teacher. <span class="grad">Learn on your schedule.</span></h1>
+                    <p class="tagline">LearnConnect is a simple platform for one-on-one learning — browse real teacher profiles, request a session, and meet over built-in video. No middleman, no clutter.</p>
+                    <div class="hero-cta">
+                        <a href="signup.html" class="btn btn-primary">Get started free <i class="fas fa-arrow-right"></i></a>
+                        <a href="#how-it-works" class="btn btn-outline">See how it works</a>
+                    </div>
+                    <p class="hero-microcopy"><i class="fas fa-circle-check"></i> Free to join · No credit card required</p>
+                    <div class="trust-chips">
+                        <span class="trust-chip"><i class="fas fa-user-graduate"></i> For students</span>
+                        <span class="trust-chip"><i class="fas fa-chalkboard-user"></i> For teachers</span>
+                        <span class="trust-chip"><i class="fas fa-video"></i> Built-in video sessions</span>
+                        <span class="trust-chip"><i class="fas fa-calendar-check"></i> Simple scheduling</span>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="mock-card">
+                        <div class="mock-card-header">
+                            <div class="mock-avatar">MA</div>
+                            <div>
+                                <div class="mock-name">Ms. Alvarez</div>
+                                <div class="mock-sub">Algebra II · 5 yrs experience</div>
+                            </div>
+                        </div>
+                        <div class="mock-row"><span>Session</span><strong>Wed, 4:00–4:45 PM</strong></div>
+                        <div class="mock-row"><span>Format</span><strong>Video call</strong></div>
+                        <div class="mock-row"><span>Status</span><span class="mock-badge"><i class="fas fa-check"></i> Confirmed</span></div>
+                        <a href="signup.html" class="btn btn-primary mock-cta">Book a session like this</a>
+                    </div>
+                    <div class="mock-float f1"><i class="fas fa-comment-dots"></i> Request accepted</div>
+                    <div class="mock-float f2"><i class="fas fa-graduation-cap"></i> Goal: Ace the midterm</div>
+                </div>
             </div>
         </section>
-        <section class="quick-nav container">
-            <h2>Explore LearnConnect</h2>
-            <div class="quick-buttons">
-                <a href="about.html" class="btn btn-outline">Learn about us <i class="fas fa-arrow-right"></i></a>
-                <a href="pricing.html" class="btn btn-primary">View pricing plans</a>
+
+        <!-- How it works -->
+        <section class="section" id="how-it-works">
+            <div class="container">
+                <div class="section-head reveal">
+                    <div class="section-eyebrow">How it works</div>
+                    <h2>Up and running in three steps</h2>
+                    <p>Whether you're here to learn or to teach, LearnConnect keeps the process short.</p>
+                </div>
+                <div class="role-toggle reveal">
+                    <button type="button" class="active" data-role="student">I'm a student</button>
+                    <button type="button" data-role="teacher">I'm a teacher</button>
+                </div>
+
+                <div class="steps-panel steps-grid active" data-panel="student">
+                    <div class="step-card reveal">
+                        <div class="step-connector"></div>
+                        <div class="step-num">1</div>
+                        <h3>Create your profile</h3>
+                        <p>Sign up and tell us what you want to learn and when you're free.</p>
+                    </div>
+                    <div class="step-card reveal">
+                        <div class="step-connector"></div>
+                        <div class="step-num">2</div>
+                        <h3>Browse &amp; choose a teacher</h3>
+                        <p>Filter by subject, experience, and availability to find the right fit.</p>
+                    </div>
+                    <div class="step-card reveal">
+                        <div class="step-num">3</div>
+                        <h3>Book &amp; meet</h3>
+                        <p>Send a request, get confirmed, and join your session over built-in video.</p>
+                    </div>
+                </div>
+
+                <div class="steps-panel steps-grid" data-panel="teacher">
+                    <div class="step-card reveal">
+                        <div class="step-connector"></div>
+                        <div class="step-num">1</div>
+                        <h3>Set up your profile</h3>
+                        <p>Share your subjects, experience, and the hours you're available to teach.</p>
+                    </div>
+                    <div class="step-card reveal">
+                        <div class="step-connector"></div>
+                        <div class="step-num">2</div>
+                        <h3>Get discovered</h3>
+                        <p>Students browse your profile and send session requests directly to you.</p>
+                    </div>
+                    <div class="step-card reveal">
+                        <div class="step-num">3</div>
+                        <h3>Teach on your terms</h3>
+                        <p>Accept the requests that fit your schedule and meet online — no extra apps.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About / values -->
+        <section class="section section-alt" id="about">
+            <div class="container about-flex">
+                <div class="about-copy reveal">
+                    <div class="section-eyebrow">About LearnConnect</div>
+                    <h2>Built for real learning — without the friction.</h2>
+                    <p>We started LearnConnect because finding a good teacher — and actually managing that relationship — is usually more complicated than it needs to be. So we kept it simple: real profiles, direct scheduling, and a dashboard that shows you exactly what's next.</p>
+                    <p>No algorithmic black boxes, no bloated features. Just a straightforward way to connect learners with mentors.</p>
+                    <div class="value-pillars">
+                        <div class="value-pillar">
+                            <div class="value-pillar-icon"><i class="fas fa-hand-holding-heart"></i></div>
+                            <div><h4>People first</h4><p>The platform gets out of the way so the teaching relationship can do the work.</p></div>
+                        </div>
+                        <div class="value-pillar">
+                            <div class="value-pillar-icon"><i class="fas fa-eye"></i></div>
+                            <div><h4>Clear &amp; honest</h4><p>Transparent pricing, real profiles, no hidden fees or fine print.</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-cards">
+                    <div class="feature-card reveal">
+                        <i class="fas fa-magnifying-glass-chart fa-3x"></i>
+                        <h3>Discover teachers</h3>
+                        <p>Browse profiles by subject, availability, and experience to find your match.</p>
+                    </div>
+                    <div class="feature-card reveal">
+                        <i class="fas fa-people-arrows fa-3x"></i>
+                        <h3>Manage students</h3>
+                        <p>Teachers get one organised view of their roster and public profile.</p>
+                    </div>
+                    <div class="feature-card reveal">
+                        <i class="fas fa-id-card fa-3x"></i>
+                        <h3>Your own profile</h3>
+                        <p>Control what others see and keep your info up to date, anytime.</p>
+                    </div>
+                    <div class="feature-card reveal">
+                        <i class="fas fa-video fa-3x"></i>
+                        <h3>Built-in video sessions</h3>
+                        <p>Join confirmed sessions over integrated video — no extra sign-ups.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing -->
+        <section class="section" id="pricing">
+            <div class="container">
+                <div class="section-head reveal">
+                    <div class="section-eyebrow">Pricing</div>
+                    <h2>Simple pricing, no hidden fees</h2>
+                    <p>Pick the plan that fits how you use the platform. Upgrade or downgrade anytime.</p>
+                </div>
+                <div class="pricing-grid">
+                    <div class="pricing-card reveal">
+                        <h3>Free</h3>
+                        <div class="price">$0<span>/month</span></div>
+                        <p class="plan-description">Get started with the basics.</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check-circle"></i> Public profile</li>
+                            <li><i class="fas fa-check-circle"></i> Browse listings</li>
+                            <li><i class="fas fa-check-circle"></i> Up to 3 connections</li>
+                        </ul>
+                        <a href="signup.html" class="btn btn-secondary">Choose Free</a>
+                    </div>
+                    <div class="pricing-card popular reveal">
+                        <div class="popular-badge">Most popular</div>
+                        <h3>Pro</h3>
+                        <div class="price">$12<span>/month</span></div>
+                        <p class="plan-description">Everything you need to grow.</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check-circle"></i> Unlimited connections</li>
+                            <li><i class="fas fa-check-circle"></i> Full profile customisation</li>
+                            <li><i class="fas fa-check-circle"></i> Session scheduling</li>
+                            <li><i class="fas fa-check-circle"></i> Priority support</li>
+                        </ul>
+                        <a href="signup.html" class="btn btn-primary">Get Pro</a>
+                    </div>
+                    <div class="pricing-card reveal">
+                        <h3>Institution <br>Custom</h3>
+                        <div class="price custom-price">For schools &amp; organisations</div>
+                        <p class="plan-description">Team-wide tools and dedicated support.</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check-circle"></i> Team management</li>
+                            <li><i class="fas fa-check-circle"></i> Admin dashboard</li>
+                            <li><i class="fas fa-check-circle"></i> Dedicated support</li>
+                        </ul>
+                        <a href="pricing.html" class="btn btn-secondary">Contact sales</a>
+                    </div>
+                </div>
+                <p class="pricing-note reveal">Want the full breakdown? <a href="pricing.html">See detailed plan comparison →</a></p>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <section class="final-cta">
+            <div class="container">
+                <h2>Ready to start learning — or teaching?</h2>
+                <p>Join LearnConnect free and set up your profile in a few minutes.</p>
+                <div class="hero-cta">
+                    <a href="signup.html" class="btn btn-primary">Get started free <i class="fas fa-arrow-right"></i></a>
+                    <a href="student-login.html" class="btn btn-outline">Sign in</a>
+                </div>
             </div>
         </section>
     </main>
-    <footer><div class="container"><p>&copy; 2026 LearnConnect — bridging learners and mentors.</p></div></footer>
+
+    <footer class="landing-footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+                <p>Bridging learners and mentors with a simple, no-friction platform for one-on-one teaching.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Product</h4>
+                <ul>
+                    <li><a href="#how-it-works">How it works</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Account</h4>
+                <ul>
+                    <li><a href="signup.html">Sign up</a></li>
+                    <li><a href="student-login.html">Sign in</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="container footer-bottom">
+            <p>&copy; 2026 LearnConnect — bridging learners and mentors.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Sticky header shadow
+        const header = document.getElementById('siteHeader');
+        window.addEventListener('scroll', () => {
+            header.classList.toggle('scrolled', window.scrollY > 8);
+        }, { passive: true });
+
+        // Mobile nav toggle
+        const navToggle = document.getElementById('navToggle');
+        const navLinks = document.getElementById('navLinks');
+        navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+        navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+        // Active nav link on scroll
+        const sections = ['home', 'how-it-works', 'about', 'pricing'].map(id => document.getElementById(id));
+        const navAnchors = document.querySelectorAll('#navLinks a[href^="#"]');
+        const setActive = () => {
+            let current = sections[0].id;
+            for (const s of sections) {
+                if (window.scrollY >= s.offsetTop - 120) current = s.id;
+            }
+            navAnchors.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+        };
+        window.addEventListener('scroll', setActive, { passive: true });
+        setActive();
+
+        // Student / teacher toggle
+        document.querySelectorAll('.role-toggle button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.role-toggle button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const role = btn.dataset.role;
+                document.querySelectorAll('.steps-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === role));
+            });
+        });
+
+        // Reveal on scroll
+        const revealEls = document.querySelectorAll('.reveal');
+        if ('IntersectionObserver' in window) {
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('in-view');
+                        io.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+            revealEls.forEach(el => io.observe(el));
+        } else {
+            revealEls.forEach(el => el.classList.add('in-view'));
+        }
+    </script>
 </body>
 </html>
