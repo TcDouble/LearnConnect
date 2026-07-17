@@ -406,9 +406,9 @@
             // ── Where to next? ────────────────────────────────────────────────
             if (editAddPersona === 'student' || editAddPersona === 'teacher') {
                 // The user was adding the other persona from a dashboard. Send them back.
-                const sourceDashboard = editAddPersona === 'teacher' ? 'student-dashboard.html' : 'Teacher-dashboard.html';
+                // (The dashboard is combined now — one URL serves both personas.)
                 localStorage.removeItem('editAddPersona');
-                window.location.href = sourceDashboard;
+                window.location.href = 'student-dashboard.html';
                 return;
             }
 
@@ -419,7 +419,7 @@
                 return;
             }
 
-            window.location.href = wantTeacher.checked ? 'Teacher-dashboard.html' : 'student-dashboard.html';
+            window.location.href = 'student-dashboard.html';
         }
 
         // ── Dashboard picker handlers ─────────────────────────────────────────
@@ -429,7 +429,7 @@
                 if (document.getElementById('rememberPick').checked) {
                     localStorage.setItem('preferredDashboard', pick);
                 }
-                window.location.href = pick === 'teacher' ? 'Teacher-dashboard.html' : 'student-dashboard.html';
+                window.location.href = 'student-dashboard.html';
             });
         });
     </script>

@@ -114,7 +114,7 @@
         });
 
         function go(dest) { window.location.href = dest; }
-        function dashboardFor(persona) { return persona === 'teacher' ? 'Teacher-dashboard.html' : 'student-dashboard.html'; }
+        function dashboardFor(persona) { return 'student-dashboard.html'; } // combined dashboard now serves both personas
 
         const submitBtn = document.getElementById('submitBtn');
         document.getElementById('loginForm').addEventListener('submit', async (e) => {

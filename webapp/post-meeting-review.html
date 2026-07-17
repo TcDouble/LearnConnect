@@ -258,7 +258,7 @@
           n.textContent = `"${data.existingNotes}"`;
           n.style.display = '';
         }
-        document.getElementById('alreadyDashLink').href = data.role === 'teacher' ? 'Teacher-dashboard.html' : 'student-dashboard.html';
+        document.getElementById('alreadyDashLink').href = 'student-dashboard.html';
         show('alreadyState');
         return;
       }
@@ -306,7 +306,7 @@
           showError(data.error || 'Failed to submit. Please try again.');
           return;
         }
-        document.getElementById('thankYouDashLink').href = userRole === 'teacher' ? 'Teacher-dashboard.html' : 'student-dashboard.html';
+        document.getElementById('thankYouDashLink').href = 'student-dashboard.html';
         show('thankYouState');
       } catch (_) {
         spinner.style.display = 'none';
