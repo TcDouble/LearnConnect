@@ -45,11 +45,9 @@
             <ul class="sidebar-nav">
                 <li data-section="overview" class="active"><a href="#"><i class="fas fa-gauge-high"></i> Overview</a></li>
                 <li data-section="find-teacher" data-persona="student"><a href="#"><i class="fas fa-magnifying-glass"></i> Find a teacher</a></li>
-                <li data-section="my-sessions" data-persona="student"><a href="#"><i class="fas fa-calendar-alt"></i> My sessions</a></li>
                 <li data-section="requests" data-persona="teacher"><a href="#"><i class="fas fa-inbox"></i> Requests</a></li>
                 <li data-section="schedule" data-persona="teacher"><a href="#"><i class="fas fa-calendar-week"></i> Schedule</a></li>
-                <li data-section="past-meetings-student" data-persona="student"><a href="#"><i class="fas fa-history"></i> <span id="pastMeetingsStudentLabel">Past sessions</span></a></li>
-                <li data-section="past-meetings-teacher" data-persona="teacher"><a href="#"><i class="fas fa-history"></i> <span id="pastMeetingsTeacherLabel">Past sessions</span></a></li>
+                <li data-section="past-meetings"><a href="#"><i class="fas fa-history"></i> Past sessions</a></li>
                 <li data-section="availability" data-persona="teacher"><a href="#"><i class="fas fa-clock"></i> Availability</a></li>
             </ul>
             <div class="sidebar-signout">
@@ -177,12 +175,6 @@
                 </div>
             </div>
 
-            <!-- My sessions (student) -->
-            <div id="my-sessions-section" class="hidden-section">
-                <div class="dashboard-header"><h1>My sessions</h1></div>
-                <table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Status</th></tr></thead><tbody id="allSessionsBody"></tbody></table>
-            </div>
-
             <!-- Requests (teacher) -->
             <div id="requests-section" class="hidden-section">
                 <div class="dashboard-header"><h1>My requests</h1></div>
@@ -196,16 +188,23 @@
                 <table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Time / Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table>
             </div>
 
-            <!-- Past sessions (student) -->
-            <div id="past-meetings-student-section" class="hidden-section">
-                <div class="dashboard-header"><h1>Past sessions</h1><p class="greeting">Completed sessions and your reviews.</p></div>
-                <table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Subject</th><th>Duration</th><th>Your rating</th></tr></thead><tbody id="pastMeetingsStudentBody"></tbody></table>
-            </div>
-
-            <!-- Past sessions (teacher) -->
-            <div id="past-meetings-teacher-section" class="hidden-section">
+            <!-- Past sessions (combined) -->
+            <div id="past-meetings-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Past sessions</h1><p class="greeting">Completed sessions and reviews.</p></div>
-                <table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Duration</th><th>Student rating</th><th>Your rating</th><th>Notes</th></tr></thead><tbody id="pastMeetingsTeacherBody"></tbody></table>
+                <div class="pm-tabs" id="pastMeetingsTabs" style="margin-bottom:16px;">
+                    <button type="button" class="pm-tab active" data-pm-tab="all">All</button>
+                    <button type="button" class="pm-tab" data-pm-tab="student">As student</button>
+                    <button type="button" class="pm-tab" data-pm-tab="teacher">As teacher</button>
+                </div>
+                <div id="pastMeetingsAllPanel">
+                    <table class="data-table"><thead><tr><th>Date</th><th>Role</th><th>With</th><th>Subject</th><th>Duration</th><th>Your rating</th></tr></thead><tbody id="pastMeetingsAllBody"></tbody></table>
+                </div>
+                <div id="pastMeetingsStudentPanel" style="display:none;">
+                    <table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Subject</th><th>Duration</th><th>Your rating</th></tr></thead><tbody id="pastMeetingsStudentBody"></tbody></table>
+                </div>
+                <div id="pastMeetingsTeacherPanel" style="display:none;">
+                    <table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Duration</th><th>Student rating</th><th>Your rating</th><th>Notes</th></tr></thead><tbody id="pastMeetingsTeacherBody"></tbody></table>
+                </div>
             </div>
 
             <!-- Availability (teacher) -->
@@ -374,10 +373,9 @@
             document.getElementById('studentBadge').classList.toggle('active', personas.isStudent);
             document.getElementById('teacherBadge').classList.toggle('active', personas.isTeacher);
             const both = personas.isStudent && personas.isTeacher;
-            const stuLbl = document.getElementById('pastMeetingsStudentLabel');
-            const tchLbl = document.getElementById('pastMeetingsTeacherLabel');
-            if (stuLbl) stuLbl.textContent = both ? 'Past sessions (learning)' : 'Past sessions';
-            if (tchLbl) tchLbl.textContent = both ? 'Past sessions (teaching)' : 'Past sessions';
+            document.getElementById('pastMeetingsTabs').hidden = !both;
+            document.querySelector('#pastMeetingsTabs [data-pm-tab="student"]').hidden = !personas.isStudent;
+            document.querySelector('#pastMeetingsTabs [data-pm-tab="teacher"]').hidden = !personas.isTeacher;
         }
 
         // ── Overview ─────────────────────────────────────────────────────────
@@ -520,7 +518,7 @@
             if (!confirm('Cancel this pending request?')) return;
             const { error } = await supabaseClient.from('Blocked_Time').update({ status: 'canceled' }).eq('SessionID', id);
             if (error) { alert('Could not cancel: ' + error.message); return; }
-            await refreshSessions(); renderOverview(); renderAllSessions(); updateNotifications();
+            await refreshSessions(); renderOverview(); updateNotifications();
         }
 
         // ── Find a teacher (student) ────────────────────────────────────────
@@ -725,26 +723,6 @@
         document.getElementById('ftBackBtn2').addEventListener('click', ftGoBack);
         document.getElementById('ftContinueBtn').addEventListener('click', ftGoNext);
 
-        // ── My sessions (student) ───────────────────────────────────────────
-        function renderAllSessions() {
-            const tbody = document.getElementById('allSessionsBody'); tbody.innerHTML = '';
-            if (!studentSessions.length) { tbody.innerHTML = '<tr><td colspan="3">No sessions yet.</td></tr>'; return; }
-            studentSessions.forEach(s => {
-                const r = tbody.insertRow();
-                r.style.cursor = 'pointer';
-                r.addEventListener('click', () => openSessionDetails(s, 'student'));
-                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime);
-                r.insertCell(1).innerText = s.counterparty || '—';
-                let statusHtml = statusPill(s.status);
-                if (s.status === 'waiting for teacher') {
-                    statusHtml += `<button class="btn-cancel" data-id="${s.session_id}">Cancel</button>`;
-                }
-                r.insertCell(2).innerHTML = statusHtml;
-            });
-            tbody.querySelectorAll('.btn-cancel').forEach(btn =>
-                btn.addEventListener('click', (e) => { e.stopPropagation(); cancelRequest(btn.getAttribute('data-id')); }));
-        }
-
         // ── Schedule (teacher) ───────────────────────────────────────────────
         function openScheduledSession(s) { openSessionDetails(s, 'teacher'); }
         function renderScheduleSection() {
@@ -763,6 +741,48 @@
         }
 
         // ── Past sessions ────────────────────────────────────────────────────
+        function renderAllPastMeetings() {
+            const tbody = document.getElementById('pastMeetingsAllBody'); tbody.innerHTML = '';
+            const past = [...studentSessions, ...teacherSessions]
+                .filter(s => s.status === 'completed')
+                .sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+            if (!past.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
+            past.forEach(s => {
+                const r = tbody.insertRow();
+                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
+                r.insertCell(1).innerHTML = s.my_role === 'teacher' ? '<span class="role-tag teaching">Teaching</span>' : '<span class="role-tag learning">Learning</span>';
+                r.insertCell(2).innerText = s.counterparty || '—';
+                r.insertCell(3).innerText = s.subject || '—';
+                r.insertCell(4).innerText = fmtDuration(s.actual_duration_minutes ?? s.duration);
+                const myRatingCell = r.insertCell(5);
+                if (s.my_role === 'teacher') {
+                    if (s.teacher_review_submitted_at) { myRatingCell.innerHTML = starsHtml(s.teacher_rating); }
+                    else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" class="action-link">Leave review →</a>` : '—'; }
+                } else {
+                    if (s.student_review_submitted_at) { myRatingCell.innerHTML = starsHtml(s.student_rating); }
+                    else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" class="action-link">Leave review →</a>` : '—'; }
+                }
+            });
+        }
+
+        function switchPastMeetingsTab(tab) {
+            document.querySelectorAll('#pastMeetingsTabs .pm-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-pm-tab') === tab));
+            document.getElementById('pastMeetingsAllPanel').style.display = tab === 'all' ? '' : 'none';
+            document.getElementById('pastMeetingsStudentPanel').style.display = tab === 'student' ? '' : 'none';
+            document.getElementById('pastMeetingsTeacherPanel').style.display = tab === 'teacher' ? '' : 'none';
+            if (tab === 'all') renderAllPastMeetings();
+            if (tab === 'student') renderStudentPastMeetings();
+            if (tab === 'teacher') renderTeacherPastMeetings();
+        }
+        document.querySelectorAll('#pastMeetingsTabs .pm-tab').forEach(btn =>
+            btn.addEventListener('click', () => switchPastMeetingsTab(btn.getAttribute('data-pm-tab'))));
+
+        function showPastMeetingsSection() {
+            const both = personas.isStudent && personas.isTeacher;
+            const defaultTab = both ? 'all' : (personas.isTeacher ? 'teacher' : 'student');
+            switchPastMeetingsTab(defaultTab);
+        }
+
         function renderStudentPastMeetings() {
             const tbody = document.getElementById('pastMeetingsStudentBody'); tbody.innerHTML = '';
             const past = studentSessions.filter(s => s.status === 'completed').sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
@@ -917,11 +937,9 @@
         const sections = {
             overview: document.getElementById('overview-section'),
             'find-teacher': document.getElementById('find-teacher-section'),
-            'my-sessions': document.getElementById('my-sessions-section'),
             requests: document.getElementById('requests-section'),
             schedule: document.getElementById('schedule-section'),
-            'past-meetings-student': document.getElementById('past-meetings-student-section'),
-            'past-meetings-teacher': document.getElementById('past-meetings-teacher-section'),
+            'past-meetings': document.getElementById('past-meetings-section'),
             availability: document.getElementById('availability-section')
         };
         function showSection(sectionId) {
@@ -932,11 +950,9 @@
             if (li) li.classList.add('active');
             if (sectionId === 'overview') renderOverview();
             if (sectionId === 'find-teacher') resetFindTeacher();
-            if (sectionId === 'my-sessions') renderAllSessions();
             if (sectionId === 'requests') renderFullRequests('');
             if (sectionId === 'schedule') renderScheduleSection();
-            if (sectionId === 'past-meetings-student') renderStudentPastMeetings();
-            if (sectionId === 'past-meetings-teacher') renderTeacherPastMeetings();
+            if (sectionId === 'past-meetings') showPastMeetingsSection();
             if (sectionId === 'availability') loadAvailability();
         }
         document.querySelectorAll('.sidebar-nav li').forEach(li => li.addEventListener('click', (e) => { e.preventDefault(); showSection(li.getAttribute('data-section')); }));
@@ -970,7 +986,7 @@
 
             if (personas.isStudent) {
                 studentSessions.filter(s => s.status === 'scheduled' && !seenConfirmed.has(s.session_id)).forEach(s => {
-                    notifs.push({ type: 'confirmed', icon: 'fa-check-circle', title: `Session confirmed!`, sub: `${s.counterparty || 'Your teacher'} accepted your ${s.subject || ''} request`, _date: s.session_date || '', _time: s.starttime || '', action: () => { seenConfirmed.add(s.session_id); localStorage.setItem('lcSeenConfirmed', JSON.stringify([...seenConfirmed])); showSection('my-sessions'); } });
+                    notifs.push({ type: 'confirmed', icon: 'fa-check-circle', title: `Session confirmed!`, sub: `${s.counterparty || 'Your teacher'} accepted your ${s.subject || ''} request`, _date: s.session_date || '', _time: s.starttime || '', action: () => { seenConfirmed.add(s.session_id); localStorage.setItem('lcSeenConfirmed', JSON.stringify([...seenConfirmed])); showSection('overview'); } });
                     if (!sentConfirmations.has(s.session_id)) {
                         sentConfirmations.add(s.session_id);
                         localStorage.setItem('lcSentConfirmations', JSON.stringify([...sentConfirmations]));
@@ -991,7 +1007,7 @@
             }
 
             const soonCandidates = [
-                ...(personas.isStudent ? studentSessions.map(s => ({ s, section: 'my-sessions' })) : []),
+                ...(personas.isStudent ? studentSessions.map(s => ({ s, section: 'overview' })) : []),
                 ...(personas.isTeacher ? teacherSessions.map(s => ({ s, section: 'schedule' })) : [])
             ];
             soonCandidates.filter(({ s }) => s.status === 'scheduled' && s.session_date && s.starttime).forEach(({ s, section }) => {
