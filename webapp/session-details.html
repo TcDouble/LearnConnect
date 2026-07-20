@@ -175,6 +175,11 @@
           <div class="detail-value" id="detailNotes" style="font-weight:400; color:#334155; line-height:1.5;"></div>
         </div>
 
+        <div class="detail-card" id="detailAttachmentCard" style="display:none;">
+          <div class="detail-label">Attachment</div>
+          <div class="detail-value"><a id="detailAttachmentLink" href="#" target="_blank" style="color:#2b7a4b;text-decoration:none;"><i class="fas fa-paperclip"></i> <span id="detailAttachmentName"></span></a></div>
+        </div>
+
         <div class="detail-card">
           <div class="detail-label">Status</div>
           <div id="detailStatus">—</div>
@@ -222,6 +227,15 @@
     if (s.notes) {
       document.getElementById('detailNotes').textContent = s.notes;
       document.getElementById('detailNotesCard').style.display = 'block';
+    }
+
+    if (s.attachmentUrl) {
+      document.getElementById('detailAttachmentName').textContent = s.attachmentFilename || 'Download file';
+      document.getElementById('detailAttachmentCard').style.display = 'block';
+      supabaseClient.storage.from('session-attachments').createSignedUrl(s.attachmentUrl, 3600).then(({ data, error }) => {
+        if (data?.signedUrl) document.getElementById('detailAttachmentLink').href = data.signedUrl;
+        else if (error) document.getElementById('detailAttachmentName').textContent += ' (link unavailable)';
+      });
     }
 
     const statusMap = { scheduled: 'Confirmed', 'waiting for teacher': 'Pending', canceled: 'Cancelled', completed: 'Completed' };

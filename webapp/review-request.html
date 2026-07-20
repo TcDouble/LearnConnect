@@ -139,6 +139,11 @@
           <div class="row-label">Request notes</div>
           <div class="row-note" id="dispRequest">—</div>
         </div>
+
+        <div class="request-card" id="dispAttachmentCard" style="display:none;">
+          <div class="row-label">Attachment</div>
+          <div class="row-note"><a id="dispAttachmentLink" href="#" target="_blank" style="color:#2b7a4b;font-weight:600;text-decoration:none;"><i class="fas fa-paperclip"></i> <span id="dispAttachmentName"></span></a></div>
+        </div>
       </div>
 
       <!-- Teacher response -->
@@ -225,6 +230,15 @@
     if (req.request) {
       document.getElementById('dispRequest').textContent     = req.request;
       document.getElementById('dispRequestCard').style.display = 'block';
+    }
+
+    if (req.attachmentUrl) {
+      document.getElementById('dispAttachmentName').textContent = req.attachmentFilename || 'Download file';
+      document.getElementById('dispAttachmentCard').style.display = 'block';
+      supabaseClient.storage.from('session-attachments').createSignedUrl(req.attachmentUrl, 3600).then(({ data, error }) => {
+        if (data?.signedUrl) document.getElementById('dispAttachmentLink').href = data.signedUrl;
+        else if (error) document.getElementById('dispAttachmentName').textContent += ' (link unavailable)';
+      });
     }
 
     // Use the student's requested session type and time directly — teacher cannot change it

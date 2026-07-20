@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LearnConnect — Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="auth.css">
     <link rel="stylesheet" href="dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
@@ -101,37 +102,78 @@
 
             <!-- Find a teacher (student) -->
             <div id="find-teacher-section" class="hidden-section">
-                <div id="requestFormView">
-                    <div class="dashboard-header"><h1>Find a teacher</h1><p class="greeting">Tell us what you need help with, then we'll show you teachers.</p></div>
-                    <form id="tutorRequestForm" class="profile-form">
-                        <div class="form-row"><label>Subject</label><select id="reqSubject" required><option value="">Select a subject…</option><option>Biology</option><option>Business Studies</option><option>Chemistry</option><option>Computer Science</option><option>Economics</option><option>English - High Level</option><option>English - Low Level</option><option>English - Middle Level</option><option>Geography</option><option>History</option><option>Legal Studies</option><option>Math - High Level</option><option>Math - Low Level</option><option>Math - Middle Level</option><option>Physics</option><option>Psychology</option><option>Robotics</option><option>Test Prep</option></select></div>
-                        <div class="form-row"><label>Topic</label><input type="text" id="reqTopic" placeholder="e.g. Quadratic equations" required></div>
-                        <div class="form-row"><label>Notes</label><textarea id="reqNotes" rows="3" placeholder="Anything the teacher should know beforehand..."></textarea></div>
-                        <div class="form-row"><label>Session type</label>
-                            <select id="reqSessionType">
-                                <option value="immediate">Immediate — find a teacher available now</option>
-                                <option value="scheduled">Scheduled — pick a date and time</option>
-                            </select>
-                        </div>
-                        <div class="form-row"><label>Duration</label>
-                            <select id="reqDuration">
-                                <option value="30">30 minutes</option>
-                                <option value="60" selected>1 hour</option>
-                                <option value="90">1.5 hours</option>
-                                <option value="120">2 hours</option>
-                            </select>
-                        </div>
-                        <div id="scheduledFields" style="display:none;">
-                            <div class="form-row"><label>Date</label><input type="date" id="reqDate"></div>
-                            <div class="form-row"><label>Time (your local time)</label><input type="time" id="reqTime"></div>
-                            <div id="reqUtcPreview" class="ls-note" style="margin-top:-6px;margin-bottom:8px;padding-left:2px;"></div>
-                        </div>
-                        <button type="submit" class="btn-save">Find teachers →</button>
-                    </form>
+                <div class="dashboard-header"><h1>Find a teacher</h1><p class="greeting">Tell us what you need help with, then we'll show you teachers.</p></div>
+
+                <div class="steps" id="ftSteps"></div>
+                <div class="form-error" id="ftError" hidden><i class="fas fa-circle-exclamation"></i> <span id="ftErrorText"></span></div>
+
+                <!-- Step 1: subject -->
+                <div class="wizard-step profile-form" data-ft-step="subject">
+                    <div class="form-row">
+                        <label>What subject do you need help with?</label>
+                        <div class="subject-btn-grid" id="reqSubjectGrid"></div>
+                    </div>
+                    <div class="form-row"><label>Topic</label><input type="text" id="reqTopic" placeholder="e.g. Quadratic equations"></div>
                 </div>
-                <div id="teacherBrowseView" style="display:none;">
-                    <div class="dashboard-header"><h1>Available teachers</h1><p class="greeting" id="requestSummary"></p><button type="button" id="editRequestBtn" class="btn-mini" style="background:#f1f5f9;color:#334155;margin-top:8px;">← Edit request</button></div>
+
+                <!-- Step 2: notes + attachment -->
+                <div class="wizard-step profile-form" data-ft-step="notes">
+                    <div class="form-row"><label>Notes for the teacher</label><textarea id="reqNotes" rows="4" placeholder="Anything the teacher should know beforehand..."></textarea></div>
+                    <div class="form-row">
+                        <label>Attach a document <span class="hint">(optional)</span></label>
+                        <div class="file-input-wrapper">
+                            <label class="file-label" for="reqAttachment"><i class="fas fa-paperclip"></i> Choose file</label>
+                            <input type="file" id="reqAttachment" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.doc,.docx">
+                            <span id="reqAttachFileName" class="file-name">No file chosen</span>
+                        </div>
+                        <small class="ls-note">PDF, Word, text, or image — up to 10MB.</small>
+                    </div>
+                </div>
+
+                <!-- Step 3: timing -->
+                <div class="wizard-step profile-form" data-ft-step="timing">
+                    <div class="form-row">
+                        <label>When do you want to meet?</label>
+                        <div class="session-type-grid">
+                            <label class="session-type-card selected" id="typeImmediateCard">
+                                <input type="radio" name="reqSessionType" value="immediate" checked>
+                                <div class="session-type-icon"><i class="fas fa-bolt"></i></div>
+                                <div><h4>Immediate</h4><p>Find a teacher available right now</p></div>
+                            </label>
+                            <label class="session-type-card" id="typeScheduledCard">
+                                <input type="radio" name="reqSessionType" value="scheduled">
+                                <div class="session-type-icon"><i class="fas fa-calendar-days"></i></div>
+                                <div><h4>Scheduled</h4><p>Pick a specific date and time</p></div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-row"><label>Duration</label>
+                        <select id="reqDuration">
+                            <option value="30">30 minutes</option>
+                            <option value="60" selected>1 hour</option>
+                            <option value="90">1.5 hours</option>
+                            <option value="120">2 hours</option>
+                        </select>
+                    </div>
+                    <div id="scheduledFields" style="display:none;">
+                        <div class="form-row"><label>Date</label><input type="date" id="reqDate"></div>
+                        <div class="form-row"><label>Time (your local time)</label><input type="time" id="reqTime"></div>
+                        <div id="reqUtcPreview" class="ls-note" style="margin-top:-6px;margin-bottom:8px;padding-left:2px;"></div>
+                    </div>
+                </div>
+
+                <div class="wizard-nav" id="ftNav">
+                    <button type="button" class="btn btn-outline" id="ftBackBtn" hidden><i class="fas fa-arrow-left"></i> Back</button>
+                    <button type="button" class="btn btn-primary grow" id="ftContinueBtn">Continue <i class="fas fa-arrow-right"></i></button>
+                </div>
+
+                <!-- Step 4: choose a teacher -->
+                <div class="wizard-step" data-ft-step="teachers">
+                    <p class="greeting" id="requestSummary" style="margin-bottom:16px;"></p>
                     <div id="availableTeachersGrid" class="teachers-grid"></div>
+                    <div class="wizard-nav">
+                        <button type="button" class="btn btn-outline" id="ftBackBtn2"><i class="fas fa-arrow-left"></i> Back</button>
+                    </div>
                 </div>
             </div>
 
@@ -399,6 +441,8 @@
                 sessionTime: s.starttime || null,
                 request: s.request || '',
                 duration: s.duration || null,
+                attachmentUrl: s.attachment_url || null,
+                attachmentFilename: s.attachment_filename || null,
                 tutorName: fullName,
                 tutorEmail: email,
                 returnUrl: 'student-dashboard.html'
@@ -437,6 +481,8 @@
                 status: s.status || 'scheduled',
                 meetingUrl: s.meeting_url || null,
                 meetingProvider: s.meeting_provider || null,
+                attachmentUrl: s.attachment_url || null,
+                attachmentFilename: s.attachment_filename || null,
                 returnUrl: 'student-dashboard.html'
             };
             if (role === 'teacher') { payload.isTeacher = true; payload.session_id = s.session_id || null; }
@@ -513,23 +559,69 @@
                 end = endDt.toISOString().slice(11, 19);
             }
             const request = currentRequest.topic + (currentRequest.notes ? ` — ${currentRequest.notes}` : '');
+
+            let attachment_url = null, attachment_filename = null;
+            const file = currentRequest.attachmentFile;
+            if (file) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+                const path = `${session.user.id}/${crypto.randomUUID()}-${safeName}`;
+                const { error: upErr } = await supabaseClient.storage.from('session-attachments').upload(path, file);
+                if (upErr) { alert('Could not upload attachment: ' + upErr.message); return; }
+                attachment_url = path;
+                attachment_filename = file.name;
+            }
+
             const { error } = await supabaseClient.from('Blocked_Time').insert({
                 TID: tid, SID: SID, date, starttime: start, endtime: end,
-                status: 'waiting for teacher', subject: currentRequest.subject, request, duration: currentRequest.duration || 60
+                status: 'waiting for teacher', subject: currentRequest.subject, request, duration: currentRequest.duration || 60,
+                attachment_url, attachment_filename
             });
             if (error) { alert('Could not send request: ' + error.message); return; }
             alert(`Request sent to ${name}!`);
             await refreshSessions(); renderOverview();
         }
 
-        const requestFormView = document.getElementById('requestFormView');
-        const teacherBrowseView = document.getElementById('teacherBrowseView');
-        const reqSessionType = document.getElementById('reqSessionType');
-        const scheduledFields = document.getElementById('scheduledFields');
-        function resetFindTeacher() { requestFormView.style.display = 'block'; teacherBrowseView.style.display = 'none'; }
-        function toggleScheduledFields() { const scheduled = reqSessionType.value === 'scheduled'; scheduledFields.style.display = scheduled ? 'block' : 'none'; document.getElementById('reqDate').required = scheduled; document.getElementById('reqTime').required = scheduled; }
-        reqSessionType.addEventListener('change', toggleScheduledFields);
-        toggleScheduledFields();
+        // ── Find-a-teacher wizard ────────────────────────────────────────────
+        const FT_STEPS = ['subject', 'notes', 'timing', 'teachers'];
+        const FT_LABELS = { subject: 'Subject', notes: 'Notes', timing: 'Timing', teachers: 'Teacher' };
+        let ftStepIndex = 0;
+        let selectedSubject = '';
+
+        function renderSubjectButtons() {
+            const grid = document.getElementById('reqSubjectGrid');
+            grid.innerHTML = '';
+            SUBJECTS.forEach(s => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'subject-btn';
+                btn.textContent = s;
+                btn.addEventListener('click', () => {
+                    selectedSubject = s;
+                    document.querySelectorAll('.subject-btn').forEach(b => b.classList.toggle('selected', b === btn));
+                });
+                grid.appendChild(btn);
+            });
+        }
+        renderSubjectButtons();
+
+        const reqAttachmentInput = document.getElementById('reqAttachment');
+        reqAttachmentInput.addEventListener('change', () => {
+            const f = reqAttachmentInput.files[0];
+            document.getElementById('reqAttachFileName').textContent = f ? f.name : 'No file chosen';
+        });
+
+        document.querySelectorAll('input[name="reqSessionType"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.getElementById('typeImmediateCard').classList.toggle('selected', radio.value === 'immediate' && radio.checked);
+                document.getElementById('typeScheduledCard').classList.toggle('selected', radio.value === 'scheduled' && radio.checked);
+                toggleScheduledFields();
+            });
+        });
+        function toggleScheduledFields() {
+            const scheduled = document.querySelector('input[name="reqSessionType"]:checked').value === 'scheduled';
+            document.getElementById('scheduledFields').style.display = scheduled ? 'block' : 'none';
+        }
 
         function updateReqUTCPreview() {
             const d = document.getElementById('reqDate').value;
@@ -539,19 +631,55 @@
         }
         document.getElementById('reqDate').addEventListener('input', updateReqUTCPreview);
         document.getElementById('reqTime').addEventListener('input', updateReqUTCPreview);
-        document.getElementById('tutorRequestForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const sessionType = reqSessionType.value;
+
+        function ftShowError(msg) { const el = document.getElementById('ftError'); document.getElementById('ftErrorText').textContent = msg; el.hidden = false; }
+        function ftClearError() { document.getElementById('ftError').hidden = true; }
+
+        function ftRenderProgress() {
+            document.getElementById('ftSteps').innerHTML = FT_STEPS.map((s, i) => {
+                const cls = i < ftStepIndex ? 'done' : (i === ftStepIndex ? 'active' : '');
+                const dot = `<div class="step ${cls}">${FT_LABELS[s]}</div>`;
+                return i < FT_STEPS.length - 1 ? dot + '<div class="step-line"></div>' : dot;
+            }).join('');
+        }
+
+        function ftShowStep(name) {
+            document.querySelectorAll('.wizard-step[data-ft-step]').forEach(el => el.classList.toggle('current', el.dataset.ftStep === name));
+            document.getElementById('ftBackBtn').hidden = ftStepIndex === 0;
+            document.getElementById('ftNav').hidden = name === 'teachers';
+            ftRenderProgress();
+            ftClearError();
+            if (name === 'teachers') loadTeacherStep();
+        }
+
+        function resetFindTeacher() {
+            ftStepIndex = 0;
+            selectedSubject = '';
+            document.querySelectorAll('.subject-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('reqTopic').value = '';
+            document.getElementById('reqNotes').value = '';
+            reqAttachmentInput.value = '';
+            document.getElementById('reqAttachFileName').textContent = 'No file chosen';
+            document.querySelector('input[name="reqSessionType"][value="immediate"]').checked = true;
+            document.getElementById('typeImmediateCard').classList.add('selected');
+            document.getElementById('typeScheduledCard').classList.remove('selected');
+            toggleScheduledFields();
+            currentRequest = null;
+            ftShowStep(FT_STEPS[0]);
+        }
+
+        async function loadTeacherStep() {
+            const sessionType = document.querySelector('input[name="reqSessionType"]:checked').value;
             currentRequest = {
-                subject: document.getElementById('reqSubject').value.trim(),
+                subject: selectedSubject,
                 topic: document.getElementById('reqTopic').value.trim(),
                 notes: document.getElementById('reqNotes').value.trim(),
+                attachmentFile: reqAttachmentInput.files[0] || null,
                 sessionType,
                 duration: parseInt(document.getElementById('reqDuration').value, 10),
                 date: sessionType === 'scheduled' ? document.getElementById('reqDate').value : null,
                 time: sessionType === 'scheduled' ? document.getElementById('reqTime').value : null
             };
-            if (sessionType === 'scheduled' && (!currentRequest.date || !currentRequest.time)) { alert('Please pick a date and time for your scheduled session.'); return; }
             const when = sessionType === 'immediate' ? 'as soon as possible' : `on ${currentRequest.date} at ${currentRequest.time}`;
             const dur = currentRequest.duration;
             const durLabel = dur < 60 ? `${dur} min` : dur === 60 ? '1 hr' : `${dur / 60} hrs`;
@@ -568,12 +696,34 @@
                 startISO = now.toISOString();
                 endISO = new Date(now.getTime() + durMs).toISOString();
             }
+            document.getElementById('availableTeachersGrid').innerHTML = '<p>Loading teachers…</p>';
             await refreshTeachers(startISO, endISO);
-            requestFormView.style.display = 'none';
-            teacherBrowseView.style.display = 'block';
             renderAvailableTeachers();
-        });
-        document.getElementById('editRequestBtn').addEventListener('click', resetFindTeacher);
+        }
+
+        function ftGoBack() {
+            if (ftStepIndex === 0) return;
+            ftStepIndex--;
+            ftShowStep(FT_STEPS[ftStepIndex]);
+        }
+        function ftGoNext() {
+            const current = FT_STEPS[ftStepIndex];
+            if (current === 'subject') {
+                if (!selectedSubject) { ftShowError('Please choose a subject.'); return; }
+                if (!document.getElementById('reqTopic').value.trim()) { ftShowError('Please enter a topic.'); return; }
+            }
+            if (current === 'timing') {
+                const scheduled = document.querySelector('input[name="reqSessionType"]:checked').value === 'scheduled';
+                if (scheduled && (!document.getElementById('reqDate').value || !document.getElementById('reqTime').value)) {
+                    ftShowError('Please pick a date and time for your scheduled session.'); return;
+                }
+            }
+            ftStepIndex++;
+            ftShowStep(FT_STEPS[ftStepIndex]);
+        }
+        document.getElementById('ftBackBtn').addEventListener('click', ftGoBack);
+        document.getElementById('ftBackBtn2').addEventListener('click', ftGoBack);
+        document.getElementById('ftContinueBtn').addEventListener('click', ftGoNext);
 
         // ── My sessions (student) ───────────────────────────────────────────
         function renderAllSessions() {
