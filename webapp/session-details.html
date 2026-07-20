@@ -171,7 +171,7 @@
         </div>
 
         <div class="detail-card" id="detailNotesCard" style="display:none;">
-          <div class="detail-label">Session notes</div>
+          <div class="detail-label">Request notes</div>
           <div class="detail-value" id="detailNotes" style="font-weight:400; color:#334155; line-height:1.5;"></div>
         </div>
 
@@ -186,7 +186,26 @@
         </div>
       </div>
 
-      <div class="form-section" style="margin-top:8px;">
+      <div class="form-section" id="detailSummarySection" style="display:none; margin-top:8px;">
+        <h3><i class="fas fa-clipboard-check"></i> Session summary</h3>
+
+        <div class="detail-card" id="detailRatingsCard" style="display:none;">
+          <div class="detail-label">Ratings</div>
+          <div class="detail-value" id="detailRatings" style="font-weight:400; line-height:1.7;"></div>
+        </div>
+
+        <div class="detail-card" id="detailSessionNotesCard" style="display:none;">
+          <div class="detail-label">Notes from the session</div>
+          <div class="detail-value" id="detailSessionNotes" style="font-weight:400; color:#334155; line-height:1.5;"></div>
+        </div>
+
+        <div class="detail-card" id="detailReviewPromptCard" style="display:none;">
+          <div class="detail-label">Your review</div>
+          <div class="detail-value" id="detailReviewPrompt" style="font-weight:400;"></div>
+        </div>
+      </div>
+
+      <div class="form-section" id="meetingRoomSection" style="margin-top:8px;">
         <h3><i class="fas fa-video"></i> Meeting room</h3>
         <div id="meetingLinkArea"></div>
       </div>
@@ -244,10 +263,50 @@
     const st = s.status || 'scheduled';
     statusEl.innerHTML = `<span class="status-pill ${statusClass[st] || 'scheduled'}">${statusMap[st] || st}</span>`;
 
+    // ── Session summary (ratings, notes, review) — completed sessions only ──
+
+    function starsLine(n) { return '★'.repeat(n) + '☆'.repeat(5 - n); }
+
+    if (st === 'completed') {
+      let summaryShown = false;
+
+      const ratingLines = [];
+      if (s.studentRating) ratingLines.push(`<div>Student's rating: <span style="color:#f59e0b;">${starsLine(s.studentRating)}</span></div>`);
+      if (s.teacherRating) ratingLines.push(`<div>Teacher's rating: <span style="color:#f59e0b;">${starsLine(s.teacherRating)}</span></div>`);
+      if (ratingLines.length) {
+        document.getElementById('detailRatings').innerHTML = ratingLines.join('');
+        document.getElementById('detailRatingsCard').style.display = 'block';
+        summaryShown = true;
+      }
+
+      if (s.teacherNotes) {
+        document.getElementById('detailSessionNotes').textContent = s.teacherNotes;
+        document.getElementById('detailSessionNotesCard').style.display = 'block';
+        summaryShown = true;
+      }
+
+      const reviewPrompt = document.getElementById('detailReviewPrompt');
+      if (s.myReviewSubmitted) {
+        reviewPrompt.textContent = "You've already left your review for this session.";
+        document.getElementById('detailReviewPromptCard').style.display = 'block';
+        summaryShown = true;
+      } else if (s.myReviewToken) {
+        reviewPrompt.innerHTML = `<a href="post-meeting-review.html?token=${s.myReviewToken}" style="color:#2b7a4b;text-decoration:none;font-weight:600;">Leave your review →</a>`;
+        document.getElementById('detailReviewPromptCard').style.display = 'block';
+        summaryShown = true;
+      }
+
+      if (summaryShown) document.getElementById('detailSummarySection').style.display = 'block';
+    }
+
     // ── Meeting link area ──────────────────────────────────────────────────
 
     function renderMeetingArea() {
       const area = document.getElementById('meetingLinkArea');
+      if (s.status === 'completed') {
+        document.getElementById('meetingRoomSection').style.display = 'none';
+        return;
+      }
       if (s.meetingUrl) {
         const prov = s.meetingProvider
           ? s.meetingProvider.charAt(0).toUpperCase() + s.meetingProvider.slice(1)

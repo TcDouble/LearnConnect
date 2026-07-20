@@ -474,14 +474,20 @@
                 subject: s.subject || '',
                 sessionDate: s.session_date || null,
                 sessionTime: s.starttime || null,
-                duration: s.duration || null,
+                duration: s.actual_duration_minutes || s.duration || null,
                 notes: s.request || '',
                 status: s.status || 'scheduled',
                 meetingUrl: s.meeting_url || null,
                 meetingProvider: s.meeting_provider || null,
                 attachmentUrl: s.attachment_url || null,
                 attachmentFilename: s.attachment_filename || null,
-                returnUrl: 'student-dashboard.html'
+                returnUrl: 'student-dashboard.html',
+                myRole: role || s.my_role || null,
+                studentRating: s.student_rating ?? null,
+                teacherRating: s.teacher_rating ?? null,
+                teacherNotes: s.teacher_notes || '',
+                myReviewToken: s.my_review_token || null,
+                myReviewSubmitted: role === 'teacher' ? !!s.teacher_review_submitted_at : !!s.student_review_submitted_at
             };
             if (role === 'teacher') { payload.isTeacher = true; payload.session_id = s.session_id || null; }
             localStorage.setItem('sessionDetails', JSON.stringify(payload));
@@ -749,6 +755,8 @@
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
             past.forEach(s => {
                 const r = tbody.insertRow();
+                r.classList.add('clickable-row');
+                r.addEventListener('click', () => openSessionDetails(s, s.my_role));
                 r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
                 r.insertCell(1).innerHTML = s.my_role === 'teacher' ? '<span class="role-tag teaching">Teaching</span>' : '<span class="role-tag learning">Learning</span>';
                 r.insertCell(2).innerText = s.counterparty || '—';
@@ -757,10 +765,10 @@
                 const myRatingCell = r.insertCell(5);
                 if (s.my_role === 'teacher') {
                     if (s.teacher_review_submitted_at) { myRatingCell.innerHTML = starsHtml(s.teacher_rating); }
-                    else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" class="action-link">Leave review →</a>` : '—'; }
+                    else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" onclick="event.stopPropagation()" class="action-link">Leave review →</a>` : '—'; }
                 } else {
                     if (s.student_review_submitted_at) { myRatingCell.innerHTML = starsHtml(s.student_rating); }
-                    else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" class="action-link">Leave review →</a>` : '—'; }
+                    else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" onclick="event.stopPropagation()" class="action-link">Leave review →</a>` : '—'; }
                 }
             });
         }
@@ -789,13 +797,15 @@
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
             past.forEach(s => {
                 const r = tbody.insertRow();
+                r.classList.add('clickable-row');
+                r.addEventListener('click', () => openSessionDetails(s, 'student'));
                 r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
                 r.insertCell(1).innerText = s.counterparty || '—';
                 r.insertCell(2).innerText = s.subject || '—';
                 r.insertCell(3).innerText = fmtDuration(s.actual_duration_minutes ?? s.duration);
                 const myRatingCell = r.insertCell(4);
                 if (s.student_review_submitted_at) { myRatingCell.innerHTML = starsHtml(s.student_rating); }
-                else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" class="action-link">Leave review →</a>` : '—'; }
+                else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" onclick="event.stopPropagation()" class="action-link">Leave review →</a>` : '—'; }
             });
         }
 
@@ -805,6 +815,8 @@
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
             past.forEach(s => {
                 const r = tbody.insertRow();
+                r.classList.add('clickable-row');
+                r.addEventListener('click', () => openSessionDetails(s, 'teacher'));
                 r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
                 r.insertCell(1).innerText = s.counterparty || '—';
                 r.insertCell(2).innerText = s.subject || '—';
@@ -812,7 +824,7 @@
                 r.insertCell(4).innerHTML = starsHtml(s.student_rating);
                 const myRatingCell = r.insertCell(5);
                 if (s.teacher_review_submitted_at) { myRatingCell.innerHTML = starsHtml(s.teacher_rating); }
-                else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" class="action-link">Leave review →</a>` : '—'; }
+                else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" onclick="event.stopPropagation()" class="action-link">Leave review →</a>` : '—'; }
                 const notesCell = r.insertCell(6);
                 if (s.teacher_notes) {
                     const short = s.teacher_notes.length > 50 ? s.teacher_notes.slice(0, 50) + '…' : s.teacher_notes;
