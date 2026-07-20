@@ -49,6 +49,18 @@
       margin-top: 4px;
       min-height: 1.2em;
     }
+    .rating-question {
+      margin-bottom: 18px;
+    }
+    .rating-question:last-child {
+      margin-bottom: 0;
+    }
+    .rating-question-label {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #0f3b2c;
+      margin-bottom: 6px;
+    }
     .notes-area {
       width: 100%;
       box-sizing: border-box;
@@ -154,14 +166,8 @@
 
         <div class="form-section">
           <h3><i class="fas fa-star"></i> Your rating</h3>
-          <div class="stars-row" id="starsRow">
-            <span class="star" data-v="1">★</span>
-            <span class="star" data-v="2">★</span>
-            <span class="star" data-v="3">★</span>
-            <span class="star" data-v="4">★</span>
-            <span class="star" data-v="5">★</span>
-          </div>
-          <div class="star-hint" id="starHint">Click a star to rate</div>
+          <p style="font-size:0.85rem; color:#64748b; margin:0 0 14px;">Rate each question — 1 star is poor, 5 stars is excellent. Your overall rating is the average.</p>
+          <div id="ratingQuestions"></div>
         </div>
 
         <div class="form-section" id="notesSection" style="display:none;">
@@ -172,7 +178,7 @@
 
         <button class="submit-btn" id="submitBtn" disabled>
           <span class="spinner" id="submitSpinner"></span>
-          <span id="submitLabel">Select a rating to continue</span>
+          <span id="submitLabel">Rate all 5 questions to continue</span>
         </button>
       </div>
 
@@ -193,10 +199,29 @@
 
   <script>
     const SUBMIT_REVIEW_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/submit-review';
-    const STAR_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
+
+    // Each role rates the other party across 5 fixed questions; the submitted
+    // rating is the rounded average of the 5 answers.
+    const RATING_QUESTIONS = {
+      student: [
+        'Overall quality of the session',
+        'How clearly the teacher explained things',
+        "How well the teacher listened and addressed your questions",
+        "Teacher's preparation and organization",
+        'How likely you are to book this teacher again',
+      ],
+      teacher: [
+        'Overall quality of the session',
+        "Student's engagement and participation",
+        "Student's preparation for the session",
+        "Student's attentiveness and respectfulness",
+        'How likely you are to teach this student again',
+      ],
+    };
 
     const token = new URLSearchParams(location.search).get('token');
     let userRole = null;
+    let questionRatings = [0, 0, 0, 0, 0];
 
     function show(id) {
       ['loadingState', 'errorState', 'alreadyState', 'reviewState', 'thankYouState']
@@ -208,25 +233,56 @@
       show('errorState');
     }
 
-    // ── Star rating ───────────────────────────────────────────────────────────
-    let selectedRating = 0;
-    const stars = document.querySelectorAll('.star');
+    // ── Star ratings (one row per question) ─────────────────────────────────────
+    function buildRatingQuestions(role) {
+      const questions = RATING_QUESTIONS[role] || RATING_QUESTIONS.student;
+      questionRatings = questions.map(() => 0);
 
-    function paintStars(upTo) {
-      stars.forEach(s => s.classList.toggle('lit', parseInt(s.dataset.v) <= upTo));
+      const container = document.getElementById('ratingQuestions');
+      container.innerHTML = '';
+      questions.forEach((question, qIndex) => {
+        const block = document.createElement('div');
+        block.className = 'rating-question';
+        block.innerHTML = `
+          <div class="rating-question-label">${question}</div>
+          <div class="stars-row" data-q="${qIndex}">
+            <span class="star" data-v="1">★</span>
+            <span class="star" data-v="2">★</span>
+            <span class="star" data-v="3">★</span>
+            <span class="star" data-v="4">★</span>
+            <span class="star" data-v="5">★</span>
+          </div>
+        `;
+        container.appendChild(block);
+      });
+
+      container.querySelectorAll('.stars-row').forEach(row => {
+        const qIndex = parseInt(row.dataset.q, 10);
+        const stars = row.querySelectorAll('.star');
+        const paint = upTo => stars.forEach(s => s.classList.toggle('lit', parseInt(s.dataset.v, 10) <= upTo));
+
+        stars.forEach(star => {
+          star.addEventListener('mouseenter', () => paint(parseInt(star.dataset.v, 10)));
+          star.addEventListener('click', () => {
+            questionRatings[qIndex] = parseInt(star.dataset.v, 10);
+            paint(questionRatings[qIndex]);
+            updateSubmitState();
+          });
+        });
+        row.addEventListener('mouseleave', () => paint(questionRatings[qIndex]));
+      });
     }
 
-    stars.forEach(star => {
-      star.addEventListener('mouseenter', () => paintStars(parseInt(star.dataset.v)));
-      star.addEventListener('click', () => {
-        selectedRating = parseInt(star.dataset.v);
-        paintStars(selectedRating);
-        document.getElementById('starHint').textContent = STAR_LABELS[selectedRating] || '';
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('submitLabel').textContent = 'Submit review';
-      });
-    });
-    document.getElementById('starsRow').addEventListener('mouseleave', () => paintStars(selectedRating));
+    function updateSubmitState() {
+      const allAnswered = questionRatings.every(v => v > 0);
+      document.getElementById('submitBtn').disabled = !allAnswered;
+      document.getElementById('submitLabel').textContent = allAnswered ? 'Submit review' : 'Rate all 5 questions to continue';
+    }
+
+    function averageRating() {
+      const sum = questionRatings.reduce((a, b) => a + b, 0);
+      return Math.round(sum / questionRatings.length);
+    }
 
     // ── Load session ──────────────────────────────────────────────────────────
     async function load() {
@@ -275,12 +331,15 @@
         document.getElementById('notesSection').style.display = '';
       }
 
+      buildRatingQuestions(data.role);
+      updateSubmitState();
+
       show('reviewState');
     }
 
     // ── Submit ────────────────────────────────────────────────────────────────
     document.getElementById('submitBtn').addEventListener('click', async () => {
-      if (!selectedRating) return;
+      if (!questionRatings.every(v => v > 0)) return;
 
       const btn     = document.getElementById('submitBtn');
       const spinner = document.getElementById('submitSpinner');
@@ -296,7 +355,7 @@
         const res = await fetch(SUBMIT_REVIEW_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'submit', token, rating: selectedRating, notes }),
+          body: JSON.stringify({ action: 'submit', token, rating: averageRating(), notes }),
         });
         const data = await res.json();
         if (!res.ok) {
