@@ -190,7 +190,7 @@
         <h3><i class="fas fa-clipboard-check"></i> Session summary</h3>
 
         <div class="detail-card" id="detailRatingsCard" style="display:none;">
-          <div class="detail-label">Ratings</div>
+          <div class="detail-label">Your rating</div>
           <div class="detail-value" id="detailRatings" style="font-weight:400; line-height:1.7;"></div>
         </div>
 
@@ -270,11 +270,9 @@
     if (st === 'completed') {
       let summaryShown = false;
 
-      const ratingLines = [];
-      if (s.studentRating) ratingLines.push(`<div>Student's rating: <span style="color:#f59e0b;">${starsLine(s.studentRating)}</span></div>`);
-      if (s.teacherRating) ratingLines.push(`<div>Teacher's rating: <span style="color:#f59e0b;">${starsLine(s.teacherRating)}</span></div>`);
-      if (ratingLines.length) {
-        document.getElementById('detailRatings').innerHTML = ratingLines.join('');
+      const myRating = s.myRole === 'teacher' ? s.teacherRating : s.studentRating;
+      if (myRating) {
+        document.getElementById('detailRatings').innerHTML = `<span style="color:#f59e0b;">${starsLine(myRating)}</span>`;
         document.getElementById('detailRatingsCard').style.display = 'block';
         summaryShown = true;
       }
