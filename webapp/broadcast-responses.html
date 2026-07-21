@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnConnect — Choose a Teacher</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .summary-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+    }
+    .summary-row { font-size: 0.9rem; color: #334155; margin-bottom: 4px; }
+    .summary-row:last-child { margin-bottom: 0; }
+    .empty-note {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      color: #64748b;
+      font-size: 0.92rem;
+    }
+    .choose-btn { margin-top: 16px; width: 100%; justify-content: center; }
+    #status {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    #status.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; display: block; }
+    #status.info  { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; display: block; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav class="container navbar">
+      <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+    </nav>
+  </header>
+
+  <main class="form-page">
+    <div class="container form-container">
+
+      <a href="student-dashboard.html"
+         style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; color:#2b7a4b; font-weight:600; text-decoration:none; margin-bottom:20px;">
+        <i class="fas fa-arrow-left"></i> Back to dashboard
+      </a>
+
+      <h1 style="color:#0f3b2c; margin-bottom:4px;">Choose a teacher</h1>
+      <p class="form-subhead" id="pageSubhead" style="margin-bottom:20px;">Loading responses…</p>
+
+      <div id="loadingState" style="text-align:center; padding:30px 0; color:#64748b;">
+        <i class="fas fa-circle-notch fa-spin" style="font-size:1.5rem; color:#2b7a4b;"></i>
+      </div>
+
+      <div id="contentState" style="display:none;">
+        <div class="summary-card">
+          <div class="summary-row" id="summarySubject"></div>
+          <div class="summary-row" id="summaryCounts"></div>
+        </div>
+
+        <div id="alreadyScheduledState" style="display:none;" class="empty-note">
+          <i class="fas fa-circle-check" style="color:#166534;margin-right:6px;"></i>
+          <span id="alreadyScheduledText"></span>
+        </div>
+
+        <div id="emptyState" style="display:none;" class="empty-note">
+          No teachers are available right now — everyone has declined or the request is still waiting on responses.
+        </div>
+
+        <div id="acceptedGrid" class="teachers-grid"></div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button id="refreshBtn" type="button" class="btn btn-outline" style="flex:1;"><i class="fas fa-rotate-right"></i> Refresh</button>
+          <button id="cancelBtn" type="button" class="btn btn-secondary" style="flex:1;"><i class="fas fa-xmark"></i> Cancel this request</button>
+        </div>
+
+        <div id="status"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="tz.js"></script>
+  <script>
+    const broadcastId = localStorage.getItem('activeBroadcastId');
+    if (!broadcastId) { window.location.href = 'student-dashboard.html'; }
+
+    function initials(name) { return (name || '?').split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase(); }
+    function fmtDuration(mins) {
+      if (!mins) return '—';
+      if (mins < 60) return `${mins} min`;
+      const h = Math.floor(mins / 60), m = mins % 60;
+      return m ? `${h}h ${m}m` : `${h}h`;
+    }
+
+    function showStatus(type, msg) {
+      const el = document.getElementById('status');
+      el.style.display = '';
+      el.className = type;
+      el.textContent = msg;
+    }
+    function clearStatus() {
+      const el = document.getElementById('status');
+      el.style.display = 'none';
+      el.textContent = '';
+    }
+
+    async function loadResponses() {
+      document.getElementById('loadingState').style.display = '';
+      document.getElementById('contentState').style.display = 'none';
+      clearStatus();
+
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) { window.location.href = 'student-login.html'; return; }
+
+      const { data, error } = await supabaseClient.rpc('my_sessions');
+      if (error) {
+        document.getElementById('loadingState').style.display = 'none';
+        showStatus('error', 'Could not load responses: ' + error.message);
+        document.getElementById('contentState').style.display = '';
+        return;
+      }
+
+      const rows = (data || []).filter(r => r.broadcast_id === broadcastId);
+      if (!rows.length) { window.location.href = 'student-dashboard.html'; return; }
+
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('contentState').style.display = '';
+      renderResponses(rows);
+    }
+
+    function renderResponses(rows) {
+      const first = rows[0];
+      document.getElementById('pageSubhead').textContent = `Immediate request — ${first.subject || 'your subject'}`;
+      document.getElementById('summarySubject').textContent = `${first.subject || '—'}${first.request ? ' — ' + first.request : ''}`;
+
+      const scheduled = rows.find(r => r.status === 'scheduled');
+      const accepted = rows.filter(r => r.status === 'offer_accepted');
+      const waiting = rows.filter(r => r.status === 'waiting for teacher');
+
+      document.getElementById('summaryCounts').textContent =
+        `Sent to ${rows.length} teacher${rows.length > 1 ? 's' : ''} — ${accepted.length + (scheduled ? 1 : 0)} accepted, ${waiting.length} still waiting to respond`;
+
+      document.getElementById('alreadyScheduledState').style.display = scheduled ? '' : 'none';
+      document.getElementById('emptyState').style.display = (!scheduled && !accepted.length && !waiting.length) ? '' : 'none';
+      document.getElementById('acceptedGrid').style.display = scheduled ? 'none' : '';
+      document.getElementById('cancelBtn').style.display = scheduled ? 'none' : '';
+
+      if (scheduled) {
+        document.getElementById('alreadyScheduledText').textContent =
+          `You already confirmed this session with ${scheduled.counterparty || 'a teacher'}.`;
+        return;
+      }
+
+      const grid = document.getElementById('acceptedGrid');
+      grid.innerHTML = '';
+      accepted.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'teacher-card';
+        card.innerHTML = `
+          <div class="teacher-name"><span class="teacher-initials">${initials(r.counterparty)}</span> ${r.counterparty || 'A teacher'}</div>
+          <div class="teacher-exp">${fmtDuration(r.duration)} session</div>
+          <button class="btn btn-primary choose-btn">Choose this teacher</button>
+        `;
+        card.querySelector('.choose-btn').addEventListener('click', () => chooseTeacher(r.session_id));
+        grid.appendChild(card);
+      });
+    }
+
+    async function chooseTeacher(sessionId) {
+      clearStatus();
+      const { error } = await supabaseClient.rpc('confirm_broadcast_teacher', { p_session_id: sessionId });
+      if (error) {
+        if (error.message && error.message.startsWith('STALE_OFFER')) {
+          showStatus('info', "That teacher's offer just changed — pick another below.");
+          loadResponses();
+        } else {
+          showStatus('error', 'Could not confirm: ' + error.message);
+        }
+        return;
+      }
+      localStorage.removeItem('activeBroadcastId');
+      window.location.href = 'student-dashboard.html';
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadResponses);
+
+    document.getElementById('cancelBtn').addEventListener('click', async () => {
+      if (!confirm('Cancel this request for everyone?')) return;
+      const { error } = await supabaseClient
+        .from('Blocked_Time')
+        .update({ status: 'canceled' })
+        .eq('broadcast_id', broadcastId)
+        .in('status', ['waiting for teacher', 'offer_accepted']);
+      if (error) { showStatus('error', 'Could not cancel: ' + error.message); return; }
+      localStorage.removeItem('activeBroadcastId');
+      window.location.href = 'student-dashboard.html';
+    });
+
+    loadResponses();
+  </script>
+
+</body>
+</html>

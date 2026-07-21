@@ -94,6 +94,11 @@
                     <table class="data-table"><thead><tr><th>Student</th><th>Subject</th><th>When</th><th></th></tr></thead><tbody id="requestsTableBody"></tbody></table>
                 </div>
 
+                <div id="mySentRequestsSection" hidden>
+                    <div class="section-title">Sent requests</div>
+                    <table class="data-table"><thead><tr><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsBody"></tbody></table>
+                </div>
+
                 <div class="section-title">Upcoming sessions</div>
                 <table class="data-table"><thead><tr><th>Date</th><th>Who</th><th>Subject</th><th>Status</th></tr></thead><tbody id="overviewUpcomingBody"></tbody></table>
             </div>
@@ -169,6 +174,10 @@
                 <div class="wizard-step" data-ft-step="teachers">
                     <p class="greeting" id="requestSummary" style="margin-bottom:16px;"></p>
                     <div id="availableTeachersGrid" class="teachers-grid"></div>
+                    <div id="broadcastAction" hidden style="margin:16px 0;">
+                        <p class="greeting" style="margin-bottom:10px;">Sending a request to all available teachers doesn't guarantee a booking — you'll pick one teacher once they start accepting.</p>
+                        <button type="button" id="broadcastSendBtn" class="btn btn-primary btn-block">Send request to all available teachers</button>
+                    </div>
                     <div class="wizard-nav">
                         <button type="button" class="btn btn-outline" id="ftBackBtn2"><i class="fas fa-arrow-left"></i> Back</button>
                     </div>
@@ -288,6 +297,7 @@
         function statusPill(status) {
             const map = {
                 'waiting for teacher': { cls: 'pending',   label: 'Pending' },
+                'offer_accepted':      { cls: 'offered',   label: 'Offer pending' },
                 'scheduled':           { cls: 'accepted',  label: 'Accepted' },
                 'canceled':            { cls: 'declined',  label: 'Declined' },
                 'completed':           { cls: 'completed', label: 'Completed' }
@@ -381,7 +391,10 @@
         // ── Overview ─────────────────────────────────────────────────────────
         function renderOverview() {
             const allSessions = [...studentSessions, ...teacherSessions];
-            const allUpcoming = allSessions.filter(isUpcoming).sort((a, b) => `${a.session_date} ${a.starttime}`.localeCompare(`${b.session_date} ${b.starttime}`));
+            const allUpcoming = allSessions
+                .filter(isUpcoming)
+                .filter(s => !(s.broadcast_id && s.status !== 'scheduled'))
+                .sort((a, b) => `${a.session_date} ${a.starttime}`.localeCompare(`${b.session_date} ${b.starttime}`));
 
             document.getElementById('statTeachersCard').hidden = !personas.isStudent;
             if (personas.isStudent) {
@@ -411,7 +424,46 @@
             document.getElementById('myRequestsSection').hidden = !personas.isTeacher;
             if (personas.isTeacher) buildRequestRows(document.getElementById('requestsTableBody'), getRequests());
 
+            if (personas.isStudent) renderSentRequests();
+
             renderOverviewUpcoming(allUpcoming);
+        }
+
+        // ── Broadcast (immediate) requests — sent, awaiting responses ───────
+        function getSentRequestGroups() {
+            const groups = new Map();
+            studentSessions.forEach(s => {
+                if (!s.broadcast_id) return;
+                if (s.status !== 'waiting for teacher' && s.status !== 'offer_accepted') return;
+                if (!groups.has(s.broadcast_id)) groups.set(s.broadcast_id, []);
+                groups.get(s.broadcast_id).push(s);
+            });
+            return [...groups.entries()].map(([broadcastId, rows]) => ({
+                broadcastId,
+                subject: rows[0].subject,
+                total: rows.length,
+                accepted: rows.filter(r => r.status === 'offer_accepted').length
+            }));
+        }
+
+        function renderSentRequests() {
+            const tbody = document.getElementById('sentRequestsBody'); tbody.innerHTML = '';
+            const groups = getSentRequestGroups();
+            document.getElementById('mySentRequestsSection').hidden = !groups.length;
+            if (!groups.length) return;
+            groups.forEach(g => {
+                const r = tbody.insertRow();
+                r.classList.add('clickable-row');
+                r.addEventListener('click', () => openBroadcastResponses(g.broadcastId));
+                r.insertCell(0).innerHTML = g.subject ? `<span class="badge-subject">${g.subject}</span>` : '—';
+                r.insertCell(1).innerText = `Sent to ${g.total} teacher${g.total > 1 ? 's' : ''} — ${g.accepted} accepted so far`;
+                r.insertCell(2).innerHTML = '<span class="action-link">Review →</span>';
+            });
+        }
+
+        function openBroadcastResponses(broadcastId) {
+            localStorage.setItem('activeBroadcastId', broadcastId);
+            window.location.href = 'broadcast-responses.html';
         }
 
         function renderMyTeachers() {
@@ -434,7 +486,7 @@
                 studentName: s.counterparty || '—',
                 studentEmail: '',
                 subject: s.subject || '—',
-                sessionType: s.session_date ? 'scheduled' : 'immediate',
+                sessionType: s.is_immediate ? 'immediate' : 'scheduled',
                 sessionDate: s.session_date || null,
                 sessionTime: s.starttime || null,
                 request: s.request || '',
@@ -443,9 +495,11 @@
                 attachmentFilename: s.attachment_filename || null,
                 tutorName: fullName,
                 tutorEmail: email,
+                broadcastId: s.broadcast_id || null,
+                kind: s.broadcast_id ? 'broadcast' : 'single',
                 returnUrl: 'student-dashboard.html'
             }));
-            window.location.href = 'review-request.html';
+            window.location.href = s.broadcast_id ? 'review-broadcast-offer.html' : 'review-request.html';
         }
 
         function buildRequestRows(tbody, requests) {
@@ -457,7 +511,7 @@
                 r.addEventListener('click', () => openRequest(s));
                 r.insertCell(0).innerText = s.counterparty || '—';
                 r.insertCell(1).innerHTML = s.subject ? `<span class="badge-subject">${s.subject}</span>` : '—';
-                r.insertCell(2).innerText = s.session_date ? fmtLocalDateTime(s.session_date, s.starttime || '00:00') : 'Immediate';
+                r.insertCell(2).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
                 r.insertCell(3).innerHTML = '<span class="action-link">View →</span>';
             });
         }
@@ -530,6 +584,8 @@
         // ── Find a teacher (student) ────────────────────────────────────────
         function renderAvailableTeachers() {
             const container = document.getElementById('availableTeachersGrid'); container.innerHTML = '';
+            const isImmediate = currentRequest?.sessionType === 'immediate';
+            document.getElementById('broadcastAction').hidden = true;
             const requestedSubject = (currentRequest?.subject || '').toLowerCase();
             const filtered = teachers
                 .filter(t => !requestedSubject || (t.subject_list || []).some(s => s.toLowerCase() === requestedSubject))
@@ -539,15 +595,28 @@
                 const name = t.name || 'Unnamed teacher';
                 const subs = t.subject_list || [];
                 const card = document.createElement('div'); card.className = 'teacher-card';
-                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div><button class="btn btn-primary request-teacher" style="margin-top:16px; width:100%; justify-content:center;">Request session</button>`;
-                card.querySelector('.request-teacher').addEventListener('click', () => createBooking(t.tid, name));
+                const button = isImmediate ? '' : `<button class="btn btn-primary request-teacher" style="margin-top:16px; width:100%; justify-content:center;">Request session</button>`;
+                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div>${button}`;
+                if (!isImmediate) card.querySelector('.request-teacher').addEventListener('click', () => createBooking(t.tid, name));
                 container.appendChild(card);
             });
+            if (isImmediate) {
+                document.getElementById('broadcastAction').hidden = false;
+                document.getElementById('broadcastSendBtn').textContent = `Send request to all ${filtered.length} available teacher${filtered.length > 1 ? 's' : ''}`;
+            }
         }
 
-        async function createBooking(tid, name) {
-            if (!currentRequest) { alert('Create a request first.'); return; }
-            if (!SID) { alert('Please finish your student profile setup before booking.'); return; }
+        async function uploadAttachmentIfAny(file) {
+            if (!file) return { attachment_url: null, attachment_filename: null, error: null };
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+            const path = `${session.user.id}/${crypto.randomUUID()}-${safeName}`;
+            const { error: upErr } = await supabaseClient.storage.from('session-attachments').upload(path, file);
+            if (upErr) return { attachment_url: null, attachment_filename: null, error: upErr };
+            return { attachment_url: path, attachment_filename: file.name, error: null };
+        }
+
+        function computeRequestWindow() {
             let date, start, end;
             if (currentRequest.sessionType === 'scheduled') {
                 const startDt = new Date(`${currentRequest.date}T${currentRequest.time}:00`);
@@ -562,28 +631,54 @@
                 start = now.toISOString().slice(11, 19);
                 end = endDt.toISOString().slice(11, 19);
             }
+            return { date, start, end };
+        }
+
+        async function createBooking(tid, name) {
+            if (!currentRequest) { alert('Create a request first.'); return; }
+            if (!SID) { alert('Please finish your student profile setup before booking.'); return; }
+            const { date, start, end } = computeRequestWindow();
             const request = currentRequest.topic + (currentRequest.notes ? ` — ${currentRequest.notes}` : '');
 
-            let attachment_url = null, attachment_filename = null;
-            const file = currentRequest.attachmentFile;
-            if (file) {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-                const path = `${session.user.id}/${crypto.randomUUID()}-${safeName}`;
-                const { error: upErr } = await supabaseClient.storage.from('session-attachments').upload(path, file);
-                if (upErr) { alert('Could not upload attachment: ' + upErr.message); return; }
-                attachment_url = path;
-                attachment_filename = file.name;
-            }
+            const { attachment_url, attachment_filename, error: upErr } = await uploadAttachmentIfAny(currentRequest.attachmentFile);
+            if (upErr) { alert('Could not upload attachment: ' + upErr.message); return; }
 
             const { error } = await supabaseClient.from('Blocked_Time').insert({
                 TID: tid, SID: SID, date, starttime: start, endtime: end,
                 status: 'waiting for teacher', subject: currentRequest.subject, request, duration: currentRequest.duration || 60,
-                attachment_url, attachment_filename
+                attachment_url, attachment_filename, is_immediate: currentRequest.sessionType === 'immediate'
             });
             if (error) { alert('Could not send request: ' + error.message); return; }
             alert(`Request sent to ${name}!`);
             await refreshSessions(); renderOverview();
+        }
+
+        async function broadcastImmediateRequest() {
+            if (!currentRequest) { alert('Create a request first.'); return; }
+            if (!SID) { alert('Please finish your student profile setup before booking.'); return; }
+            const requestedSubject = (currentRequest.subject || '').toLowerCase();
+            const candidates = teachers
+                .filter(t => !requestedSubject || (t.subject_list || []).some(s => s.toLowerCase() === requestedSubject))
+                .filter(t => !availableTeacherUIDs || availableTeacherUIDs.has(t.uid));
+            if (!candidates.length) { alert('No teachers are currently available for this subject.'); return; }
+
+            const { date, start, end } = computeRequestWindow();
+            const request = currentRequest.topic + (currentRequest.notes ? ` — ${currentRequest.notes}` : '');
+
+            const { attachment_url, attachment_filename, error: upErr } = await uploadAttachmentIfAny(currentRequest.attachmentFile);
+            if (upErr) { alert('Could not upload attachment: ' + upErr.message); return; }
+
+            const broadcastId = crypto.randomUUID();
+            const rows = candidates.map(t => ({
+                TID: t.tid, SID: SID, date, starttime: start, endtime: end,
+                status: 'waiting for teacher', subject: currentRequest.subject, request, duration: currentRequest.duration || 60,
+                attachment_url, attachment_filename, is_immediate: true, broadcast_id: broadcastId
+            }));
+
+            const { error } = await supabaseClient.from('Blocked_Time').insert(rows);
+            if (error) { alert('Could not send request: ' + error.message); return; }
+            alert(`Request sent to ${rows.length} available teacher${rows.length > 1 ? 's' : ''}! We'll let you know as they respond.`);
+            await refreshSessions(); renderOverview(); showSection('overview');
         }
 
         // ── Find-a-teacher wizard ────────────────────────────────────────────
@@ -728,6 +823,7 @@
         document.getElementById('ftBackBtn').addEventListener('click', ftGoBack);
         document.getElementById('ftBackBtn2').addEventListener('click', ftGoBack);
         document.getElementById('ftContinueBtn').addEventListener('click', ftGoNext);
+        document.getElementById('broadcastSendBtn').addEventListener('click', broadcastImmediateRequest);
 
         // ── Schedule (teacher) ───────────────────────────────────────────────
         function openScheduledSession(s) { openSessionDetails(s, 'teacher'); }
@@ -739,11 +835,30 @@
                 const r = tbody.insertRow();
                 r.classList.add('clickable-row');
                 r.addEventListener('click', () => openScheduledSession(s));
-                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
+                r.insertCell(0).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
                 r.insertCell(1).innerText = s.counterparty || '—';
                 r.insertCell(2).innerText = `${s.subject || ''}${s.request ? ' — ' + s.request : ''}`;
-                r.insertCell(3).innerHTML = `${statusPill(s.status)}${joinLink(s.meeting_url)}`;
+                let statusHtml = statusPill(s.status) + joinLink(s.meeting_url);
+                if (s.status === 'offer_accepted') {
+                    statusHtml += `<button class="btn-cancel" data-id="${s.session_id}">Withdraw</button>`;
+                }
+                r.insertCell(3).innerHTML = statusHtml;
             });
+            tbody.querySelectorAll('.btn-cancel').forEach(btn =>
+                btn.addEventListener('click', (e) => { e.stopPropagation(); withdrawOffer(btn.getAttribute('data-id')); }));
+        }
+
+        async function withdrawOffer(sessionId) {
+            if (!confirm('Withdraw your offer for this request?')) return;
+            const { data, error } = await supabaseClient
+                .from('Blocked_Time')
+                .update({ status: 'canceled' })
+                .eq('SessionID', sessionId)
+                .eq('status', 'offer_accepted')
+                .select();
+            if (error) { alert('Could not withdraw: ' + error.message); return; }
+            if (!data || !data.length) { alert('This offer has already been resolved.'); }
+            await refreshSessions(); renderOverview(); renderScheduleSection();
         }
 
         // ── Past sessions ────────────────────────────────────────────────────
@@ -992,6 +1107,7 @@
             const soonCutoff = new Date(now.getTime() + 60 * 60 * 1000);
             const notifs = [];
             const seenConfirmed = new Set(JSON.parse(localStorage.getItem('lcSeenConfirmed') || '[]'));
+            const seenOfferAccepted = new Set(JSON.parse(localStorage.getItem('lcSeenOfferAccepted') || '[]'));
             const sentReminders = new Set(JSON.parse(localStorage.getItem('lcSentReminders') || '[]'));
             const sentConfirmations = new Set(JSON.parse(localStorage.getItem('lcSentConfirmations') || '[]'));
             const sentRequests = new Set(JSON.parse(localStorage.getItem('lcSentRequests') || '[]'));
@@ -1004,6 +1120,10 @@
                         localStorage.setItem('lcSentConfirmations', JSON.stringify([...sentConfirmations]));
                         callSessionEmail('confirmation', s.session_id);
                     }
+                });
+
+                studentSessions.filter(s => s.broadcast_id && s.status === 'offer_accepted' && !seenOfferAccepted.has(s.session_id)).forEach(s => {
+                    notifs.push({ type: 'offerAccepted', icon: 'fa-hand-holding-heart', title: `A teacher accepted your request!`, sub: `Pick one to confirm your ${s.subject || ''} session`, _date: s.session_date || '', _time: s.starttime || '', action: () => { seenOfferAccepted.add(s.session_id); localStorage.setItem('lcSeenOfferAccepted', JSON.stringify([...seenOfferAccepted])); openBroadcastResponses(s.broadcast_id); } });
                 });
             }
 

@@ -55,6 +55,7 @@ body.dashboard-page {
 .notif-icon.soon { background: #dcfce7; color: #166534; }
 .notif-icon.request { background: #fef9c3; color: #854d0e; }
 .notif-icon.confirmed { background: var(--dash-green-tint); color: var(--dash-green); }
+.notif-icon.offerAccepted { background: #e0e7ff; color: #3730a3; }
 .notif-title { font-weight: 600; font-size: 0.85rem; color: var(--dash-green-dark); }
 .notif-sub { font-size: 0.76rem; color: var(--dash-muted); margin-top: 2px; }
 .notif-empty { padding: 28px 16px; text-align: center; color: var(--dash-faint); font-size: 0.85rem; }
@@ -142,6 +143,7 @@ body.dashboard-page {
 .status-pill.accepted  { background: #dcfce7; color: #166534; }
 .status-pill.declined  { background: #fee2e2; color: #b91c1c; }
 .status-pill.completed { background: #f1f5f9; color: #334155; }
+.status-pill.offered   { background: #e0e7ff; color: #3730a3; }
 .btn-cancel { background: #fee2e2; color: #b91c1c; border: none; border-radius: 20px; padding: 4px 12px; font-size: 0.72rem; cursor: pointer; margin-left: 8px; font-weight: 600; }
 .btn-cancel:hover { background: #fecaca; }
 .btn-mini { border: none; border-radius: 20px; padding: 6px 13px; font-size: 0.76rem; cursor: pointer; margin-right: 6px; font-weight: 600; }

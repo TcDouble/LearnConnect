@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnConnect — Broadcast Request</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    .request-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 20px 24px;
+      margin-bottom: 8px;
+    }
+    .request-card .row-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 3px;
+    }
+    .request-card .row-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #0f3b2c;
+    }
+    .request-card .row-note {
+      font-size: 0.88rem;
+      color: #475569;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+    .badge-immediate {
+      background: #dcfce7;
+      color: #166534;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .broadcast-note {
+      background: #e0e7ff;
+      color: #3730a3;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .divider-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 28px 0 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+    }
+    .divider-label::before, .divider-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+    #status {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    #status.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; display: block; }
+    #status.info  { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; display: block; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav class="container navbar">
+      <div class="logo"><i class="fas fa-chalkboard-user"></i> LearnConnect</div>
+    </nav>
+  </header>
+
+  <main class="form-page">
+    <div class="container form-container">
+
+      <a id="backBtn" href="student-dashboard.html"
+         style="display:inline-flex; align-items:center; gap:6px; font-size:0.85rem; color:#2b7a4b; font-weight:600; text-decoration:none; margin-bottom:20px;">
+        <i class="fas fa-arrow-left"></i> Back to dashboard
+      </a>
+
+      <h1 style="color:#0f3b2c; margin-bottom:6px;">Broadcast request</h1>
+      <p class="form-subhead">This request was sent to every teacher available right now.</p>
+
+      <div class="broadcast-note">
+        <i class="fas fa-circle-info"></i> Accepting doesn't guarantee a booking — the student will review everyone who accepts and choose one teacher.
+      </div>
+
+      <!-- Student request details (read-only) -->
+      <div class="form-section">
+        <h3><i class="fas fa-user-graduate"></i> Student request</h3>
+
+        <div class="request-card" style="margin-bottom:12px;">
+          <div class="row-label">Student</div>
+          <div class="row-value" id="dispStudentName">—</div>
+        </div>
+
+        <div class="request-card" style="margin-bottom:12px;">
+          <div class="row-label">Subject</div>
+          <div class="row-value" id="dispSubject">—</div>
+        </div>
+
+        <div class="request-card" style="margin-bottom:12px;">
+          <div class="row-label">Requested time</div>
+          <div class="row-value" id="dispWhen">—</div>
+        </div>
+
+        <div class="request-card" id="dispDurationCard" style="display:none; margin-bottom:12px;">
+          <div class="row-label">Duration</div>
+          <div class="row-value" id="dispDuration">—</div>
+        </div>
+
+        <div class="request-card" id="dispRequestCard" style="display:none;">
+          <div class="row-label">Request notes</div>
+          <div class="row-note" id="dispRequest">—</div>
+        </div>
+
+        <div class="request-card" id="dispAttachmentCard" style="display:none;">
+          <div class="row-label">Attachment</div>
+          <div class="row-note"><a id="dispAttachmentLink" href="#" target="_blank" style="color:#2b7a4b;font-weight:600;text-decoration:none;"><i class="fas fa-paperclip"></i> <span id="dispAttachmentName"></span></a></div>
+        </div>
+      </div>
+
+      <!-- Teacher response -->
+      <div class="divider-label">Your response</div>
+
+      <button id="declineBtn" class="btn btn-secondary btn-block" style="margin-bottom:12px;">
+        <i class="fas fa-xmark"></i> Not available
+      </button>
+
+      <button id="acceptBtn" class="btn btn-primary btn-block">
+        <i class="fas fa-check"></i> I'm available
+      </button>
+
+      <div id="status"></div>
+
+    </div>
+  </main>
+
+  <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="tz.js"></script>
+  <script>
+    const raw = localStorage.getItem('teacherPendingRequest');
+    if (!raw) { window.location.href = 'student-dashboard.html'; }
+    const req = JSON.parse(raw);
+
+    if (req.kind !== 'broadcast') { window.location.href = req.returnUrl || 'student-dashboard.html'; }
+
+    const returnUrl = req.returnUrl || 'student-dashboard.html';
+    document.getElementById('backBtn').href = returnUrl;
+
+    // ── Display request details ──────────────────────────────────────────────
+    document.getElementById('dispStudentName').textContent = req.studentName || '—';
+    document.getElementById('dispSubject').textContent     = req.subject     || '—';
+
+    if (req.sessionType === 'immediate') {
+      document.getElementById('dispWhen').innerHTML = '<span class="badge-immediate">Immediate</span>';
+    } else if (req.sessionDate && req.sessionTime) {
+      document.getElementById('dispWhen').textContent = fmtLocalDateTime(req.sessionDate, req.sessionTime);
+    } else {
+      document.getElementById('dispWhen').textContent = '—';
+    }
+
+    if (req.duration) {
+      const d = req.duration;
+      document.getElementById('dispDuration').textContent = d < 60 ? `${d} min` : d === 60 ? '1 hour' : `${d / 60} hours`;
+      document.getElementById('dispDurationCard').style.display = 'block';
+    }
+
+    if (req.request) {
+      document.getElementById('dispRequest').textContent     = req.request;
+      document.getElementById('dispRequestCard').style.display = 'block';
+    }
+
+    if (req.attachmentUrl) {
+      document.getElementById('dispAttachmentName').textContent = req.attachmentFilename || 'Download file';
+      document.getElementById('dispAttachmentCard').style.display = 'block';
+      supabaseClient.storage.from('session-attachments').createSignedUrl(req.attachmentUrl, 3600).then(({ data, error }) => {
+        if (data?.signedUrl) document.getElementById('dispAttachmentLink').href = data.signedUrl;
+        else if (error) document.getElementById('dispAttachmentName').textContent += ' (link unavailable)';
+      });
+    }
+
+    function showStatus(type, msg) {
+      const el = document.getElementById('status');
+      el.style.display = '';
+      el.className = type;
+      el.textContent = msg;
+    }
+
+    function setButtonsDisabled(on) {
+      document.getElementById('acceptBtn').disabled = on;
+      document.getElementById('declineBtn').disabled = on;
+    }
+
+    // A broadcast offer can be stale by the time a teacher responds (the
+    // student may have already canceled it or confirmed someone else), so
+    // both actions guard on the row still being 'waiting for teacher' and
+    // check whether the update actually matched a row.
+    document.getElementById('acceptBtn').addEventListener('click', async () => {
+      setButtonsDisabled(true);
+      const btn = document.getElementById('acceptBtn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+
+      const { data, error } = await supabaseClient
+        .from('Blocked_Time')
+        .update({ status: 'offer_accepted' })
+        .eq('SessionID', req.session_id)
+        .eq('status', 'waiting for teacher')
+        .select();
+
+      if (error) {
+        showStatus('error', 'Could not respond: ' + error.message);
+        setButtonsDisabled(false);
+        btn.innerHTML = '<i class="fas fa-check"></i> I\'m available';
+        return;
+      }
+      if (!data || !data.length) {
+        showStatus('info', 'This request is no longer available — it may have been canceled or already filled by another teacher.');
+        btn.style.display = 'none';
+        document.getElementById('declineBtn').style.display = 'none';
+        return;
+      }
+
+      localStorage.removeItem('teacherPendingRequest');
+      window.location.href = returnUrl;
+    });
+
+    document.getElementById('declineBtn').addEventListener('click', async () => {
+      if (!confirm(`Decline ${req.studentName}'s request for ${req.subject}?`)) return;
+
+      setButtonsDisabled(true);
+      const btn = document.getElementById('declineBtn');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Declining…';
+
+      const { data, error } = await supabaseClient
+        .from('Blocked_Time')
+        .update({ status: 'canceled' })
+        .eq('SessionID', req.session_id)
+        .eq('status', 'waiting for teacher')
+        .select();
+
+      if (error) {
+        showStatus('error', 'Could not respond: ' + error.message);
+        setButtonsDisabled(false);
+        btn.innerHTML = '<i class="fas fa-xmark"></i> Not available';
+        return;
+      }
+      if (!data || !data.length) {
+        showStatus('info', 'This request is no longer available.');
+        btn.style.display = 'none';
+        document.getElementById('acceptBtn').style.display = 'none';
+        return;
+      }
+
+      localStorage.removeItem('teacherPendingRequest');
+      window.location.href = returnUrl;
+    });
+  </script>
+
+</body>
+</html>
