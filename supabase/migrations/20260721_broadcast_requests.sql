@@ -117,11 +117,11 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  UPDATE "Blocked_Time"
-  SET status = CASE WHEN "SessionID" = p_session_id THEN 'scheduled'::booking_status ELSE 'canceled'::booking_status END
-  WHERE broadcast_id = v_broadcast_id
-    AND status IN ('offer_accepted', 'waiting for teacher')
-  RETURNING "SessionID", status;
+  UPDATE "Blocked_Time" AS bt
+  SET status = CASE WHEN bt."SessionID" = p_session_id THEN 'scheduled'::booking_status ELSE 'canceled'::booking_status END
+  WHERE bt.broadcast_id = v_broadcast_id
+    AND bt.status IN ('offer_accepted', 'waiting for teacher')
+  RETURNING bt."SessionID", bt.status;
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'STALE_OFFER: this offer is no longer available (it may have been withdrawn or already confirmed)';
