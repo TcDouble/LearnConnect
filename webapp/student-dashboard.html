@@ -290,7 +290,11 @@
         let personas = { isStudent: false, isTeacher: false };
 
         function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':'); let hr = parseInt(h, 10); const ap = hr >= 12 ? 'pm' : 'am'; hr = hr % 12 || 12; return `${hr}:${m} ${ap}`; }
-        function isUpcoming(s) { return s.status !== 'completed' && s.status !== 'canceled'; }
+        function isPastDue(s) {
+            if (!s.session_date || !s.endtime) return false;
+            return new Date(`${s.session_date}T${s.endtime.slice(0, 5)}:00Z`).getTime() < Date.now();
+        }
+        function isUpcoming(s) { return s.status !== 'completed' && s.status !== 'canceled' && !isPastDue(s); }
         function initials(name) { return (name || '?').split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase(); }
         function yearsToRange(n) { n = n || 0; if (n < 1) return 'Less than 1 year'; if (n <= 2) return '1–2 years'; if (n <= 5) return '3–5 years'; if (n <= 10) return '6–10 years'; return '10+ years'; }
         function rangeToYears(t) { return /less than/i.test(t) ? 0 : (t.match(/\d+/) ? parseInt(t.match(/\d+/)[0], 10) : 0); }
@@ -829,7 +833,7 @@
         function openScheduledSession(s) { openSessionDetails(s, 'teacher'); }
         function renderScheduleSection() {
             const tbody = document.getElementById('scheduleSessionsBody'); tbody.innerHTML = '';
-            const confirmed = teacherSessions.filter(s => s.status !== 'waiting for teacher' && s.status !== 'completed');
+            const confirmed = teacherSessions.filter(s => s.status !== 'waiting for teacher' && s.status !== 'completed' && !isPastDue(s));
             if (!confirmed.length) { tbody.innerHTML = '<tr><td colspan="4">No upcoming sessions.</td></tr>'; return; }
             confirmed.forEach(s => {
                 const r = tbody.insertRow();
@@ -865,7 +869,7 @@
         function renderAllPastMeetings() {
             const tbody = document.getElementById('pastMeetingsAllBody'); tbody.innerHTML = '';
             const past = [...studentSessions, ...teacherSessions]
-                .filter(s => s.status === 'completed')
+                .filter(s => s.status === 'completed' || (s.status !== 'canceled' && isPastDue(s)))
                 .sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
             past.forEach(s => {
@@ -908,7 +912,7 @@
 
         function renderStudentPastMeetings() {
             const tbody = document.getElementById('pastMeetingsStudentBody'); tbody.innerHTML = '';
-            const past = studentSessions.filter(s => s.status === 'completed').sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+            const past = studentSessions.filter(s => s.status === 'completed' || (s.status !== 'canceled' && isPastDue(s))).sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
             past.forEach(s => {
                 const r = tbody.insertRow();
@@ -926,7 +930,7 @@
 
         function renderTeacherPastMeetings() {
             const tbody = document.getElementById('pastMeetingsTeacherBody'); tbody.innerHTML = '';
-            const past = teacherSessions.filter(s => s.status === 'completed').sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+            const past = teacherSessions.filter(s => s.status === 'completed' || (s.status !== 'canceled' && isPastDue(s))).sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
             past.forEach(s => {
                 const r = tbody.insertRow();
