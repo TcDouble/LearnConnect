@@ -292,7 +292,8 @@
         function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':'); let hr = parseInt(h, 10); const ap = hr >= 12 ? 'pm' : 'am'; hr = hr % 12 || 12; return `${hr}:${m} ${ap}`; }
         function isPastDue(s) {
             if (!s.session_date || !s.endtime) return false;
-            return new Date(`${s.session_date}T${s.endtime.slice(0, 5)}:00Z`).getTime() < Date.now();
+            const endDate = s.end_date || s.session_date;
+            return new Date(`${endDate}T${s.endtime.slice(0, 5)}:00Z`).getTime() < Date.now();
         }
         function isUpcoming(s) { return s.status !== 'completed' && s.status !== 'canceled' && !isPastDue(s); }
         function initials(name) { return (name || '?').split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase(); }
