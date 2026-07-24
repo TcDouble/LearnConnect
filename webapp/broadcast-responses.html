@@ -145,7 +145,8 @@
 
     function renderResponses(rows) {
       const first = rows[0];
-      document.getElementById('pageSubhead').textContent = `Immediate request — ${first.subject || 'your subject'}`;
+      const when = first.is_immediate ? 'Immediate request' : `Request for ${fmtLocalDateTime(first.session_date, first.starttime || '00:00')}`;
+      document.getElementById('pageSubhead').textContent = `${when} — ${first.subject || 'your subject'}`;
       document.getElementById('summarySubject').textContent = `${first.subject || '—'}${first.request ? ' — ' + first.request : ''}`;
 
       const scheduled = rows.find(r => r.status === 'scheduled');

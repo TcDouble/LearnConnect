@@ -589,7 +589,6 @@
         // ── Find a teacher (student) ────────────────────────────────────────
         function renderAvailableTeachers() {
             const container = document.getElementById('availableTeachersGrid'); container.innerHTML = '';
-            const isImmediate = currentRequest?.sessionType === 'immediate';
             document.getElementById('broadcastAction').hidden = true;
             const requestedSubject = (currentRequest?.subject || '').toLowerCase();
             const filtered = teachers
@@ -600,15 +599,11 @@
                 const name = t.name || 'Unnamed teacher';
                 const subs = t.subject_list || [];
                 const card = document.createElement('div'); card.className = 'teacher-card';
-                const button = isImmediate ? '' : `<button class="btn btn-primary request-teacher" style="margin-top:16px; width:100%; justify-content:center;">Request session</button>`;
-                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div>${button}`;
-                if (!isImmediate) card.querySelector('.request-teacher').addEventListener('click', () => createBooking(t.tid, name));
+                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div>`;
                 container.appendChild(card);
             });
-            if (isImmediate) {
-                document.getElementById('broadcastAction').hidden = false;
-                document.getElementById('broadcastSendBtn').textContent = `Send request to all ${filtered.length} available teacher${filtered.length > 1 ? 's' : ''}`;
-            }
+            document.getElementById('broadcastAction').hidden = false;
+            document.getElementById('broadcastSendBtn').textContent = `Send request to all ${filtered.length} available teacher${filtered.length > 1 ? 's' : ''}`;
         }
 
         async function uploadAttachmentIfAny(file) {
@@ -639,26 +634,7 @@
             return { date, start, end };
         }
 
-        async function createBooking(tid, name) {
-            if (!currentRequest) { alert('Create a request first.'); return; }
-            if (!SID) { alert('Please finish your student profile setup before booking.'); return; }
-            const { date, start, end } = computeRequestWindow();
-            const request = currentRequest.topic + (currentRequest.notes ? ` — ${currentRequest.notes}` : '');
-
-            const { attachment_url, attachment_filename, error: upErr } = await uploadAttachmentIfAny(currentRequest.attachmentFile);
-            if (upErr) { alert('Could not upload attachment: ' + upErr.message); return; }
-
-            const { error } = await supabaseClient.from('Blocked_Time').insert({
-                TID: tid, SID: SID, date, starttime: start, endtime: end,
-                status: 'waiting for teacher', subject: currentRequest.subject, request, duration: currentRequest.duration || 60,
-                attachment_url, attachment_filename, is_immediate: currentRequest.sessionType === 'immediate'
-            });
-            if (error) { alert('Could not send request: ' + error.message); return; }
-            alert(`Request sent to ${name}!`);
-            await refreshSessions(); renderOverview();
-        }
-
-        async function broadcastImmediateRequest() {
+        async function broadcastRequest() {
             if (!currentRequest) { alert('Create a request first.'); return; }
             if (!SID) { alert('Please finish your student profile setup before booking.'); return; }
             const requestedSubject = (currentRequest.subject || '').toLowerCase();
@@ -677,7 +653,7 @@
             const rows = candidates.map(t => ({
                 TID: t.tid, SID: SID, date, starttime: start, endtime: end,
                 status: 'waiting for teacher', subject: currentRequest.subject, request, duration: currentRequest.duration || 60,
-                attachment_url, attachment_filename, is_immediate: true, broadcast_id: broadcastId
+                attachment_url, attachment_filename, is_immediate: currentRequest.sessionType === 'immediate', broadcast_id: broadcastId
             }));
 
             const { error } = await supabaseClient.from('Blocked_Time').insert(rows);
@@ -828,7 +804,7 @@
         document.getElementById('ftBackBtn').addEventListener('click', ftGoBack);
         document.getElementById('ftBackBtn2').addEventListener('click', ftGoBack);
         document.getElementById('ftContinueBtn').addEventListener('click', ftGoNext);
-        document.getElementById('broadcastSendBtn').addEventListener('click', broadcastImmediateRequest);
+        document.getElementById('broadcastSendBtn').addEventListener('click', broadcastRequest);
 
         // ── Schedule (teacher) ───────────────────────────────────────────────
         function openScheduledSession(s) { openSessionDetails(s, 'teacher'); }
