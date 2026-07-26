@@ -74,12 +74,12 @@
 
                 <div id="myRequestsSection" hidden>
                     <div class="section-title">My requests <a href="#" class="action-link" data-goto="requests">View all →</a></div>
-                    <table class="data-table"><thead><tr><th>When</th><th>Student</th><th>Subject</th><th></th></tr></thead><tbody id="requestsTableBody"></tbody></table>
+                    <table class="data-table"><thead><tr><th>Date and Time</th><th>Student</th><th>Subject</th><th></th></tr></thead><tbody id="requestsTableBody"></tbody></table>
                 </div>
 
                 <div id="mySentRequestsSection" hidden>
                     <div class="section-title">Sent requests</div>
-                    <table class="data-table"><thead><tr><th>When</th><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsBody"></tbody></table>
+                    <table class="data-table"><thead><tr><th>Date and Time</th><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsBody"></tbody></table>
                 </div>
 
                 <div class="section-title">Upcoming sessions</div>
@@ -174,7 +174,7 @@
             <div id="requests-section" class="hidden-section">
                 <div class="dashboard-header"><h1>My requests</h1></div>
                 <div style="margin-bottom:20px;"><input type="text" id="requestSearchFull" placeholder="Search by student..." class="search-bar"></div>
-                <table class="data-table"><thead><tr><th>When</th><th>Student</th><th>Subject</th><th></th></tr></thead><tbody id="fullRequestsBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date and Time</th><th>Student</th><th>Subject</th><th></th></tr></thead><tbody id="fullRequestsBody"></tbody></table>
             </div>
 
             <!-- Schedule (teacher) -->
@@ -192,7 +192,7 @@
             <!-- Requests (student, sent) -->
             <div id="sent-requests-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Requests</h1><p class="greeting">Requests you've sent, awaiting a teacher's response.</p></div>
-                <table class="data-table"><thead><tr><th>When</th><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsFullBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date and Time</th><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsFullBody"></tbody></table>
             </div>
 
             <!-- Past sessions (combined) -->
@@ -358,15 +358,15 @@
             }
             applyPersonaVisibility();
 
-            if (personas.isStudent) {
-                const { data: s } = await supabaseClient.from('Students').select('SID, school, grade_level, age, subject_list').eq('UID', uid).maybeSingle();
-                if (s) { SID = s.SID; studentInfo.grade = s.grade_level || ''; studentInfo.age = s.age || ''; studentInfo.subjects = (s.subject_list || []).join(', '); }
-                await refreshTeachers();
-            }
-            if (personas.isTeacher) {
-                const { data: t } = await supabaseClient.from('Teachers').select('TID, subject_list, years_experience').eq('UID', uid).maybeSingle();
-                if (t) { TID = t.TID; teacherInfo.subjects = (t.subject_list || []).join(', '); teacherInfo.experience = yearsToRange(t.years_experience); }
-            }
+            // Fetched regardless of the active persona toggle, so re-enabling a
+            // persona later (Settings tab) can tell whether a profile already
+            // exists rather than sending the user through Profile-setup again.
+            const { data: s } = await supabaseClient.from('Students').select('SID, school, grade_level, age, subject_list').eq('UID', uid).maybeSingle();
+            if (s) { SID = s.SID; studentInfo.grade = s.grade_level || ''; studentInfo.age = s.age || ''; studentInfo.subjects = (s.subject_list || []).join(', '); }
+            if (personas.isStudent) await refreshTeachers();
+
+            const { data: t } = await supabaseClient.from('Teachers').select('TID, subject_list, years_experience').eq('UID', uid).maybeSingle();
+            if (t) { TID = t.TID; teacherInfo.subjects = (t.subject_list || []).join(', '); teacherInfo.experience = yearsToRange(t.years_experience); }
 
             await refreshSessions();
 
@@ -1276,8 +1276,6 @@
                     document.getElementById('pmTchExperience').value = teacherInfo.experience || 'Less than 1 year';
                     initSubjectPicker('pmTchSubjectPicker', (teacherInfo.subjects || '').split(',').map(s => s.trim()).filter(Boolean));
                 }
-                document.getElementById('pmAlsoLearn').checked = personas.isStudent;
-                document.getElementById('pmAlsoLearn').disabled = personas.isStudent;
             }
             if (tab === 'student') {
                 if (!personas.isStudent) {
@@ -1292,10 +1290,10 @@
                     document.getElementById('pmStuGrade').value = studentInfo.grade || '';
                     initSubjectPicker('pmStuSubjectPicker', (studentInfo.subjects || '').split(',').map(s => s.trim()).filter(Boolean));
                 }
-                document.getElementById('pmAlsoTeach').checked = personas.isTeacher;
-                document.getElementById('pmAlsoTeach').disabled = personas.isTeacher;
             }
             if (tab === 'settings') {
+                document.getElementById('pmWantLearn').checked = personas.isStudent;
+                document.getElementById('pmWantTeach').checked = personas.isTeacher;
                 document.getElementById('pmReminderRow').hidden = !personas.isStudent;
                 document.getElementById('pmNotifRow').hidden = !personas.isTeacher;
                 document.getElementById('pmReminderSetting').value = localStorage.getItem('studentReminders') || 'All sessions';
@@ -1322,8 +1320,6 @@
             localStorage.setItem('studentFullName', fullName); localStorage.setItem('teacherFullName', fullName);
             document.getElementById('userNameDisplay').innerText = fullName.split(' ')[0] || fullName;
             document.getElementById('profileInitials').textContent = initials(fullName);
-            const alsoTeach = document.getElementById('pmAlsoTeach');
-            if (alsoTeach.checked && !alsoTeach.disabled) { localStorage.setItem('editAddPersona', 'teacher'); window.location.href = 'Profile-setup.html'; return; }
             alert('Student profile saved!');
         }
         async function pmSaveTeacher() {
@@ -1343,16 +1339,38 @@
             localStorage.setItem('teacherFullName', fullName); localStorage.setItem('studentFullName', fullName);
             document.getElementById('userNameDisplay').innerText = fullName.split(' ')[0] || fullName;
             document.getElementById('profileInitials').textContent = initials(fullName);
-            const alsoLearn = document.getElementById('pmAlsoLearn');
-            if (alsoLearn.checked && !alsoLearn.disabled) { localStorage.setItem('editAddPersona', 'student'); window.location.href = 'Profile-setup.html'; return; }
             alert('Teacher profile saved!');
         }
         async function pmSaveSettings() {
-            const tz = document.getElementById('pmTimezone').value;
-            if (personas.isStudent) { localStorage.setItem('studentReminders', document.getElementById('pmReminderSetting').value); localStorage.setItem('studentTZ', tz); }
-            if (personas.isTeacher) { localStorage.setItem('teacherNotif', document.getElementById('pmNotifSetting').value); localStorage.setItem('teacherTimezone', tz); }
+            const wantStudent = document.getElementById('pmWantLearn').checked;
+            const wantTeach = document.getElementById('pmWantTeach').checked;
+            if (!wantStudent && !wantTeach) { alert('Select at least one: Learn or Teach.'); return; }
+
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) await supabaseClient.from('Users').update({ timezone: tz }).eq('UID', session.user.id);
+            if (!session) return;
+            const uid = session.user.id;
+
+            // Turning on a persona that has no profile yet needs its details
+            // collected first — hand off to Profile-setup instead of just
+            // flipping the flag. Once a profile row exists (SID/TID set),
+            // re-enabling it later is a plain flag flip with no re-entry.
+            if (wantStudent && !SID) { localStorage.setItem('editAddPersona', 'student'); window.location.href = 'Profile-setup.html'; return; }
+            if (wantTeach && !TID) { localStorage.setItem('editAddPersona', 'teacher'); window.location.href = 'Profile-setup.html'; return; }
+
+            const tz = document.getElementById('pmTimezone').value;
+            const { error } = await supabaseClient.from('Users').update({ is_student: wantStudent, is_teacher: wantTeach, timezone: tz }).eq('UID', uid);
+            if (error) { alert('Could not save: ' + error.message); return; }
+
+            personas.isStudent = wantStudent;
+            personas.isTeacher = wantTeach;
+            localStorage.setItem('isStudent', wantStudent ? 'true' : 'false');
+            localStorage.setItem('isTeacher', wantTeach ? 'true' : 'false');
+            if (wantStudent) { localStorage.setItem('studentReminders', document.getElementById('pmReminderSetting').value); localStorage.setItem('studentTZ', tz); }
+            if (wantTeach) { localStorage.setItem('teacherNotif', document.getElementById('pmNotifSetting').value); localStorage.setItem('teacherTimezone', tz); }
+
+            if (wantStudent && !teachers.length) await refreshTeachers();
+            applyPersonaVisibility();
+            showSection('overview');
             alert('Settings saved.');
         }
 
@@ -1371,29 +1389,32 @@
           <button class="pm-close" onclick="closeProfileModal()">✕</button>
         </div>
         <div id="pmStudentTab" class="pm-body">
-          <div id="pmNoStudentMsg" class="greeting" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:12px;">You don't have a student profile yet. Tick "I also want to learn" in the Teacher tab to create one.</div>
+          <div id="pmNoStudentMsg" class="greeting" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:12px;">You're not set up to learn right now. Turn on "Learn" in the Settings tab to create a student profile.</div>
           <div id="pmStudentFields">
             <div class="form-row"><label>Full name</label><input type="text" id="pmStuName"></div>
             <div class="form-row"><label>Email</label><input type="email" id="pmStuEmail" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;"></div>
             <div class="form-row"><label>Age</label><input type="number" id="pmStuAge" min="5" max="100"></div>
             <div class="form-row"><label>Education level</label><select id="pmStuGrade"><option value="">Select…</option><option>Primary school</option><option>High school</option><option>University</option><option>Vocational / TAFE</option><option>Other</option></select></div>
             <div class="form-row"><label>Subjects interested in</label><div id="pmStuSubjectPicker"></div></div>
-            <div class="opt-in-row" style="margin-top:10px;"><input type="checkbox" id="pmAlsoTeach"><label for="pmAlsoTeach">I also want to teach on LearnConnect</label></div>
             <button class="btn-save" style="margin-top:14px;" onclick="pmSaveStudent()">Save student profile</button>
           </div>
         </div>
         <div id="pmTeacherTab" class="pm-body" style="display:none;">
-          <div id="pmNoTeacherMsg" class="greeting" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:12px;">You don't have a teacher profile yet. Tick "I also want to teach" in the Student tab to create one.</div>
+          <div id="pmNoTeacherMsg" class="greeting" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:12px;">You're not set up to teach right now. Turn on "Teach" in the Settings tab to create a teacher profile.</div>
           <div id="pmTeacherFields">
             <div class="form-row"><label>Full name</label><input type="text" id="pmTchName"></div>
             <div class="form-row"><label>Email</label><input type="email" id="pmTchEmail" readonly style="background:#f1f5f9;color:#64748b;cursor:not-allowed;"></div>
             <div class="form-row"><label>Subjects / specialties</label><div id="pmTchSubjectPicker"></div></div>
             <div class="form-row"><label>Years of experience</label><select id="pmTchExperience"><option>Less than 1 year</option><option>1–2 years</option><option>3–5 years</option><option>6–10 years</option><option>10+ years</option></select></div>
-            <div class="opt-in-row" style="margin-top:10px;"><input type="checkbox" id="pmAlsoLearn"><label for="pmAlsoLearn">I also want to learn on LearnConnect</label></div>
             <button class="btn-save" style="margin-top:14px;" onclick="pmSaveTeacher()">Save teacher profile</button>
           </div>
         </div>
         <div id="pmSettingsTab" class="pm-body" style="display:none;">
+          <div class="form-row">
+            <label>I want to</label>
+            <div class="opt-in-row"><input type="checkbox" id="pmWantLearn"><label for="pmWantLearn">Learn (student)</label></div>
+            <div class="opt-in-row"><input type="checkbox" id="pmWantTeach"><label for="pmWantTeach">Teach (teacher)</label></div>
+          </div>
           <div class="form-row" id="pmReminderRow"><label>Email reminders <span class="hint">(as student)</span></label><select id="pmReminderSetting"><option>All sessions</option><option>Only upcoming</option><option>None</option></select></div>
           <div class="form-row" id="pmNotifRow"><label>Email notifications <span class="hint">(as teacher)</span></label><select id="pmNotifSetting"><option>All updates</option><option>Only session reminders</option><option>None</option></select></div>
           <div class="form-row"><label>Timezone</label><select id="pmTimezone"></select></div>
