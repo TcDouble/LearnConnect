@@ -42,14 +42,7 @@
                 <span class="persona-badge student" id="studentBadge"><i class="fas fa-user-graduate"></i> Student</span>
                 <span class="persona-badge teacher" id="teacherBadge"><i class="fas fa-chalkboard-user"></i> Teacher</span>
             </div>
-            <ul class="sidebar-nav">
-                <li data-section="overview" class="active"><a href="#"><i class="fas fa-gauge-high"></i> Overview</a></li>
-                <li data-section="find-teacher" data-persona="student"><a href="#"><i class="fas fa-magnifying-glass"></i> Find a teacher</a></li>
-                <li data-section="requests" data-persona="teacher"><a href="#"><i class="fas fa-inbox"></i> Requests</a></li>
-                <li data-section="schedule" data-persona="teacher"><a href="#"><i class="fas fa-calendar-week"></i> Schedule</a></li>
-                <li data-section="past-meetings"><a href="#"><i class="fas fa-history"></i> Past sessions</a></li>
-                <li data-section="availability" data-persona="teacher"><a href="#"><i class="fas fa-clock"></i> Availability</a></li>
-            </ul>
+            <ul class="sidebar-nav" id="sidebarNav"></ul>
             <div class="sidebar-signout">
                 <button class="btn-signout" id="signOutBtn"><i class="fas fa-right-from-bracket"></i> Sign out</button>
             </div>
@@ -61,11 +54,6 @@
                 <div class="dashboard-header"><h1>Welcome, <span id="userNameDisplay">there</span></h1><p id="overviewGreeting" class="greeting">Loading your sessions…</p></div>
 
                 <div class="stats-row">
-                    <div class="stat-card" id="statTeachersCard" hidden>
-                        <div class="stat-icon"><i class="fas fa-chalkboard-user"></i></div>
-                        <div class="stat-number" id="statTeachersValue">0</div>
-                        <div class="stat-label">Teachers</div>
-                    </div>
                     <div class="stat-card teacher-flavor" id="statStudentsCard" hidden>
                         <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
                         <div class="stat-number" id="statStudentsValue">0</div>
@@ -101,6 +89,9 @@
 
                 <div class="section-title">Upcoming sessions</div>
                 <table class="data-table"><thead><tr><th>Date</th><th>Who</th><th>Subject</th><th>Status</th></tr></thead><tbody id="overviewUpcomingBody"></tbody></table>
+
+                <div class="section-title">Past sessions <a href="#" class="action-link" data-goto="past-meetings">View all →</a></div>
+                <table class="data-table"><thead><tr><th>Date</th><th>Who</th><th>Subject</th><th>Duration</th></tr></thead><tbody id="overviewPastBody"></tbody></table>
             </div>
 
             <!-- Find a teacher (student) -->
@@ -193,8 +184,20 @@
 
             <!-- Schedule (teacher) -->
             <div id="schedule-section" class="hidden-section">
-                <div class="dashboard-header"><h1>Schedule</h1><p class="greeting">Your confirmed and upcoming sessions.</p></div>
+                <div class="dashboard-header"><h1 id="scheduleSectionTitle">Schedule</h1><p class="greeting">Your confirmed and upcoming sessions.</p></div>
                 <table class="data-table"><thead><tr><th>Date</th><th>Student</th><th>Subject</th><th>Time / Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table>
+            </div>
+
+            <!-- Upcoming sessions (student) -->
+            <div id="student-upcoming-section" class="hidden-section">
+                <div class="dashboard-header"><h1>Upcoming sessions</h1><p class="greeting">Your confirmed and pending sessions.</p></div>
+                <table class="data-table"><thead><tr><th>Date</th><th>Teacher</th><th>Subject</th><th>Status</th></tr></thead><tbody id="studentUpcomingBody"></tbody></table>
+            </div>
+
+            <!-- Requests (student, sent) -->
+            <div id="sent-requests-section" class="hidden-section">
+                <div class="dashboard-header"><h1>Requests</h1><p class="greeting">Requests you've sent, awaiting a teacher's response.</p></div>
+                <table class="data-table"><thead><tr><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsFullBody"></tbody></table>
             </div>
 
             <!-- Past sessions (combined) -->
@@ -380,17 +383,56 @@
         }
 
         function applyPersonaVisibility() {
-            document.querySelectorAll('.sidebar-nav li[data-persona]').forEach(li => {
-                const need = li.getAttribute('data-persona');
-                const show = need === 'student' ? personas.isStudent : personas.isTeacher;
-                li.hidden = !show;
-            });
+            buildSidebarNav();
             document.getElementById('studentBadge').classList.toggle('active', personas.isStudent);
             document.getElementById('teacherBadge').classList.toggle('active', personas.isTeacher);
             const both = personas.isStudent && personas.isTeacher;
             document.getElementById('pastMeetingsTabs').hidden = !both;
             document.querySelector('#pastMeetingsTabs [data-pm-tab="student"]').hidden = !personas.isStudent;
             document.querySelector('#pastMeetingsTabs [data-pm-tab="teacher"]').hidden = !personas.isTeacher;
+            document.getElementById('scheduleSectionTitle').textContent = both ? 'Schedule' : 'Upcoming sessions';
+        }
+
+        // Builds the sidebar nav from scratch based on which persona(s) are active.
+        // Dual-persona users keep the original combined layout; single-persona
+        // users get the role-specific order/labels requested for that role.
+        function buildSidebarNav() {
+            const nav = document.getElementById('sidebarNav');
+            let items;
+            if (personas.isStudent && personas.isTeacher) {
+                items = [
+                    ['overview', 'fa-gauge-high', 'Overview'],
+                    ['find-teacher', 'fa-magnifying-glass', 'Find a teacher'],
+                    ['requests', 'fa-inbox', 'Requests'],
+                    ['schedule', 'fa-calendar-week', 'Schedule'],
+                    ['past-meetings', 'fa-history', 'Past sessions'],
+                    ['availability', 'fa-clock', 'Availability'],
+                ];
+            } else if (personas.isStudent) {
+                items = [
+                    ['overview', 'fa-gauge-high', 'Overview'],
+                    ['find-teacher', 'fa-magnifying-glass', 'Find a teacher'],
+                    ['student-upcoming', 'fa-calendar-check', 'Upcoming sessions'],
+                    ['sent-requests', 'fa-paper-plane', 'Requests'],
+                    ['past-meetings', 'fa-history', 'Past sessions'],
+                ];
+            } else if (personas.isTeacher) {
+                items = [
+                    ['overview', 'fa-gauge-high', 'Overview'],
+                    ['availability', 'fa-clock', 'Availability'],
+                    ['requests', 'fa-inbox', 'Requests'],
+                    ['past-meetings', 'fa-history', 'Past sessions'],
+                    ['schedule', 'fa-calendar-week', 'Upcoming sessions'],
+                ];
+            } else {
+                items = [['overview', 'fa-gauge-high', 'Overview']];
+            }
+            nav.innerHTML = items.map(([section, icon, label]) =>
+                `<li data-section="${section}"><a href="#"><i class="fas ${icon}"></i> ${label}</a></li>`
+            ).join('');
+            nav.querySelectorAll('li').forEach(li =>
+                li.addEventListener('click', (e) => { e.preventDefault(); showSection(li.getAttribute('data-section')); }));
+            nav.querySelector('li[data-section="overview"]')?.classList.add('active');
         }
 
         // ── Overview ─────────────────────────────────────────────────────────
@@ -401,10 +443,6 @@
                 .filter(s => !(s.broadcast_id && s.status !== 'scheduled'))
                 .sort((a, b) => `${a.session_date} ${a.starttime}`.localeCompare(`${b.session_date} ${b.starttime}`));
 
-            document.getElementById('statTeachersCard').hidden = !personas.isStudent;
-            if (personas.isStudent) {
-                document.getElementById('statTeachersValue').innerText = new Set(studentSessions.map(s => s.counterparty).filter(Boolean)).size;
-            }
             document.getElementById('statStudentsCard').hidden = !personas.isTeacher;
             if (personas.isTeacher) {
                 document.getElementById('statStudentsValue').innerText = new Set(teacherSessions.map(s => s.counterparty).filter(Boolean)).size;
@@ -432,6 +470,26 @@
             if (personas.isStudent) renderSentRequests();
 
             renderOverviewUpcoming(allUpcoming);
+            renderOverviewPast(allSessions);
+        }
+
+        function renderOverviewPast(allSessions) {
+            const tbody = document.getElementById('overviewPastBody'); tbody.innerHTML = '';
+            const past = allSessions
+                .filter(s => s.status === 'completed' || (s.status !== 'canceled' && isPastDue(s)))
+                .sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`))
+                .slice(0, 5);
+            if (!past.length) { tbody.innerHTML = '<tr><td colspan="4">No past sessions yet.</td></tr>'; return; }
+            past.forEach(s => {
+                const r = tbody.insertRow();
+                r.classList.add('clickable-row');
+                r.addEventListener('click', () => openSessionDetails(s, s.my_role));
+                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
+                const roleTag = s.my_role === 'teacher' ? '<span class="role-tag teaching">Teaching</span>' : '<span class="role-tag learning">Learning</span>';
+                r.insertCell(1).innerHTML = `${roleTag}${s.counterparty || '—'}`;
+                r.insertCell(2).innerText = s.subject || '—';
+                r.insertCell(3).innerText = fmtDuration(s.actual_duration_minutes ?? s.duration);
+            });
         }
 
         // ── Broadcast (immediate) requests — sent, awaiting responses ───────
@@ -451,11 +509,15 @@
             }));
         }
 
-        function renderSentRequests() {
-            const tbody = document.getElementById('sentRequestsBody'); tbody.innerHTML = '';
+        function getSentSingleRequests() {
+            return studentSessions.filter(s => !s.broadcast_id && s.status === 'waiting for teacher');
+        }
+
+        function renderSentRequestRows(tbody) {
+            tbody.innerHTML = '';
             const groups = getSentRequestGroups();
-            document.getElementById('mySentRequestsSection').hidden = !groups.length;
-            if (!groups.length) return;
+            const singles = getSentSingleRequests();
+            if (!groups.length && !singles.length) { tbody.innerHTML = '<tr><td colspan="3">No pending requests.</td></tr>'; return false; }
             groups.forEach(g => {
                 const r = tbody.insertRow();
                 r.classList.add('clickable-row');
@@ -464,6 +526,24 @@
                 r.insertCell(1).innerText = `Sent to ${g.total} teacher${g.total > 1 ? 's' : ''} — ${g.accepted} accepted so far`;
                 r.insertCell(2).innerHTML = '<span class="action-link">Review →</span>';
             });
+            singles.forEach(s => {
+                const r = tbody.insertRow();
+                r.insertCell(0).innerHTML = s.subject ? `<span class="badge-subject">${s.subject}</span>` : '—';
+                r.insertCell(1).innerText = `Sent to ${s.counterparty || 'a teacher'} — awaiting response`;
+                r.insertCell(2).innerHTML = `<button class="btn-cancel" data-id="${s.session_id}">Cancel</button>`;
+            });
+            tbody.querySelectorAll('.btn-cancel').forEach(btn =>
+                btn.addEventListener('click', (e) => { e.stopPropagation(); cancelRequest(btn.getAttribute('data-id')); }));
+            return true;
+        }
+
+        function renderSentRequests() {
+            const has = renderSentRequestRows(document.getElementById('sentRequestsBody'));
+            document.getElementById('mySentRequestsSection').hidden = !has;
+        }
+
+        function renderSentRequestsFull() {
+            renderSentRequestRows(document.getElementById('sentRequestsFullBody'));
         }
 
         function openBroadcastResponses(broadcastId) {
@@ -584,6 +664,8 @@
             const { error } = await supabaseClient.from('Blocked_Time').update({ status: 'canceled' }).eq('SessionID', id);
             if (error) { alert('Could not cancel: ' + error.message); return; }
             await refreshSessions(); renderOverview(); updateNotifications();
+            if (!document.getElementById('sent-requests-section').classList.contains('hidden-section')) renderSentRequestsFull();
+            if (!document.getElementById('student-upcoming-section').classList.contains('hidden-section')) renderStudentUpcomingSection();
         }
 
         // ── Find a teacher (student) ────────────────────────────────────────
@@ -829,6 +911,21 @@
                 btn.addEventListener('click', (e) => { e.stopPropagation(); withdrawOffer(btn.getAttribute('data-id')); }));
         }
 
+        function renderStudentUpcomingSection() {
+            const tbody = document.getElementById('studentUpcomingBody'); tbody.innerHTML = '';
+            const confirmed = studentSessions.filter(s => s.status === 'scheduled' && !isPastDue(s));
+            if (!confirmed.length) { tbody.innerHTML = '<tr><td colspan="4">No upcoming sessions.</td></tr>'; return; }
+            confirmed.forEach(s => {
+                const r = tbody.insertRow();
+                r.classList.add('clickable-row');
+                r.addEventListener('click', () => openSessionDetails(s, 'student'));
+                r.insertCell(0).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
+                r.insertCell(1).innerText = s.counterparty || '—';
+                r.insertCell(2).innerText = `${s.subject || ''}${s.request ? ' — ' + s.request : ''}`;
+                r.insertCell(3).innerHTML = statusPill(s.status) + joinLink(s.meeting_url);
+            });
+        }
+
         async function withdrawOffer(sessionId) {
             if (!confirm('Withdraw your offer for this request?')) return;
             const { data, error } = await supabaseClient
@@ -1047,6 +1144,8 @@
             'find-teacher': document.getElementById('find-teacher-section'),
             requests: document.getElementById('requests-section'),
             schedule: document.getElementById('schedule-section'),
+            'student-upcoming': document.getElementById('student-upcoming-section'),
+            'sent-requests': document.getElementById('sent-requests-section'),
             'past-meetings': document.getElementById('past-meetings-section'),
             availability: document.getElementById('availability-section')
         };
@@ -1060,10 +1159,11 @@
             if (sectionId === 'find-teacher') resetFindTeacher();
             if (sectionId === 'requests') renderFullRequests('');
             if (sectionId === 'schedule') renderScheduleSection();
+            if (sectionId === 'student-upcoming') renderStudentUpcomingSection();
+            if (sectionId === 'sent-requests') renderSentRequestsFull();
             if (sectionId === 'past-meetings') showPastMeetingsSection();
             if (sectionId === 'availability') loadAvailability();
         }
-        document.querySelectorAll('.sidebar-nav li').forEach(li => li.addEventListener('click', (e) => { e.preventDefault(); showSection(li.getAttribute('data-section')); }));
         document.querySelectorAll('[data-goto]').forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); showSection(el.getAttribute('data-goto')); }));
 
         document.getElementById('requestSearchFull').addEventListener('input', (e) => renderFullRequests(e.target.value));
