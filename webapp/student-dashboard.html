@@ -72,11 +72,6 @@
                     </div>
                 </div>
 
-                <div id="myTeachersSection" hidden>
-                    <div class="section-title">My teachers</div>
-                    <div id="myTeachersGrid" class="teachers-grid"></div>
-                </div>
-
                 <div id="myRequestsSection" hidden>
                     <div class="section-title">My requests <a href="#" class="action-link" data-goto="requests">View all →</a></div>
                     <table class="data-table"><thead><tr><th>Student</th><th>Subject</th><th>When</th><th></th></tr></thead><tbody id="requestsTableBody"></tbody></table>
@@ -84,7 +79,7 @@
 
                 <div id="mySentRequestsSection" hidden>
                     <div class="section-title">Sent requests</div>
-                    <table class="data-table"><thead><tr><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsBody"></tbody></table>
+                    <table class="data-table"><thead><tr><th>Subject</th><th>When</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsBody"></tbody></table>
                 </div>
 
                 <div class="section-title">Upcoming sessions</div>
@@ -197,7 +192,7 @@
             <!-- Requests (student, sent) -->
             <div id="sent-requests-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Requests</h1><p class="greeting">Requests you've sent, awaiting a teacher's response.</p></div>
-                <table class="data-table"><thead><tr><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsFullBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Subject</th><th>When</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsFullBody"></tbody></table>
             </div>
 
             <!-- Past sessions (combined) -->
@@ -461,9 +456,6 @@
                 document.getElementById('overviewGreeting').innerText = 'You have no upcoming sessions yet.';
             }
 
-            document.getElementById('myTeachersSection').hidden = !personas.isStudent;
-            if (personas.isStudent) renderMyTeachers();
-
             document.getElementById('myRequestsSection').hidden = !personas.isTeacher;
             if (personas.isTeacher) buildRequestRows(document.getElementById('requestsTableBody'), getRequests());
 
@@ -504,6 +496,9 @@
             return [...groups.entries()].map(([broadcastId, rows]) => ({
                 broadcastId,
                 subject: rows[0].subject,
+                sessionDate: rows[0].session_date,
+                starttime: rows[0].starttime,
+                isImmediate: rows[0].is_immediate,
                 total: rows.length,
                 accepted: rows.filter(r => r.status === 'offer_accepted').length
             }));
@@ -517,20 +512,22 @@
             tbody.innerHTML = '';
             const groups = getSentRequestGroups();
             const singles = getSentSingleRequests();
-            if (!groups.length && !singles.length) { tbody.innerHTML = '<tr><td colspan="3">No pending requests.</td></tr>'; return false; }
+            if (!groups.length && !singles.length) { tbody.innerHTML = '<tr><td colspan="4">No pending requests.</td></tr>'; return false; }
             groups.forEach(g => {
                 const r = tbody.insertRow();
                 r.classList.add('clickable-row');
                 r.addEventListener('click', () => openBroadcastResponses(g.broadcastId));
                 r.insertCell(0).innerHTML = g.subject ? `<span class="badge-subject">${g.subject}</span>` : '—';
-                r.insertCell(1).innerText = `Sent to ${g.total} teacher${g.total > 1 ? 's' : ''} — ${g.accepted} accepted so far`;
-                r.insertCell(2).innerHTML = '<span class="action-link">Review →</span>';
+                r.insertCell(1).innerText = g.isImmediate ? 'Immediate' : fmtLocalDateTime(g.sessionDate, g.starttime || '00:00');
+                r.insertCell(2).innerText = `Sent to ${g.total} teacher${g.total > 1 ? 's' : ''} — ${g.accepted} accepted so far`;
+                r.insertCell(3).innerHTML = '<span class="action-link">Review →</span>';
             });
             singles.forEach(s => {
                 const r = tbody.insertRow();
                 r.insertCell(0).innerHTML = s.subject ? `<span class="badge-subject">${s.subject}</span>` : '—';
-                r.insertCell(1).innerText = `Sent to ${s.counterparty || 'a teacher'} — awaiting response`;
-                r.insertCell(2).innerHTML = `<button class="btn-cancel" data-id="${s.session_id}">Cancel</button>`;
+                r.insertCell(1).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
+                r.insertCell(2).innerText = `Sent to ${s.counterparty || 'a teacher'} — awaiting response`;
+                r.insertCell(3).innerHTML = `<button class="btn-cancel" data-id="${s.session_id}">Cancel</button>`;
             });
             tbody.querySelectorAll('.btn-cancel').forEach(btn =>
                 btn.addEventListener('click', (e) => { e.stopPropagation(); cancelRequest(btn.getAttribute('data-id')); }));
@@ -549,18 +546,6 @@
         function openBroadcastResponses(broadcastId) {
             localStorage.setItem('activeBroadcastId', broadcastId);
             window.location.href = 'broadcast-responses.html';
-        }
-
-        function renderMyTeachers() {
-            const grid = document.getElementById('myTeachersGrid'); grid.innerHTML = '';
-            const names = [...new Set(studentSessions.map(s => s.counterparty).filter(Boolean))];
-            if (!names.length) { grid.innerHTML = '<p>You haven\'t booked any teachers yet — use "Find a teacher".</p>'; return; }
-            names.forEach(n => {
-                const subs = [...new Set(studentSessions.filter(s => s.counterparty === n).map(s => s.subject).filter(Boolean))];
-                const card = document.createElement('div'); card.className = 'teacher-card';
-                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${initials(n)}</span> ${n}</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div>`;
-                grid.appendChild(card);
-            });
         }
 
         function getRequests() { return teacherSessions.filter(s => s.status === 'waiting for teacher'); }
