@@ -40,9 +40,11 @@ body.dashboard-page {
 .dashboard-page .nav-btns { display: flex; align-items: center; gap: 6px; }
 
 /* ---------- View toggle (dual-persona student/teacher switch) ---------- */
-.view-toggle { display: flex; align-items: center; gap: 3px; background: #f1f5f9; border-radius: 40px; padding: 3px; margin: 0 4px; }
-.view-toggle-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px; border-radius: 40px; border: none; background: transparent; color: var(--dash-muted); font-weight: 600; font-size: 0.8rem; cursor: pointer; font-family: inherit; transition: all 0.15s; }
-.view-toggle-btn.active { background: white; color: var(--dash-green-dark); box-shadow: 0 1px 3px rgba(15,59,44,0.15); }
+.view-toggle { position: relative; display: flex; align-items: center; background: #f1f5f9; border-radius: 40px; padding: 3px; margin: 0 4px; }
+.view-toggle-thumb { position: absolute; top: 3px; left: 3px; width: calc(50% - 3px); height: calc(100% - 6px); background: white; border-radius: 40px; box-shadow: 0 1px 3px rgba(15,59,44,0.15); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); z-index: 0; }
+.view-toggle-thumb.teacher { transform: translateX(100%); }
+.view-toggle-btn { position: relative; z-index: 1; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 13px; border-radius: 40px; border: none; background: transparent; color: var(--dash-muted); font-weight: 600; font-size: 0.8rem; cursor: pointer; font-family: inherit; transition: color 0.15s; }
+.view-toggle-btn.active { color: var(--dash-green-dark); }
 .view-toggle-btn:hover:not(.active) { color: var(--dash-green-dark); }
 
 /* ---------- Notification bell ---------- */

@@ -23,6 +23,7 @@
                     </div>
                 </div>
                 <div class="view-toggle" id="viewToggle" hidden>
+                    <span class="view-toggle-thumb" id="viewToggleThumb"></span>
                     <button type="button" class="view-toggle-btn" data-view="student"><i class="fas fa-graduation-cap"></i> Student</button>
                     <button type="button" class="view-toggle-btn" data-view="teacher"><i class="fas fa-chalkboard-user"></i> Teacher</button>
                 </div>
@@ -388,6 +389,7 @@
             const both = personas.isStudent && personas.isTeacher;
             document.getElementById('viewToggle').hidden = !both;
             document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.view === activeView));
+            document.getElementById('viewToggleThumb').classList.toggle('teacher', activeView === 'teacher');
             buildSidebarNav();
         }
 
