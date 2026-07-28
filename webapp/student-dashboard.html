@@ -22,6 +22,10 @@
                         <div id="notifList"></div>
                     </div>
                 </div>
+                <div class="view-toggle" id="viewToggle" hidden>
+                    <button type="button" class="view-toggle-btn" data-view="student"><i class="fas fa-graduation-cap"></i> Student</button>
+                    <button type="button" class="view-toggle-btn" data-view="teacher"><i class="fas fa-chalkboard-user"></i> Teacher</button>
+                </div>
                 <div class="profile-wrap" id="profileWrap">
                     <button class="profile-avatar-btn" id="profileAvatarBtn" title="Account"><span id="profileInitials">?</span></button>
                     <div class="profile-dropdown" id="profileDropdown">
@@ -179,7 +183,7 @@
 
             <!-- Schedule (teacher) -->
             <div id="schedule-section" class="hidden-section">
-                <div class="dashboard-header"><h1 id="scheduleSectionTitle">Schedule</h1><p class="greeting">Your confirmed and upcoming sessions.</p></div>
+                <div class="dashboard-header"><h1>Upcoming sessions</h1><p class="greeting">Your confirmed and upcoming sessions.</p></div>
                 <table class="data-table"><thead><tr><th>When</th><th>Student</th><th>Subject</th><th>Time / Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table>
             </div>
 
@@ -195,17 +199,9 @@
                 <table class="data-table"><thead><tr><th>When</th><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsFullBody"></tbody></table>
             </div>
 
-            <!-- Past sessions (combined) -->
+            <!-- Past sessions -->
             <div id="past-meetings-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Past sessions</h1><p class="greeting">Completed sessions and reviews.</p></div>
-                <div class="pm-tabs" id="pastMeetingsTabs" style="margin-bottom:16px;">
-                    <button type="button" class="pm-tab active" data-pm-tab="all">All</button>
-                    <button type="button" class="pm-tab" data-pm-tab="student">As student</button>
-                    <button type="button" class="pm-tab" data-pm-tab="teacher">As teacher</button>
-                </div>
-                <div id="pastMeetingsAllPanel">
-                    <table class="data-table"><thead><tr><th>When</th><th>Role</th><th>With</th><th>Subject</th><th>Duration</th><th>Your rating</th></tr></thead><tbody id="pastMeetingsAllBody"></tbody></table>
-                </div>
                 <div id="pastMeetingsStudentPanel" style="display:none;">
                     <table class="data-table"><thead><tr><th>When</th><th>Teacher</th><th>Subject</th><th>Duration</th><th>Your rating</th></tr></thead><tbody id="pastMeetingsStudentBody"></tbody></table>
                 </div>
@@ -286,6 +282,15 @@
         let studentSessions = [];
         let teacherSessions = [];
         let personas = { isStudent: false, isTeacher: false };
+        let activeView = null; // 'student' | 'teacher' — which single-persona view a dual-persona user is looking at
+
+        // The role whose artifacts should currently be shown. Single-persona
+        // users always see their one role; dual-persona users see whichever
+        // side the header toggle is set to.
+        function effectiveRole() {
+            if (personas.isStudent && personas.isTeacher) return activeView;
+            return personas.isTeacher ? 'teacher' : 'student';
+        }
 
         function fmtTime(t) { if (!t) return ''; const [h, m] = t.split(':'); let hr = parseInt(h, 10); const ap = hr >= 12 ? 'pm' : 'am'; hr = hr % 12 || 12; return `${hr}:${m} ${ap}`; }
         function isPastDue(s) {
@@ -356,6 +361,12 @@
                 localStorage.setItem('isStudent', personas.isStudent ? 'true' : 'false');
                 localStorage.setItem('isTeacher', personas.isTeacher ? 'true' : 'false');
             }
+            if (personas.isStudent && personas.isTeacher) {
+                const saved = localStorage.getItem('lcActiveView');
+                activeView = (saved === 'student' || saved === 'teacher') ? saved : 'student';
+            } else {
+                activeView = personas.isTeacher ? 'teacher' : 'student';
+            }
             applyPersonaVisibility();
 
             // Fetched regardless of the active persona toggle, so re-enabling a
@@ -378,50 +389,42 @@
         }
 
         function applyPersonaVisibility() {
+            const both = personas.isStudent && personas.isTeacher;
+            document.getElementById('viewToggle').hidden = !both;
+            document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.view === activeView));
             buildSidebarNav();
             document.getElementById('studentBadge').classList.toggle('active', personas.isStudent);
             document.getElementById('teacherBadge').classList.toggle('active', personas.isTeacher);
-            const both = personas.isStudent && personas.isTeacher;
-            document.getElementById('pastMeetingsTabs').hidden = !both;
-            document.querySelector('#pastMeetingsTabs [data-pm-tab="student"]').hidden = !personas.isStudent;
-            document.querySelector('#pastMeetingsTabs [data-pm-tab="teacher"]').hidden = !personas.isTeacher;
-            document.getElementById('scheduleSectionTitle').textContent = both ? 'Schedule' : 'Upcoming sessions';
         }
 
-        // Builds the sidebar nav from scratch based on which persona(s) are active.
-        // Dual-persona users keep the original combined layout; single-persona
-        // users get the role-specific order/labels requested for that role.
+        function setActiveView(view, section) {
+            if (view !== 'student' && view !== 'teacher') return;
+            activeView = view;
+            localStorage.setItem('lcActiveView', view);
+            applyPersonaVisibility();
+            showSection(section || 'overview');
+        }
+        document.querySelectorAll('.view-toggle-btn').forEach(btn =>
+            btn.addEventListener('click', () => setActiveView(btn.getAttribute('data-view'))));
+
+        // Builds the sidebar nav from scratch for whichever role is currently
+        // in view (effectiveRole) — the single-persona-only artifacts, never
+        // a combined layout. Dual-persona users switch roles via the header toggle.
         function buildSidebarNav() {
             const nav = document.getElementById('sidebarNav');
-            let items;
-            if (personas.isStudent && personas.isTeacher) {
-                items = [
-                    ['overview', 'fa-gauge-high', 'Overview'],
-                    ['find-teacher', 'fa-magnifying-glass', 'Find a teacher'],
-                    ['requests', 'fa-inbox', 'Requests'],
-                    ['schedule', 'fa-calendar-week', 'Schedule'],
-                    ['past-meetings', 'fa-history', 'Past sessions'],
-                    ['availability', 'fa-clock', 'Availability'],
-                ];
-            } else if (personas.isStudent) {
-                items = [
-                    ['overview', 'fa-gauge-high', 'Overview'],
-                    ['find-teacher', 'fa-magnifying-glass', 'Find a teacher'],
-                    ['student-upcoming', 'fa-calendar-check', 'Upcoming sessions'],
-                    ['sent-requests', 'fa-paper-plane', 'Requests'],
-                    ['past-meetings', 'fa-history', 'Past sessions'],
-                ];
-            } else if (personas.isTeacher) {
-                items = [
-                    ['overview', 'fa-gauge-high', 'Overview'],
-                    ['availability', 'fa-clock', 'Availability'],
-                    ['requests', 'fa-inbox', 'Requests'],
-                    ['past-meetings', 'fa-history', 'Past sessions'],
-                    ['schedule', 'fa-calendar-week', 'Upcoming sessions'],
-                ];
-            } else {
-                items = [['overview', 'fa-gauge-high', 'Overview']];
-            }
+            const items = effectiveRole() === 'teacher' ? [
+                ['overview', 'fa-gauge-high', 'Overview'],
+                ['availability', 'fa-clock', 'Availability'],
+                ['requests', 'fa-inbox', 'Requests'],
+                ['past-meetings', 'fa-history', 'Past sessions'],
+                ['schedule', 'fa-calendar-week', 'Upcoming sessions'],
+            ] : [
+                ['overview', 'fa-gauge-high', 'Overview'],
+                ['find-teacher', 'fa-magnifying-glass', 'Find a teacher'],
+                ['student-upcoming', 'fa-calendar-check', 'Upcoming sessions'],
+                ['sent-requests', 'fa-paper-plane', 'Requests'],
+                ['past-meetings', 'fa-history', 'Past sessions'],
+            ];
             nav.innerHTML = items.map(([section, icon, label]) =>
                 `<li data-section="${section}"><a href="#"><i class="fas ${icon}"></i> ${label}</a></li>`
             ).join('');
@@ -431,23 +434,26 @@
         }
 
         // ── Overview ─────────────────────────────────────────────────────────
+        // Always scoped to effectiveRole() — a dual-persona user only ever sees
+        // the artifacts for whichever side the header toggle is set to.
         function renderOverview() {
-            const allSessions = [...studentSessions, ...teacherSessions];
-            const allUpcoming = allSessions
+            const role = effectiveRole();
+            const roleSessions = role === 'teacher' ? teacherSessions : studentSessions;
+            const roleUpcoming = roleSessions
                 .filter(isUpcoming)
                 .filter(s => !(s.broadcast_id && s.status !== 'scheduled'))
                 .sort((a, b) => `${a.session_date} ${a.starttime}`.localeCompare(`${b.session_date} ${b.starttime}`));
 
-            document.getElementById('statStudentsCard').hidden = !personas.isTeacher;
-            if (personas.isTeacher) {
+            document.getElementById('statStudentsCard').hidden = role !== 'teacher';
+            if (role === 'teacher') {
                 document.getElementById('statStudentsValue').innerText = new Set(teacherSessions.map(s => s.counterparty).filter(Boolean)).size;
             }
-            document.getElementById('statCompletedValue').innerText = allSessions.filter(s => s.status === 'completed').length;
+            document.getElementById('statCompletedValue').innerText = roleSessions.filter(s => s.status === 'completed').length;
 
-            if (allUpcoming.length) {
-                const next = allUpcoming[0];
+            if (roleUpcoming.length) {
+                const next = roleUpcoming[0];
                 document.getElementById('statNextValue').innerText = next.session_date || '—';
-                const withWho = next.my_role === 'teacher' ? `teaching ${next.counterparty || 'a student'}` : `with ${next.counterparty || 'a teacher'}`;
+                const withWho = role === 'teacher' ? `teaching ${next.counterparty || 'a student'}` : `with ${next.counterparty || 'a teacher'}`;
                 document.getElementById('statNextSub').innerText = `${fmtTime(next.starttime)} ${withWho}`;
                 document.getElementById('overviewGreeting').innerText = `Your next session is on ${next.session_date} at ${fmtTime(next.starttime)}.`;
             } else {
@@ -456,13 +462,14 @@
                 document.getElementById('overviewGreeting').innerText = 'You have no upcoming sessions yet.';
             }
 
-            document.getElementById('myRequestsSection').hidden = !personas.isTeacher;
-            if (personas.isTeacher) buildRequestRows(document.getElementById('requestsTableBody'), getRequests());
+            document.getElementById('myRequestsSection').hidden = role !== 'teacher';
+            if (role === 'teacher') buildRequestRows(document.getElementById('requestsTableBody'), getRequests());
 
-            if (personas.isStudent) renderSentRequests();
+            document.getElementById('mySentRequestsSection').hidden = role !== 'student';
+            if (role === 'student') renderSentRequests();
 
-            renderOverviewUpcoming(allUpcoming);
-            renderOverviewPast(allSessions);
+            renderOverviewUpcoming(roleUpcoming);
+            renderOverviewPast(roleSessions);
         }
 
         function renderOverviewPast(allSessions) {
@@ -925,48 +932,12 @@
         }
 
         // ── Past sessions ────────────────────────────────────────────────────
-        function renderAllPastMeetings() {
-            const tbody = document.getElementById('pastMeetingsAllBody'); tbody.innerHTML = '';
-            const past = [...studentSessions, ...teacherSessions]
-                .filter(s => s.status === 'completed' || (s.status !== 'canceled' && isPastDue(s)))
-                .sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
-            if (!past.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
-            past.forEach(s => {
-                const r = tbody.insertRow();
-                r.classList.add('clickable-row');
-                r.addEventListener('click', () => openSessionDetails(s, s.my_role));
-                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
-                r.insertCell(1).innerHTML = s.my_role === 'teacher' ? '<span class="role-tag teaching">Teaching</span>' : '<span class="role-tag learning">Learning</span>';
-                r.insertCell(2).innerText = s.counterparty || '—';
-                r.insertCell(3).innerText = s.subject || '—';
-                r.insertCell(4).innerText = fmtDuration(s.actual_duration_minutes ?? s.duration);
-                const myRatingCell = r.insertCell(5);
-                if (s.my_role === 'teacher') {
-                    if (s.teacher_review_submitted_at) { myRatingCell.innerHTML = starsHtml(s.teacher_rating); }
-                    else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" onclick="event.stopPropagation()" class="action-link">Leave review →</a>` : '—'; }
-                } else {
-                    if (s.student_review_submitted_at) { myRatingCell.innerHTML = starsHtml(s.student_rating); }
-                    else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" onclick="event.stopPropagation()" class="action-link">Leave review →</a>` : '—'; }
-                }
-            });
-        }
-
-        function switchPastMeetingsTab(tab) {
-            document.querySelectorAll('#pastMeetingsTabs .pm-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-pm-tab') === tab));
-            document.getElementById('pastMeetingsAllPanel').style.display = tab === 'all' ? '' : 'none';
-            document.getElementById('pastMeetingsStudentPanel').style.display = tab === 'student' ? '' : 'none';
-            document.getElementById('pastMeetingsTeacherPanel').style.display = tab === 'teacher' ? '' : 'none';
-            if (tab === 'all') renderAllPastMeetings();
-            if (tab === 'student') renderStudentPastMeetings();
-            if (tab === 'teacher') renderTeacherPastMeetings();
-        }
-        document.querySelectorAll('#pastMeetingsTabs .pm-tab').forEach(btn =>
-            btn.addEventListener('click', () => switchPastMeetingsTab(btn.getAttribute('data-pm-tab'))));
-
         function showPastMeetingsSection() {
-            const both = personas.isStudent && personas.isTeacher;
-            const defaultTab = both ? 'all' : (personas.isTeacher ? 'teacher' : 'student');
-            switchPastMeetingsTab(defaultTab);
+            const role = effectiveRole();
+            document.getElementById('pastMeetingsStudentPanel').style.display = role === 'student' ? '' : 'none';
+            document.getElementById('pastMeetingsTeacherPanel').style.display = role === 'teacher' ? '' : 'none';
+            if (role === 'student') renderStudentPastMeetings();
+            if (role === 'teacher') renderTeacherPastMeetings();
         }
 
         function renderStudentPastMeetings() {
@@ -1180,7 +1151,7 @@
 
             if (personas.isStudent) {
                 studentSessions.filter(s => s.status === 'scheduled' && !seenConfirmed.has(s.session_id)).forEach(s => {
-                    notifs.push({ type: 'confirmed', icon: 'fa-check-circle', title: `Session confirmed!`, sub: `${s.counterparty || 'Your teacher'} accepted your ${s.subject || ''} request`, _date: s.session_date || '', _time: s.starttime || '', action: () => { seenConfirmed.add(s.session_id); localStorage.setItem('lcSeenConfirmed', JSON.stringify([...seenConfirmed])); showSection('overview'); } });
+                    notifs.push({ type: 'confirmed', icon: 'fa-check-circle', title: `Session confirmed!`, sub: `${s.counterparty || 'Your teacher'} accepted your ${s.subject || ''} request`, _date: s.session_date || '', _time: s.starttime || '', action: () => { seenConfirmed.add(s.session_id); localStorage.setItem('lcSeenConfirmed', JSON.stringify([...seenConfirmed])); setActiveView('student'); } });
                     if (!sentConfirmations.has(s.session_id)) {
                         sentConfirmations.add(s.session_id);
                         localStorage.setItem('lcSentConfirmations', JSON.stringify([...sentConfirmations]));
@@ -1189,13 +1160,13 @@
                 });
 
                 studentSessions.filter(s => s.broadcast_id && s.status === 'offer_accepted' && !seenOfferAccepted.has(s.session_id)).forEach(s => {
-                    notifs.push({ type: 'offerAccepted', icon: 'fa-hand-holding-heart', title: `A teacher accepted your request!`, sub: `Pick one to confirm your ${s.subject || ''} session`, _date: s.session_date || '', _time: s.starttime || '', action: () => { seenOfferAccepted.add(s.session_id); localStorage.setItem('lcSeenOfferAccepted', JSON.stringify([...seenOfferAccepted])); openBroadcastResponses(s.broadcast_id); } });
+                    notifs.push({ type: 'offerAccepted', icon: 'fa-hand-holding-heart', title: `A teacher accepted your request!`, sub: `Pick one to confirm your ${s.subject || ''} session`, _date: s.session_date || '', _time: s.starttime || '', action: () => { seenOfferAccepted.add(s.session_id); localStorage.setItem('lcSeenOfferAccepted', JSON.stringify([...seenOfferAccepted])); setActiveView('student'); openBroadcastResponses(s.broadcast_id); } });
                 });
             }
 
             if (personas.isTeacher) {
                 teacherSessions.filter(s => s.status === 'waiting for teacher').forEach(s => {
-                    notifs.push({ type: 'request', icon: 'fa-envelope', title: `New request from ${s.counterparty || 'a student'}`, sub: s.subject || '', _date: s.session_date || '', _time: s.starttime || '', action: () => showSection('requests') });
+                    notifs.push({ type: 'request', icon: 'fa-envelope', title: `New request from ${s.counterparty || 'a student'}`, sub: s.subject || '', _date: s.session_date || '', _time: s.starttime || '', action: () => setActiveView('teacher', 'requests') });
                     if (!sentRequests.has(s.session_id)) {
                         sentRequests.add(s.session_id);
                         localStorage.setItem('lcSentRequests', JSON.stringify([...sentRequests]));
@@ -1205,14 +1176,14 @@
             }
 
             const soonCandidates = [
-                ...(personas.isStudent ? studentSessions.map(s => ({ s, section: 'overview' })) : []),
-                ...(personas.isTeacher ? teacherSessions.map(s => ({ s, section: 'schedule' })) : [])
+                ...(personas.isStudent ? studentSessions.map(s => ({ s, role: 'student', section: 'overview' })) : []),
+                ...(personas.isTeacher ? teacherSessions.map(s => ({ s, role: 'teacher', section: 'schedule' })) : [])
             ];
-            soonCandidates.filter(({ s }) => s.status === 'scheduled' && s.session_date && s.starttime).forEach(({ s, section }) => {
+            soonCandidates.filter(({ s }) => s.status === 'scheduled' && s.session_date && s.starttime).forEach(({ s, role, section }) => {
                 const startDt = new Date(`${s.session_date}T${s.starttime.slice(0, 5)}:00Z`);
                 if (startDt >= now && startDt <= soonCutoff) {
                     const mins = Math.round((startDt - now) / 60000);
-                    notifs.push({ type: 'soon', icon: 'fa-clock', title: `Session with ${s.counterparty || 'someone'} starting soon`, sub: `In ${mins} min · ${s.subject || ''}`, _mins: mins, action: () => showSection(section) });
+                    notifs.push({ type: 'soon', icon: 'fa-clock', title: `Session with ${s.counterparty || 'someone'} starting soon`, sub: `In ${mins} min · ${s.subject || ''}`, _mins: mins, action: () => setActiveView(role, section) });
                     if (!sentReminders.has(s.session_id)) {
                         sentReminders.add(s.session_id);
                         localStorage.setItem('lcSentReminders', JSON.stringify([...sentReminders]));
@@ -1367,6 +1338,12 @@
             localStorage.setItem('isTeacher', wantTeach ? 'true' : 'false');
             if (wantStudent) { localStorage.setItem('studentReminders', document.getElementById('pmReminderSetting').value); localStorage.setItem('studentTZ', tz); }
             if (wantTeach) { localStorage.setItem('teacherNotif', document.getElementById('pmNotifSetting').value); localStorage.setItem('teacherTimezone', tz); }
+
+            // Keep the current view if it's still valid (both active); otherwise
+            // snap to whichever single role remains.
+            if (!(wantStudent && wantTeach)) activeView = wantTeach ? 'teacher' : 'student';
+            else if (activeView !== 'student' && activeView !== 'teacher') activeView = 'student';
+            localStorage.setItem('lcActiveView', activeView);
 
             if (wantStudent && !teachers.length) await refreshTeachers();
             applyPersonaVisibility();

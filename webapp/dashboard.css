@@ -39,6 +39,12 @@ body.dashboard-page {
 .dashboard-page .navbar { padding: 12px 20px; }
 .dashboard-page .nav-btns { display: flex; align-items: center; gap: 6px; }
 
+/* ---------- View toggle (dual-persona student/teacher switch) ---------- */
+.view-toggle { display: flex; align-items: center; gap: 3px; background: #f1f5f9; border-radius: 40px; padding: 3px; margin: 0 4px; }
+.view-toggle-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px; border-radius: 40px; border: none; background: transparent; color: var(--dash-muted); font-weight: 600; font-size: 0.8rem; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.view-toggle-btn.active { background: white; color: var(--dash-green-dark); box-shadow: 0 1px 3px rgba(15,59,44,0.15); }
+.view-toggle-btn:hover:not(.active) { color: var(--dash-green-dark); }
+
 /* ---------- Notification bell ---------- */
 .notif-wrap { position: relative; }
 .notif-btn { background: none; border: none; cursor: pointer; padding: 7px 9px; position: relative; font-size: 1.05rem; color: var(--dash-muted); line-height: 1; border-radius: 50%; transition: background 0.15s, color 0.15s; }
