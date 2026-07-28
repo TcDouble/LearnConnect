@@ -42,10 +42,6 @@
 
     <div class="dashboard-container">
         <aside class="sidebar">
-            <div class="persona-badges">
-                <span class="persona-badge student" id="studentBadge"><i class="fas fa-user-graduate"></i> Student</span>
-                <span class="persona-badge teacher" id="teacherBadge"><i class="fas fa-chalkboard-user"></i> Teacher</span>
-            </div>
             <ul class="sidebar-nav" id="sidebarNav"></ul>
             <div class="sidebar-signout">
                 <button class="btn-signout" id="signOutBtn"><i class="fas fa-right-from-bracket"></i> Sign out</button>
@@ -393,8 +389,6 @@
             document.getElementById('viewToggle').hidden = !both;
             document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.view === activeView));
             buildSidebarNav();
-            document.getElementById('studentBadge').classList.toggle('active', personas.isStudent);
-            document.getElementById('teacherBadge').classList.toggle('active', personas.isTeacher);
         }
 
         function setActiveView(view, section) {

@@ -85,12 +85,6 @@ body.dashboard-page {
 .sidebar { width: 246px; flex-shrink: 0; background: white; border-right: 1px solid var(--dash-border); padding: 20px 0 0; display: flex; flex-direction: column; }
 .main-content { flex: 1; min-width: 0; padding: 24px 28px 48px; }
 
-/* ---------- Persona badges (replaces the old switcher pills) ---------- */
-.persona-badges { display: flex; gap: 8px; padding: 0 20px 18px; }
-.persona-badge { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; border-radius: 40px; font-size: 0.8rem; font-weight: 600; border: 1px solid var(--dash-border); color: var(--dash-faint); background: #f8fafc; }
-.persona-badge.active.student { background: var(--dash-green-tint); color: var(--dash-green-dark); border-color: #bfe3cd; }
-.persona-badge.active.teacher { background: var(--dash-purple-tint); color: #3b2a7a; border-color: #d9d0f2; }
-
 /* ---------- Sidebar nav ---------- */
 .sidebar-nav { flex: 1; }
 .sidebar-nav li { list-style: none; margin-bottom: 2px; }
