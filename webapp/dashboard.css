@@ -91,6 +91,15 @@ body.dashboard-page {
 .sidebar { width: 246px; flex-shrink: 0; background: white; border-right: 1px solid var(--dash-border); padding: 20px 0 0; display: flex; flex-direction: column; overflow-y: auto; }
 .main-content { flex: 1; min-width: 0; padding: 24px 28px 48px; overflow-y: auto; }
 
+.dashboard-page footer {
+    background: transparent;
+    padding: 10px 0;
+    border-top: 1px solid var(--dash-border);
+    margin-top: 0;
+    font-size: 0.76rem;
+    color: var(--dash-faint);
+}
+
 /* ---------- Sidebar nav ---------- */
 .sidebar-nav { flex: 1; }
 .sidebar-nav li { list-style: none; margin-bottom: 2px; }
