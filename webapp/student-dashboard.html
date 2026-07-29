@@ -1246,6 +1246,10 @@
             document.getElementById('vpTitle').textContent = row.role === 'teacher' ? 'Teacher profile' : 'Student profile';
             document.getElementById('vpName').textContent = row.name || '—';
 
+            document.getElementById('vpRating').innerHTML = row.rating_count
+                ? `${starsHtml(Math.round(row.avg_rating))} <span style="color:var(--dash-muted);font-size:0.85rem;">${row.avg_rating} (${row.rating_count} review${row.rating_count > 1 ? 's' : ''})</span>`
+                : '<span style="color:#94a3b8">No ratings yet</span>';
+
             const isTeacher = row.role === 'teacher';
             document.getElementById('vpSubjectsLabel').textContent = isTeacher ? 'Subjects / specialties' : 'Subjects interested in';
             document.getElementById('vpSubjects').textContent = (row.subject_list || []).length ? row.subject_list.join(', ') : '—';
@@ -1452,6 +1456,7 @@
           <p class="greeting" id="vpLoading">Loading…</p>
           <div id="vpFields" style="display:none;">
             <div class="form-row"><label>Name</label><p id="vpName">—</p></div>
+            <div class="form-row" id="vpRatingRow"><label>Rating</label><p id="vpRating">—</p></div>
             <div class="form-row" id="vpSubjectsRow"><label id="vpSubjectsLabel">Subjects</label><p id="vpSubjects">—</p></div>
             <div class="form-row" id="vpExperienceRow"><label>Years of experience</label><p id="vpExperience">—</p></div>
             <div class="form-row" id="vpGradeRow"><label>Education level</label><p id="vpGrade">—</p></div>

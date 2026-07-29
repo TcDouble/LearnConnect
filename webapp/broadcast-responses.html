@@ -28,6 +28,8 @@
       font-size: 0.92rem;
     }
     .choose-btn { margin-top: 16px; width: 100%; justify-content: center; }
+    .teacher-name-link { background: none; border: none; padding: 0; font: inherit; cursor: pointer; text-align: left; color: var(--dash-green-dark, #0f3b2c); }
+    .teacher-name-link:hover { text-decoration: underline; }
     #status {
       margin-top: 1rem;
       padding: 0.85rem 1rem;
@@ -90,6 +92,26 @@
     </div>
   </main>
 
+  <!-- View teacher profile modal -->
+  <div id="viewProfileModal" class="pm-overlay" onclick="if(event.target===this)closeViewProfileModal()">
+    <div class="pm-modal">
+      <div class="pm-header">
+        <div class="pm-tabs"><span style="font-weight:700;color:#0f3b2c;">Teacher profile</span></div>
+        <button class="pm-close" onclick="closeViewProfileModal()">✕</button>
+      </div>
+      <div class="pm-body">
+        <p class="greeting" id="vpLoading">Loading…</p>
+        <div id="vpFields" style="display:none;">
+          <div class="form-row"><label>Name</label><p id="vpName">—</p></div>
+          <div class="form-row"><label>Rating</label><p id="vpRating">—</p></div>
+          <div class="form-row"><label>Subjects / specialties</label><p id="vpSubjects">—</p></div>
+          <div class="form-row"><label>Years of experience</label><p id="vpExperience">—</p></div>
+          <div class="form-row" id="vpBioRow"><label>About</label><p id="vpBio">—</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer><div class="container"><p>&copy; 2026 LearnConnect</p></div></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -105,6 +127,39 @@
       if (mins < 60) return `${mins} min`;
       const h = Math.floor(mins / 60), m = mins % 60;
       return m ? `${h}h ${m}m` : `${h}h`;
+    }
+    function starsHtml(n, total = 5) {
+      if (!n) return '<span style="color:#94a3b8">—</span>';
+      return '<span style="color:#f59e0b">' + '★'.repeat(n) + '</span><span style="color:#e2e8f0">' + '★'.repeat(total - n) + '</span>';
+    }
+    function yearsToRange(n) { n = n || 0; if (n < 1) return 'Less than 1 year'; if (n <= 2) return '1–2 years'; if (n <= 5) return '3–5 years'; if (n <= 10) return '6–10 years'; return '10+ years'; }
+
+    function closeViewProfileModal() { document.getElementById('viewProfileModal').classList.remove('open'); }
+
+    async function openViewProfile(sessionId) {
+      document.getElementById('viewProfileModal').classList.add('open');
+      document.getElementById('vpFields').style.display = 'none';
+      document.getElementById('vpLoading').style.display = '';
+      document.getElementById('vpLoading').textContent = 'Loading…';
+
+      const { data, error } = await supabaseClient.rpc('get_counterparty_profile', { p_session_id: sessionId });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row) {
+        document.getElementById('vpLoading').textContent = 'Could not load this profile.';
+        return;
+      }
+
+      document.getElementById('vpName').textContent = row.name || '—';
+      document.getElementById('vpRating').innerHTML = row.rating_count
+        ? `${starsHtml(Math.round(row.avg_rating))} <span style="color:#64748b;font-size:0.85rem;">${row.avg_rating} (${row.rating_count} review${row.rating_count > 1 ? 's' : ''})</span>`
+        : '<span style="color:#94a3b8">No ratings yet</span>';
+      document.getElementById('vpSubjects').textContent = (row.subject_list || []).length ? row.subject_list.join(', ') : '—';
+      document.getElementById('vpExperience').textContent = yearsToRange(row.years_experience);
+      document.getElementById('vpBioRow').hidden = !row.bio;
+      document.getElementById('vpBio').textContent = row.bio || '';
+
+      document.getElementById('vpLoading').style.display = 'none';
+      document.getElementById('vpFields').style.display = '';
     }
 
     function showStatus(type, msg) {
@@ -173,10 +228,11 @@
         const card = document.createElement('div');
         card.className = 'teacher-card';
         card.innerHTML = `
-          <div class="teacher-name"><span class="teacher-initials">${initials(r.counterparty)}</span> ${r.counterparty || 'A teacher'}</div>
+          <div class="teacher-name"><span class="teacher-initials">${initials(r.counterparty)}</span> <button type="button" class="teacher-name-link">${r.counterparty || 'A teacher'}</button></div>
           <div class="teacher-exp">${fmtDuration(r.duration)} session</div>
           <button class="btn btn-primary choose-btn">Choose this teacher</button>
         `;
+        card.querySelector('.teacher-name-link').addEventListener('click', () => openViewProfile(r.session_id));
         card.querySelector('.choose-btn').addEventListener('click', () => chooseTeacher(r.session_id));
         grid.appendChild(card);
       });
