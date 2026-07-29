@@ -296,6 +296,9 @@
             return new Date(`${endDate}T${s.endtime.slice(0, 5)}:00Z`).getTime() < Date.now();
         }
         function isUpcoming(s) { return s.status !== 'completed' && s.status !== 'canceled' && !isPastDue(s); }
+        // A declined/canceled request always belongs in Past sessions, regardless
+        // of whether its original date has actually passed yet.
+        function isPastSession(s) { return s.status === 'completed' || s.status === 'canceled' || isPastDue(s); }
         function initials(name) { return (name || '?').split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase(); }
         function yearsToRange(n) { n = n || 0; if (n < 1) return 'Less than 1 year'; if (n <= 2) return '1–2 years'; if (n <= 5) return '3–5 years'; if (n <= 10) return '6–10 years'; return '10+ years'; }
         function rangeToYears(t) { return /less than/i.test(t) ? 0 : (t.match(/\d+/) ? parseInt(t.match(/\d+/)[0], 10) : 0); }
@@ -471,7 +474,7 @@
         function renderOverviewPast(allSessions) {
             const tbody = document.getElementById('overviewPastBody'); tbody.innerHTML = '';
             const past = allSessions
-                .filter(s => s.status === 'completed' || (s.status !== 'canceled' && isPastDue(s)))
+                .filter(s => isPastSession(s))
                 .sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`))
                 .slice(0, 5);
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="4">No past sessions yet.</td></tr>'; return; }
@@ -882,7 +885,10 @@
         function openScheduledSession(s) { openSessionDetails(s, 'teacher'); }
         function renderScheduleSection() {
             const tbody = document.getElementById('scheduleSessionsBody'); tbody.innerHTML = '';
-            const confirmed = teacherSessions.filter(s => s.status !== 'waiting for teacher' && s.status !== 'completed' && !isPastDue(s));
+            // Only sessions accepted by the teacher (offer_accepted) or by both
+            // parties (scheduled) belong here — pending requests and declined/
+            // canceled ones are shown under Requests / Past sessions instead.
+            const confirmed = teacherSessions.filter(s => (s.status === 'offer_accepted' || s.status === 'scheduled') && !isPastDue(s));
             if (!confirmed.length) { tbody.innerHTML = '<tr><td colspan="4">No upcoming sessions.</td></tr>'; return; }
             confirmed.forEach(s => {
                 const r = tbody.insertRow();
@@ -940,7 +946,7 @@
 
         function renderStudentPastMeetings() {
             const tbody = document.getElementById('pastMeetingsStudentBody'); tbody.innerHTML = '';
-            const past = studentSessions.filter(s => s.status === 'completed' || (s.status !== 'canceled' && isPastDue(s))).sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+            const past = studentSessions.filter(s => isPastSession(s)).sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
             past.forEach(s => {
                 const r = tbody.insertRow();
@@ -958,7 +964,7 @@
 
         function renderTeacherPastMeetings() {
             const tbody = document.getElementById('pastMeetingsTeacherBody'); tbody.innerHTML = '';
-            const past = teacherSessions.filter(s => s.status === 'completed' || (s.status !== 'canceled' && isPastDue(s))).sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+            const past = teacherSessions.filter(s => isPastSession(s)).sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
             past.forEach(s => {
                 const r = tbody.insertRow();
