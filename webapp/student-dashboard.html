@@ -480,8 +480,7 @@
                 r.classList.add('clickable-row');
                 r.addEventListener('click', () => openSessionDetails(s, s.my_role));
                 r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
-                const roleTag = s.my_role === 'teacher' ? '<span class="role-tag teaching">Teaching</span>' : '<span class="role-tag learning">Learning</span>';
-                r.insertCell(1).innerHTML = `${roleTag}${s.counterparty || '—'}`;
+                r.insertCell(1).innerText = s.counterparty || '—';
                 r.insertCell(2).innerText = s.subject || '—';
                 r.insertCell(3).innerText = fmtDuration(s.actual_duration_minutes ?? s.duration);
             });
@@ -634,8 +633,7 @@
                 r.classList.add('clickable-row');
                 r.addEventListener('click', () => openSessionDetails(s, s.my_role));
                 r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
-                const roleTag = s.my_role === 'teacher' ? '<span class="role-tag teaching">Teaching</span>' : '<span class="role-tag learning">Learning</span>';
-                r.insertCell(1).innerHTML = `${roleTag}${s.counterparty || '—'}`;
+                r.insertCell(1).innerText = s.counterparty || '—';
                 r.insertCell(2).innerText = s.subject || '—';
                 let statusHtml = statusPill(s.status) + joinLink(s.meeting_url);
                 if (s.status === 'waiting for teacher' && s.my_role === 'student') {

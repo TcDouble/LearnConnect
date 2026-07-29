@@ -135,9 +135,6 @@ body.dashboard-page {
 .data-table tr:last-child td { border-bottom: none; }
 .clickable-row { cursor: pointer; transition: background 0.15s; }
 .clickable-row:hover td { background: #f8fafc; }
-.role-tag { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 20px; margin-right: 8px; }
-.role-tag.learning { background: var(--dash-green-tint); color: var(--dash-green-dark); }
-.role-tag.teaching { background: var(--dash-purple-tint); color: #3b2a7a; }
 
 /* ---------- Status pills / badges ---------- */
 .status-pill { padding: 4px 11px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; display: inline-block; }
