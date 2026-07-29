@@ -20,7 +20,8 @@
 .dashboard-page [hidden] { display: none !important; }
 
 body.dashboard-page {
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     background: var(--dash-bg);
@@ -83,9 +84,12 @@ body.dashboard-page {
 .profile-menu-divider { height: 1px; background: #f1f5f9; margin: 4px 0; }
 
 /* ---------- Layout ---------- */
-.dashboard-container { display: flex; flex: 1; min-height: 0; align-items: stretch; }
-.sidebar { width: 246px; flex-shrink: 0; background: white; border-right: 1px solid var(--dash-border); padding: 20px 0 0; display: flex; flex-direction: column; }
-.main-content { flex: 1; min-width: 0; padding: 24px 28px 48px; }
+/* Header stays fixed (it's outside this flex row); sidebar and main-content
+   each scroll independently within their own fixed-height column instead of
+   the whole page scrolling together. */
+.dashboard-container { display: flex; flex: 1; min-height: 0; align-items: stretch; overflow: hidden; }
+.sidebar { width: 246px; flex-shrink: 0; background: white; border-right: 1px solid var(--dash-border); padding: 20px 0 0; display: flex; flex-direction: column; overflow-y: auto; }
+.main-content { flex: 1; min-width: 0; padding: 24px 28px 48px; overflow-y: auto; }
 
 /* ---------- Sidebar nav ---------- */
 .sidebar-nav { flex: 1; }
