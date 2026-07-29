@@ -1,10 +1,11 @@
 // Edge Function: send-session-email
 // Sends notification or reminder emails for a Blocked_Time session.
 //
-// POST body: { type: 'confirmation' | 'reminder' | 'request', session_id: string }
-//   confirmation — student is emailed when their request is accepted (no meeting room)
-//   request      — teacher is emailed when a student sends a new tutoring request
-//   reminder     — both parties are emailed when session is starting soon
+// POST body: { type: 'confirmation' | 'reminder' | 'request' | 'offer_accepted', session_id: string }
+//   confirmation    — student is emailed when their request is accepted (no meeting room)
+//   request         — teacher is emailed when a student sends a new tutoring request
+//   reminder        — both parties are emailed when session is starting soon
+//   offer_accepted  — student is emailed when a teacher accepts one of their broadcast requests
 //
 // Uses RESEND_API_KEY + FROM_EMAIL (same env vars as create-meeting).
 
@@ -59,6 +60,19 @@ function confirmationHtml(studentName: string, teacherName: string, subject: str
       📅 <strong>${when}</strong>
     </div>
     <p style="font-size:13px;color:#64748b">Log in to LearnConnect to view your session details. You'll receive a reminder before it starts.</p>
+  `);
+}
+
+function offerAcceptedHtml(studentName: string, teacherName: string, subject: string, when: string) {
+  return brand(`
+    <h2 style="color:#0f3b2c;margin:0 0 12px">A teacher accepted your request! 🤝</h2>
+    <p style="color:#334155">Hi ${studentName},</p>
+    <p style="color:#334155"><strong>${teacherName}</strong> is available for your tutoring request.</p>
+    <div style="background:#e0e7ff;border-radius:12px;padding:16px;margin:16px 0;color:#0f3b2c">
+      📚 <strong>${subject}</strong><br>
+      📅 <strong>${when}</strong>
+    </div>
+    <p style="font-size:13px;color:#64748b">Log in to LearnConnect to review everyone who's responded and choose your teacher.</p>
   `);
 }
 
@@ -117,7 +131,8 @@ Deno.serve(async (req) => {
 
     const { type, session_id } = await req.json().catch(() => ({}));
     if (!session_id) return jsonResponse({ error: "session_id required" }, 400);
-    if (type !== "confirmation" && type !== "reminder" && type !== "request") return jsonResponse({ error: "type must be confirmation, request, or reminder" }, 400);
+    const validTypes = ["confirmation", "reminder", "request", "offer_accepted"];
+    if (!validTypes.includes(type)) return jsonResponse({ error: `type must be one of: ${validTypes.join(", ")}` }, 400);
 
     // Fetch session row
     const { data: bt } = await admin
@@ -164,6 +179,14 @@ Deno.serve(async (req) => {
           studentEmail,
           `Session confirmed: ${subject} with ${teacherName}`,
           confirmationHtml(studentName, teacherName, subject, when),
+        ));
+      }
+    } else if (type === "offer_accepted") {
+      if (studentEmail) {
+        results.push(await sendEmail(
+          studentEmail,
+          `${teacherName} accepted your request: ${subject}`,
+          offerAcceptedHtml(studentName, teacherName, subject, when),
         ));
       }
     } else if (type === "request") {
