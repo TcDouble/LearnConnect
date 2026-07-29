@@ -528,11 +528,13 @@
                 const r = tbody.insertRow();
                 r.insertCell(0).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
                 r.insertCell(1).innerHTML = s.subject ? `<span class="badge-subject">${s.subject}</span>` : '—';
-                r.insertCell(2).innerText = `Sent to ${s.counterparty || 'a teacher'} — awaiting response`;
+                r.insertCell(2).innerHTML = `Sent to <span class="action-link" data-view-profile="${s.session_id}">${s.counterparty || 'a teacher'}</span> — awaiting response`;
                 r.insertCell(3).innerHTML = `<button class="btn-cancel" data-id="${s.session_id}">Cancel</button>`;
             });
             tbody.querySelectorAll('.btn-cancel').forEach(btn =>
                 btn.addEventListener('click', (e) => { e.stopPropagation(); cancelRequest(btn.getAttribute('data-id')); }));
+            tbody.querySelectorAll('[data-view-profile]').forEach(el =>
+                el.addEventListener('click', (e) => { e.stopPropagation(); openViewProfile(el.getAttribute('data-view-profile')); }));
             return true;
         }
 
@@ -582,7 +584,9 @@
                 r.classList.add('clickable-row');
                 r.addEventListener('click', () => openRequest(s));
                 r.insertCell(0).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
-                r.insertCell(1).innerText = s.counterparty || '—';
+                const nameCell = r.insertCell(1);
+                nameCell.innerHTML = `<span class="action-link">${s.counterparty || '—'}</span>`;
+                nameCell.querySelector('.action-link').addEventListener('click', (e) => { e.stopPropagation(); openViewProfile(s.session_id); });
                 r.insertCell(2).innerHTML = s.subject ? `<span class="badge-subject">${s.subject}</span>` : '—';
                 r.insertCell(3).innerHTML = '<span class="action-link">View →</span>';
             });
@@ -1221,6 +1225,49 @@
             switchModalTab(tab);
         }
         function closeProfileModal() { document.getElementById('profileModal').classList.remove('open'); }
+
+        // ── View profile (read-only, from a request row) ─────────────────────
+        function closeViewProfileModal() { document.getElementById('viewProfileModal').classList.remove('open'); }
+
+        async function openViewProfile(sessionId) {
+            document.getElementById('viewProfileModal').classList.add('open');
+            document.getElementById('vpFields').style.display = 'none';
+            document.getElementById('vpLoading').style.display = '';
+            document.getElementById('vpLoading').textContent = 'Loading…';
+            document.getElementById('vpTitle').textContent = 'Profile';
+
+            const { data, error } = await supabaseClient.rpc('get_counterparty_profile', { p_session_id: sessionId });
+            const row = Array.isArray(data) ? data[0] : data;
+            if (error || !row) {
+                document.getElementById('vpLoading').textContent = 'Could not load this profile.';
+                return;
+            }
+
+            document.getElementById('vpTitle').textContent = row.role === 'teacher' ? 'Teacher profile' : 'Student profile';
+            document.getElementById('vpName').textContent = row.name || '—';
+
+            const isTeacher = row.role === 'teacher';
+            document.getElementById('vpSubjectsLabel').textContent = isTeacher ? 'Subjects / specialties' : 'Subjects interested in';
+            document.getElementById('vpSubjects').textContent = (row.subject_list || []).length ? row.subject_list.join(', ') : '—';
+
+            document.getElementById('vpExperienceRow').hidden = !isTeacher;
+            if (isTeacher) document.getElementById('vpExperience').textContent = yearsToRange(row.years_experience);
+
+            document.getElementById('vpGradeRow').hidden = isTeacher;
+            if (!isTeacher) document.getElementById('vpGrade').textContent = row.grade_level || '—';
+
+            document.getElementById('vpAgeRow').hidden = isTeacher;
+            if (!isTeacher) document.getElementById('vpAge').textContent = row.age || '—';
+
+            document.getElementById('vpGoalsRow').hidden = isTeacher || !row.goals;
+            if (!isTeacher) document.getElementById('vpGoals').textContent = row.goals || '—';
+
+            document.getElementById('vpBioRow').hidden = !row.bio;
+            document.getElementById('vpBio').textContent = row.bio || '';
+
+            document.getElementById('vpLoading').style.display = 'none';
+            document.getElementById('vpFields').style.display = '';
+        }
         function switchModalTab(tab) {
             document.querySelectorAll('.pm-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
             document.getElementById('pmTeacherTab').style.display = tab === 'teacher' ? '' : 'none';
@@ -1390,6 +1437,28 @@
           <div class="form-row" id="pmNotifRow"><label>Email notifications <span class="hint">(as teacher)</span></label><select id="pmNotifSetting"><option>All updates</option><option>Only session reminders</option><option>None</option></select></div>
           <div class="form-row"><label>Timezone</label><select id="pmTimezone"></select></div>
           <button class="btn-save" style="margin-top:14px;" onclick="pmSaveSettings()">Save settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View profile modal (read-only — the counterparty on a request row) -->
+    <div id="viewProfileModal" class="pm-overlay" onclick="if(event.target===this)closeViewProfileModal()">
+      <div class="pm-modal">
+        <div class="pm-header">
+          <div class="pm-tabs"><span id="vpTitle" style="font-weight:700;color:var(--dash-green-dark);">Profile</span></div>
+          <button class="pm-close" onclick="closeViewProfileModal()">✕</button>
+        </div>
+        <div class="pm-body" id="vpBody">
+          <p class="greeting" id="vpLoading">Loading…</p>
+          <div id="vpFields" style="display:none;">
+            <div class="form-row"><label>Name</label><p id="vpName">—</p></div>
+            <div class="form-row" id="vpSubjectsRow"><label id="vpSubjectsLabel">Subjects</label><p id="vpSubjects">—</p></div>
+            <div class="form-row" id="vpExperienceRow"><label>Years of experience</label><p id="vpExperience">—</p></div>
+            <div class="form-row" id="vpGradeRow"><label>Education level</label><p id="vpGrade">—</p></div>
+            <div class="form-row" id="vpAgeRow"><label>Age</label><p id="vpAge">—</p></div>
+            <div class="form-row" id="vpGoalsRow"><label>Goals</label><p id="vpGoals">—</p></div>
+            <div class="form-row" id="vpBioRow"><label>About</label><p id="vpBio">—</p></div>
+          </div>
         </div>
       </div>
     </div>
