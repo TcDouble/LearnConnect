@@ -65,10 +65,10 @@
                         <div class="stat-number" id="statCompletedValue">0</div>
                         <div class="stat-label">Sessions completed</div>
                     </div>
-                    <div class="stat-card teacher-flavor" id="statHoursCard" hidden>
+                    <div class="stat-card" id="statHoursCard" hidden>
                         <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
                         <div class="stat-number" id="statHoursValue">0</div>
-                        <div class="stat-label">Hours tutored</div>
+                        <div class="stat-label">Hours learned</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
@@ -470,9 +470,9 @@
             }
             document.getElementById('statCompletedValue').innerText = roleSessions.filter(s => s.status === 'completed').length;
 
-            document.getElementById('statHoursCard').hidden = role !== 'teacher';
-            if (role === 'teacher') {
-                const totalMinutes = teacherSessions
+            document.getElementById('statHoursCard').hidden = role !== 'student';
+            if (role === 'student') {
+                const totalMinutes = studentSessions
                     .filter(s => s.status === 'completed')
                     .reduce((sum, s) => sum + (s.actual_duration_minutes ?? s.duration ?? 0), 0);
                 document.getElementById('statHoursValue').innerText = Math.round((totalMinutes / 60) * 10) / 10;
