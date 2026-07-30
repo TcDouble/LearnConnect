@@ -80,19 +80,19 @@
 
                 <div id="myRequestsSection" hidden>
                     <div class="section-title">My requests <a href="#" class="action-link" data-goto="requests">View all →</a></div>
-                    <table class="data-table"><thead><tr><th>When</th><th>Student</th><th>Subject</th><th></th></tr></thead><tbody id="requestsTableBody"></tbody></table>
+                    <table class="data-table"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th></th></tr></thead><tbody id="requestsTableBody"></tbody></table>
                 </div>
 
                 <div id="mySentRequestsSection" hidden>
                     <div class="section-title">Sent requests</div>
-                    <table class="data-table"><thead><tr><th>When</th><th>Subject</th><th>Status</th><th>Actions</th></tr></thead><tbody id="sentRequestsBody"></tbody></table>
+                    <table class="data-table"><thead><tr><th>Date & Time</th><th>Subject</th><th>Status</th><th>Actions</th></tr></thead><tbody id="sentRequestsBody"></tbody></table>
                 </div>
 
                 <div class="section-title">Upcoming sessions</div>
-                <table class="data-table"><thead><tr><th>When</th><th>Who</th><th>Subject</th><th>Status</th></tr></thead><tbody id="overviewUpcomingBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date & Time</th><th id="overviewUpcomingWhoHeader">Who</th><th>Subject</th><th>Status</th></tr></thead><tbody id="overviewUpcomingBody"></tbody></table>
 
                 <div class="section-title">Past sessions <a href="#" class="action-link" data-goto="past-meetings">View all →</a></div>
-                <table class="data-table"><thead><tr><th>When</th><th>Who</th><th>Subject</th><th>Duration</th></tr></thead><tbody id="overviewPastBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date & Time</th><th id="overviewPastWhoHeader">Who</th><th>Subject</th><th>Duration</th></tr></thead><tbody id="overviewPastBody"></tbody></table>
             </div>
 
             <!-- Find a teacher (student) -->
@@ -180,35 +180,35 @@
             <div id="requests-section" class="hidden-section">
                 <div class="dashboard-header"><h1>My requests</h1></div>
                 <div style="margin-bottom:20px;"><input type="text" id="requestSearchFull" placeholder="Search by student..." class="search-bar"></div>
-                <table class="data-table"><thead><tr><th>When</th><th>Student</th><th>Subject</th><th></th></tr></thead><tbody id="fullRequestsBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th></th></tr></thead><tbody id="fullRequestsBody"></tbody></table>
             </div>
 
             <!-- Schedule (teacher) -->
             <div id="schedule-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Upcoming sessions</h1><p class="greeting">Your confirmed and upcoming sessions.</p></div>
-                <table class="data-table"><thead><tr><th>When</th><th>Student</th><th>Subject</th><th>Time / Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th>Time / Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table>
             </div>
 
             <!-- Upcoming sessions (student) -->
             <div id="student-upcoming-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Upcoming sessions</h1><p class="greeting">Your confirmed and pending sessions.</p></div>
-                <table class="data-table"><thead><tr><th>When</th><th>Teacher</th><th>Subject</th><th>Status</th></tr></thead><tbody id="studentUpcomingBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date & Time</th><th>Teacher</th><th>Subject</th><th>Status</th></tr></thead><tbody id="studentUpcomingBody"></tbody></table>
             </div>
 
             <!-- Requests (student, sent) -->
             <div id="sent-requests-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Requests</h1><p class="greeting">Requests you've sent, awaiting a teacher's response.</p></div>
-                <table class="data-table"><thead><tr><th>When</th><th>Subject</th><th>Status</th><th>Actions</th></tr></thead><tbody id="sentRequestsFullBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date & Time</th><th>Subject</th><th>Status</th><th>Actions</th></tr></thead><tbody id="sentRequestsFullBody"></tbody></table>
             </div>
 
             <!-- Past sessions -->
             <div id="past-meetings-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Past sessions</h1><p class="greeting">Completed sessions and reviews.</p></div>
                 <div id="pastMeetingsStudentPanel" style="display:none;">
-                    <table class="data-table"><thead><tr><th>When</th><th>Teacher</th><th>Subject</th><th>Duration</th><th>Your rating</th></tr></thead><tbody id="pastMeetingsStudentBody"></tbody></table>
+                    <table class="data-table"><thead><tr><th>Date & Time</th><th>Teacher</th><th>Subject</th><th>Duration</th><th>Your rating</th></tr></thead><tbody id="pastMeetingsStudentBody"></tbody></table>
                 </div>
                 <div id="pastMeetingsTeacherPanel" style="display:none;">
-                    <table class="data-table"><thead><tr><th>When</th><th>Student</th><th>Subject</th><th>Duration</th><th>Student rating</th><th>Your rating</th><th>Notes</th></tr></thead><tbody id="pastMeetingsTeacherBody"></tbody></table>
+                    <table class="data-table"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th>Duration</th><th>Student rating</th><th>Your rating</th><th>Notes</th></tr></thead><tbody id="pastMeetingsTeacherBody"></tbody></table>
                 </div>
             </div>
 
@@ -456,6 +456,9 @@
         function renderOverview() {
             const role = effectiveRole();
             const roleSessions = role === 'teacher' ? teacherSessions : studentSessions;
+            const counterpartyLabel = role === 'teacher' ? 'Student' : 'Teacher';
+            document.getElementById('overviewUpcomingWhoHeader').textContent = counterpartyLabel;
+            document.getElementById('overviewPastWhoHeader').textContent = counterpartyLabel;
             const roleUpcoming = roleSessions
                 .filter(isConfirmedUpcoming)
                 // A student's own broadcast offer isn't really "theirs" to meet yet
