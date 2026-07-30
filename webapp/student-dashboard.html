@@ -110,7 +110,6 @@
                         <label>What subject do you need help with?</label>
                         <div class="subject-btn-grid" id="reqSubjectGrid"></div>
                     </div>
-                    <div class="form-row"><label>Topic</label><input type="text" id="reqTopic" placeholder="e.g. Quadratic equations"></div>
                 </div>
 
                 <!-- Step 2: notes + attachment -->
@@ -759,7 +758,7 @@
             if (!candidates.length) { alert('No teachers are currently available for this subject.'); return; }
 
             const { date, start, end } = computeRequestWindow();
-            const request = currentRequest.topic + (currentRequest.notes ? ` — ${currentRequest.notes}` : '');
+            const request = currentRequest.notes || '';
 
             const { attachment_url, attachment_filename, error: upErr } = await uploadAttachmentIfAny(currentRequest.attachmentFile);
             if (upErr) { alert('Could not upload attachment: ' + upErr.message); return; }
@@ -851,7 +850,6 @@
             ftStepIndex = 0;
             selectedSubject = '';
             document.querySelectorAll('.subject-btn').forEach(b => b.classList.remove('selected'));
-            document.getElementById('reqTopic').value = '';
             document.getElementById('reqNotes').value = '';
             reqAttachmentInput.value = '';
             document.getElementById('reqAttachFileName').textContent = 'No file chosen';
@@ -867,7 +865,6 @@
             const sessionType = document.querySelector('input[name="reqSessionType"]:checked').value;
             currentRequest = {
                 subject: selectedSubject,
-                topic: document.getElementById('reqTopic').value.trim(),
                 notes: document.getElementById('reqNotes').value.trim(),
                 attachmentFile: reqAttachmentInput.files[0] || null,
                 sessionType,
@@ -878,7 +875,7 @@
             const when = sessionType === 'immediate' ? 'as soon as possible' : `on ${currentRequest.date} at ${currentRequest.time}`;
             const dur = currentRequest.duration;
             const durLabel = dur < 60 ? `${dur} min` : dur === 60 ? '1 hr' : `${dur / 60} hrs`;
-            document.getElementById('requestSummary').innerText = `${currentRequest.subject} — ${currentRequest.topic} · ${durLabel} (${when})`;
+            document.getElementById('requestSummary').innerText = `${currentRequest.subject} · ${durLabel} (${when})`;
             let startISO, endISO;
             if (sessionType === 'scheduled') {
                 const startDt = new Date(`${currentRequest.date}T${currentRequest.time}:00`);
@@ -905,7 +902,6 @@
             const current = FT_STEPS[ftStepIndex];
             if (current === 'subject') {
                 if (!selectedSubject) { ftShowError('Please choose a subject.'); return; }
-                if (!document.getElementById('reqTopic').value.trim()) { ftShowError('Please enter a topic.'); return; }
             }
             if (current === 'timing') {
                 const scheduled = document.querySelector('input[name="reqSessionType"]:checked').value === 'scheduled';
