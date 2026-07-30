@@ -80,7 +80,7 @@
 
                 <div id="myRequestsSection" hidden>
                     <div class="section-title">My requests <a href="#" class="action-link" data-goto="requests">View all →</a></div>
-                    <table class="data-table"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th></th></tr></thead><tbody id="requestsTableBody"></tbody></table>
+                    <table class="data-table"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th>Actions</th></tr></thead><tbody id="requestsTableBody"></tbody></table>
                 </div>
 
                 <div id="mySentRequestsSection" hidden>
@@ -180,19 +180,19 @@
             <div id="requests-section" class="hidden-section">
                 <div class="dashboard-header"><h1>My requests</h1></div>
                 <div style="margin-bottom:20px;"><input type="text" id="requestSearchFull" placeholder="Search by student..." class="search-bar"></div>
-                <table class="data-table"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th></th></tr></thead><tbody id="fullRequestsBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th>Actions</th></tr></thead><tbody id="fullRequestsBody"></tbody></table>
             </div>
 
             <!-- Schedule (teacher) -->
             <div id="schedule-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Upcoming sessions</h1><p class="greeting">Your confirmed and upcoming sessions.</p></div>
-                <table class="data-table"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th>Time / Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th>Status</th></tr></thead><tbody id="scheduleSessionsBody"></tbody></table>
             </div>
 
             <!-- Upcoming sessions (student) -->
             <div id="student-upcoming-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Upcoming sessions</h1><p class="greeting">Your confirmed and pending sessions.</p></div>
-                <table class="data-table"><thead><tr><th>Date & Time</th><th>Teacher</th><th>Subject</th><th>Status</th></tr></thead><tbody id="studentUpcomingBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>Date & Time</th><th>Teacher</th><th>Subject</th><th>Actions</th></tr></thead><tbody id="studentUpcomingBody"></tbody></table>
             </div>
 
             <!-- Requests (student, sent) -->
@@ -716,7 +716,7 @@
         }
 
         async function cancelRequest(id) {
-            if (!confirm('Cancel this pending request?')) return;
+            if (!confirm('Cancel this session?')) return;
             const { error } = await supabaseClient.from('Blocked_Time').update({ status: 'canceled' }).eq('SessionID', id);
             if (error) { alert('Could not cancel: ' + error.message); return; }
             await refreshSessions(); renderOverview(); updateNotifications();
@@ -976,13 +976,23 @@
             if (!confirmed.length) { tbody.innerHTML = '<tr><td colspan="4">No upcoming sessions.</td></tr>'; return; }
             confirmed.forEach(s => {
                 const r = tbody.insertRow();
-                r.classList.add('clickable-row');
-                r.addEventListener('click', () => openSessionDetails(s, 'student'));
                 r.insertCell(0).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
                 r.insertCell(1).innerText = s.counterparty || '—';
                 r.insertCell(2).innerText = `${s.subject || ''}${s.request ? ' — ' + s.request : ''}`;
-                r.insertCell(3).innerHTML = statusPill(s.status) + joinLink(s.meeting_url);
+                r.insertCell(3).innerHTML = `
+                    <div class="row-actions">
+                        ${s.meeting_url ? `<a href="${s.meeting_url}" target="_blank" class="btn-mini btn-accept">Join meeting</a>` : ''}
+                        <button type="button" class="btn-mini btn-edit" data-view="${s.session_id}">View</button>
+                        <button type="button" class="btn-mini btn-decline" data-cancel="${s.session_id}">Cancel</button>
+                    </div>`;
             });
+            tbody.querySelectorAll('[data-view]').forEach(btn =>
+                btn.addEventListener('click', () => {
+                    const s = confirmed.find(x => x.session_id === btn.getAttribute('data-view'));
+                    if (s) openSessionDetails(s, 'student');
+                }));
+            tbody.querySelectorAll('[data-cancel]').forEach(btn =>
+                btn.addEventListener('click', () => cancelRequest(btn.getAttribute('data-cancel'))));
         }
 
         async function withdrawOffer(sessionId) {
