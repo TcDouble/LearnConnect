@@ -163,6 +163,10 @@ body.dashboard-page {
 .btn-accept:hover { background: #235f3b; }
 .btn-decline { background: #fde2e2; color: #b91c1c; }
 .btn-decline:hover { background: #fbc9c9; }
+.btn-edit { background: #f1f5f9; color: #334155; }
+.btn-edit:hover { background: #e2e8f0; }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.row-actions .btn-mini { margin: 0; }
 
 /* ---------- Search bar ---------- */
 .search-bar { padding: 9px 16px; border: 1px solid #cbd5e1; border-radius: 40px; width: 240px; font-family: inherit; font-size: 0.88rem; }

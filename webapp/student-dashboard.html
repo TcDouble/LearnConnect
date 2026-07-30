@@ -52,7 +52,7 @@
         <main class="main-content">
             <!-- Overview -->
             <div id="overview-section">
-                <div class="dashboard-header"><h1>Welcome, <span id="userNameDisplay">there</span></h1><p id="overviewGreeting" class="greeting">Loading your sessions…</p></div>
+                <div class="dashboard-header"><h1>Welcome, <span id="userNameDisplay">there</span></h1></div>
 
                 <div class="stats-row">
                     <div class="stat-card teacher-flavor" id="statStudentsCard" hidden>
@@ -64,6 +64,11 @@
                         <div class="stat-icon"><i class="fas fa-circle-check"></i></div>
                         <div class="stat-number" id="statCompletedValue">0</div>
                         <div class="stat-label">Sessions completed</div>
+                    </div>
+                    <div class="stat-card teacher-flavor" id="statHoursCard" hidden>
+                        <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                        <div class="stat-number" id="statHoursValue">0</div>
+                        <div class="stat-label">Hours tutored</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
@@ -80,7 +85,7 @@
 
                 <div id="mySentRequestsSection" hidden>
                     <div class="section-title">Sent requests</div>
-                    <table class="data-table"><thead><tr><th>When</th><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsBody"></tbody></table>
+                    <table class="data-table"><thead><tr><th>When</th><th>Subject</th><th>Status</th><th>Actions</th></tr></thead><tbody id="sentRequestsBody"></tbody></table>
                 </div>
 
                 <div class="section-title">Upcoming sessions</div>
@@ -193,7 +198,7 @@
             <!-- Requests (student, sent) -->
             <div id="sent-requests-section" class="hidden-section">
                 <div class="dashboard-header"><h1>Requests</h1><p class="greeting">Requests you've sent, awaiting a teacher's response.</p></div>
-                <table class="data-table"><thead><tr><th>When</th><th>Subject</th><th>Status</th><th></th></tr></thead><tbody id="sentRequestsFullBody"></tbody></table>
+                <table class="data-table"><thead><tr><th>When</th><th>Subject</th><th>Status</th><th>Actions</th></tr></thead><tbody id="sentRequestsFullBody"></tbody></table>
             </div>
 
             <!-- Past sessions -->
@@ -465,16 +470,22 @@
             }
             document.getElementById('statCompletedValue').innerText = roleSessions.filter(s => s.status === 'completed').length;
 
+            document.getElementById('statHoursCard').hidden = role !== 'teacher';
+            if (role === 'teacher') {
+                const totalMinutes = teacherSessions
+                    .filter(s => s.status === 'completed')
+                    .reduce((sum, s) => sum + (s.actual_duration_minutes ?? s.duration ?? 0), 0);
+                document.getElementById('statHoursValue').innerText = Math.round((totalMinutes / 60) * 10) / 10;
+            }
+
             if (roleUpcoming.length) {
                 const next = roleUpcoming[0];
                 document.getElementById('statNextValue').innerText = next.session_date || '—';
                 const withWho = role === 'teacher' ? `teaching ${next.counterparty || 'a student'}` : `with ${next.counterparty || 'a teacher'}`;
                 document.getElementById('statNextSub').innerText = `${fmtTime(next.starttime)} ${withWho}`;
-                document.getElementById('overviewGreeting').innerText = `Your next session is on ${next.session_date} at ${fmtTime(next.starttime)}.`;
             } else {
                 document.getElementById('statNextValue').innerText = '—';
                 document.getElementById('statNextSub').innerText = 'No upcoming sessions';
-                document.getElementById('overviewGreeting').innerText = 'You have no upcoming sessions yet.';
             }
 
             document.getElementById('myRequestsSection').hidden = role !== 'teacher';
@@ -517,6 +528,8 @@
             return [...groups.entries()].map(([broadcastId, rows]) => ({
                 broadcastId,
                 subject: rows[0].subject,
+                request: rows[0].request,
+                sampleSessionId: rows[0].session_id,
                 sessionDate: rows[0].session_date,
                 starttime: rows[0].starttime,
                 isImmediate: rows[0].is_immediate,
@@ -541,20 +554,57 @@
                 r.insertCell(0).innerText = g.isImmediate ? 'Immediate' : fmtLocalDateTime(g.sessionDate, g.starttime || '00:00');
                 r.insertCell(1).innerHTML = g.subject ? `<span class="badge-subject">${g.subject}</span>` : '—';
                 r.insertCell(2).innerText = `Sent to ${g.total} teacher${g.total > 1 ? 's' : ''} — ${g.accepted} accepted so far`;
-                r.insertCell(3).innerHTML = '<span class="action-link">Review →</span>';
+                r.insertCell(3).innerHTML = `
+                    <div class="row-actions">
+                        <button type="button" class="btn-mini btn-accept" data-select="${g.broadcastId}">Select teacher</button>
+                        <button type="button" class="btn-mini btn-edit" data-edit-broadcast="${g.broadcastId}">Edit</button>
+                        <button type="button" class="btn-mini btn-decline" data-cancel-broadcast="${g.broadcastId}">Cancel</button>
+                    </div>`;
             });
             singles.forEach(s => {
                 const r = tbody.insertRow();
                 r.insertCell(0).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
                 r.insertCell(1).innerHTML = s.subject ? `<span class="badge-subject">${s.subject}</span>` : '—';
                 r.insertCell(2).innerHTML = `Sent to <span class="action-link" data-view-profile="${s.session_id}">${s.counterparty || 'a teacher'}</span> — awaiting response`;
-                r.insertCell(3).innerHTML = `<button class="btn-cancel" data-id="${s.session_id}">Cancel</button>`;
+                r.insertCell(3).innerHTML = `
+                    <div class="row-actions">
+                        <button type="button" class="btn-mini btn-edit" data-edit-session="${s.session_id}">Edit</button>
+                        <button type="button" class="btn-mini btn-decline" data-cancel-single="${s.session_id}">Cancel</button>
+                    </div>`;
             });
-            tbody.querySelectorAll('.btn-cancel').forEach(btn =>
-                btn.addEventListener('click', (e) => { e.stopPropagation(); cancelRequest(btn.getAttribute('data-id')); }));
+            tbody.querySelectorAll('[data-cancel-single]').forEach(btn =>
+                btn.addEventListener('click', (e) => { e.stopPropagation(); cancelRequest(btn.getAttribute('data-cancel-single')); }));
+            tbody.querySelectorAll('[data-cancel-broadcast]').forEach(btn =>
+                btn.addEventListener('click', (e) => { e.stopPropagation(); cancelBroadcast(btn.getAttribute('data-cancel-broadcast')); }));
+            tbody.querySelectorAll('[data-select]').forEach(btn =>
+                btn.addEventListener('click', (e) => { e.stopPropagation(); openBroadcastResponses(btn.getAttribute('data-select')); }));
+            tbody.querySelectorAll('[data-edit-broadcast]').forEach(btn =>
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const g = groups.find(x => x.broadcastId === btn.getAttribute('data-edit-broadcast'));
+                    if (g) openEditRequest({ broadcastId: g.broadcastId, sessionId: g.sampleSessionId, request: g.request });
+                }));
+            tbody.querySelectorAll('[data-edit-session]').forEach(btn =>
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const s = singles.find(x => x.session_id === btn.getAttribute('data-edit-session'));
+                    if (s) openEditRequest({ broadcastId: null, sessionId: s.session_id, request: s.request });
+                }));
             tbody.querySelectorAll('[data-view-profile]').forEach(el =>
                 el.addEventListener('click', (e) => { e.stopPropagation(); openViewProfile(el.getAttribute('data-view-profile')); }));
             return true;
+        }
+
+        async function cancelBroadcast(broadcastId) {
+            if (!confirm('Cancel this request for everyone?')) return;
+            const { error } = await supabaseClient
+                .from('Blocked_Time')
+                .update({ status: 'canceled' })
+                .eq('broadcast_id', broadcastId)
+                .in('status', ['waiting for teacher', 'offer_accepted']);
+            if (error) { alert('Could not cancel: ' + error.message); return; }
+            await refreshSessions(); renderOverview(); updateNotifications();
+            if (!document.getElementById('sent-requests-section').classList.contains('hidden-section')) renderSentRequestsFull();
         }
 
         function renderSentRequests() {
@@ -1294,6 +1344,93 @@
             document.getElementById('vpLoading').style.display = 'none';
             document.getElementById('vpFields').style.display = '';
         }
+
+        // ── Edit request (student — notes + documents on a pending sent request) ─
+        let editRequestCtx = null;
+        let editRequestAttachments = [];
+
+        function closeEditRequestModal() {
+            document.getElementById('editRequestModal').classList.remove('open');
+            editRequestCtx = null;
+        }
+
+        async function openEditRequest(ctx) {
+            editRequestCtx = ctx;
+            document.getElementById('erNotes').value = ctx.request || '';
+            document.getElementById('erAttachmentInput').value = '';
+            document.getElementById('erAttachFileName').textContent = 'No file chosen';
+            document.getElementById('erError').hidden = true;
+            document.getElementById('erAttachmentList').innerHTML = '<p class="greeting">Loading…</p>';
+            document.getElementById('editRequestModal').classList.add('open');
+
+            const { data, error } = await supabaseClient.rpc('get_request_attachments', { p_session_id: ctx.sessionId });
+            editRequestAttachments = error ? [] : (data || []);
+            renderEditAttachmentList();
+        }
+
+        function renderEditAttachmentList() {
+            const list = document.getElementById('erAttachmentList');
+            if (!editRequestAttachments.length) { list.innerHTML = '<p class="greeting">No documents attached yet.</p>'; return; }
+            list.innerHTML = '';
+            editRequestAttachments.forEach(a => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;';
+                row.innerHTML = `<span style="font-size:0.86rem;color:#334155;overflow-wrap:anywhere;"><i class="fas fa-paperclip"></i> ${a.filename}</span>`;
+                if (a.attachment_id) {
+                    const rmBtn = document.createElement('button');
+                    rmBtn.type = 'button'; rmBtn.className = 'btn-mini btn-decline'; rmBtn.textContent = 'Remove';
+                    rmBtn.addEventListener('click', () => removeEditAttachment(a.attachment_id));
+                    row.appendChild(rmBtn);
+                }
+                list.appendChild(row);
+            });
+        }
+
+        async function removeEditAttachment(attachmentId) {
+            const { error } = await supabaseClient.from('Request_Attachments').delete().eq('AttachmentID', attachmentId);
+            if (error) { alert('Could not remove: ' + error.message); return; }
+            editRequestAttachments = editRequestAttachments.filter(a => a.attachment_id !== attachmentId);
+            renderEditAttachmentList();
+        }
+
+        function updateErAttachmentFileName() {
+            const f = document.getElementById('erAttachmentInput').files[0];
+            document.getElementById('erAttachFileName').textContent = f ? f.name : 'No file chosen';
+        }
+
+        function showEditRequestError(msg) {
+            document.getElementById('erError').hidden = false;
+            document.getElementById('erErrorText').textContent = msg;
+        }
+
+        async function saveEditRequest() {
+            if (!editRequestCtx) return;
+            document.getElementById('erError').hidden = true;
+            const notes = document.getElementById('erNotes').value.trim();
+            const file = document.getElementById('erAttachmentInput').files[0];
+
+            if (file) {
+                const { attachment_url, attachment_filename, error: upErr } = await uploadAttachmentIfAny(file);
+                if (upErr) { showEditRequestError('Could not upload document: ' + upErr.message); return; }
+                const insertRow = editRequestCtx.broadcastId
+                    ? { broadcast_id: editRequestCtx.broadcastId, url: attachment_url, filename: attachment_filename }
+                    : { session_id: editRequestCtx.sessionId, url: attachment_url, filename: attachment_filename };
+                const { error: insErr } = await supabaseClient.from('Request_Attachments').insert(insertRow);
+                if (insErr) { showEditRequestError('Could not save document: ' + insErr.message); return; }
+            }
+
+            const update = supabaseClient.from('Blocked_Time').update({ request: notes });
+            const { error: updErr } = editRequestCtx.broadcastId
+                ? await update.eq('broadcast_id', editRequestCtx.broadcastId)
+                : await update.eq('SessionID', editRequestCtx.sessionId);
+            if (updErr) { showEditRequestError('Could not save changes: ' + updErr.message); return; }
+
+            closeEditRequestModal();
+            await refreshSessions();
+            renderOverview();
+            if (!document.getElementById('sent-requests-section').classList.contains('hidden-section')) renderSentRequestsFull();
+        }
+
         function switchModalTab(tab) {
             document.querySelectorAll('.pm-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
             document.getElementById('pmTeacherTab').style.display = tab === 'teacher' ? '' : 'none';
@@ -1486,6 +1623,31 @@
             <div class="form-row" id="vpGoalsRow"><label>Goals</label><p id="vpGoals">—</p></div>
             <div class="form-row" id="vpBioRow"><label>About</label><p id="vpBio">—</p></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit request modal (student — pending sent requests only) -->
+    <div id="editRequestModal" class="pm-overlay" onclick="if(event.target===this)closeEditRequestModal()">
+      <div class="pm-modal">
+        <div class="pm-header">
+          <div class="pm-tabs"><span style="font-weight:700;color:var(--dash-green-dark);">Edit request</span></div>
+          <button class="pm-close" onclick="closeEditRequestModal()">✕</button>
+        </div>
+        <div class="pm-body">
+          <div class="form-row"><label>Notes for the teacher</label><textarea id="erNotes" rows="4"></textarea></div>
+          <div class="form-row">
+            <label>Documents</label>
+            <div id="erAttachmentList" style="margin-bottom:10px;"></div>
+            <div class="file-input-wrapper">
+              <label class="file-label" for="erAttachmentInput"><i class="fas fa-paperclip"></i> Add a document</label>
+              <input type="file" id="erAttachmentInput" accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.doc,.docx" onchange="updateErAttachmentFileName()">
+              <span id="erAttachFileName" class="file-name">No file chosen</span>
+            </div>
+            <small class="ls-note">PDF, Word, text, or image — up to 10MB.</small>
+          </div>
+          <div class="form-error" id="erError" hidden style="margin-top:10px;"><i class="fas fa-circle-exclamation"></i> <span id="erErrorText"></span></div>
+          <button class="btn-save" style="margin-top:14px;" onclick="saveEditRequest()">Save changes</button>
         </div>
       </div>
     </div>
