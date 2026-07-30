@@ -89,10 +89,12 @@
                 </div>
 
                 <div class="section-title">Upcoming sessions</div>
-                <table class="data-table"><thead><tr><th>Date & Time</th><th id="overviewUpcomingWhoHeader">Who</th><th>Subject</th><th>Status</th></tr></thead><tbody id="overviewUpcomingBody"></tbody></table>
+                <table class="data-table" id="overviewUpcomingStudentTable"><thead><tr><th>Date & Time</th><th>Teacher</th><th>Subject</th><th>Actions</th></tr></thead><tbody id="overviewUpcomingStudentBody"></tbody></table>
+                <table class="data-table" id="overviewUpcomingTeacherTable"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th>Status</th></tr></thead><tbody id="overviewUpcomingTeacherBody"></tbody></table>
 
                 <div class="section-title">Past sessions <a href="#" class="action-link" data-goto="past-meetings">View all →</a></div>
-                <table class="data-table"><thead><tr><th>Date & Time</th><th id="overviewPastWhoHeader">Who</th><th>Subject</th><th>Duration</th></tr></thead><tbody id="overviewPastBody"></tbody></table>
+                <table class="data-table" id="overviewPastStudentTable"><thead><tr><th>Date & Time</th><th>Teacher</th><th>Subject</th><th>Duration</th><th>Your rating</th></tr></thead><tbody id="overviewPastStudentBody"></tbody></table>
+                <table class="data-table" id="overviewPastTeacherTable"><thead><tr><th>Date & Time</th><th>Student</th><th>Subject</th><th>Duration</th><th>Student rating</th><th>Your rating</th><th>Notes</th></tr></thead><tbody id="overviewPastTeacherBody"></tbody></table>
             </div>
 
             <!-- Find a teacher (student) -->
@@ -456,9 +458,6 @@
         function renderOverview() {
             const role = effectiveRole();
             const roleSessions = role === 'teacher' ? teacherSessions : studentSessions;
-            const counterpartyLabel = role === 'teacher' ? 'Student' : 'Teacher';
-            document.getElementById('overviewUpcomingWhoHeader').textContent = counterpartyLabel;
-            document.getElementById('overviewPastWhoHeader').textContent = counterpartyLabel;
             const roleUpcoming = roleSessions
                 .filter(isConfirmedUpcoming)
                 // A student's own broadcast offer isn't really "theirs" to meet yet
@@ -497,26 +496,18 @@
             document.getElementById('mySentRequestsSection').hidden = role !== 'student';
             if (role === 'student') renderSentRequests();
 
-            renderOverviewUpcoming(roleUpcoming);
-            renderOverviewPast(roleSessions);
-        }
+            // Upcoming/Past widgets mirror their in-tab table exactly (same
+            // columns, same actions) for whichever role is active — just a
+            // shorter preview for Past sessions.
+            document.getElementById('overviewUpcomingStudentTable').hidden = role !== 'student';
+            document.getElementById('overviewUpcomingTeacherTable').hidden = role !== 'teacher';
+            if (role === 'student') renderStudentUpcomingSection('overviewUpcomingStudentBody');
+            else renderScheduleSection('overviewUpcomingTeacherBody');
 
-        function renderOverviewPast(allSessions) {
-            const tbody = document.getElementById('overviewPastBody'); tbody.innerHTML = '';
-            const past = allSessions
-                .filter(s => isPastSession(s))
-                .sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`))
-                .slice(0, 5);
-            if (!past.length) { tbody.innerHTML = '<tr><td colspan="4">No past sessions yet.</td></tr>'; return; }
-            past.forEach(s => {
-                const r = tbody.insertRow();
-                r.classList.add('clickable-row');
-                r.addEventListener('click', () => openSessionDetails(s, s.my_role));
-                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
-                r.insertCell(1).innerText = s.counterparty || '—';
-                r.insertCell(2).innerText = s.subject || '—';
-                r.insertCell(3).innerText = fmtDuration(s.actual_duration_minutes ?? s.duration);
-            });
+            document.getElementById('overviewPastStudentTable').hidden = role !== 'student';
+            document.getElementById('overviewPastTeacherTable').hidden = role !== 'teacher';
+            if (role === 'student') renderStudentPastMeetings('overviewPastStudentBody', 5);
+            else renderTeacherPastMeetings('overviewPastTeacherBody', 5);
         }
 
         // ── Broadcast (immediate) requests — sent, awaiting responses ───────
@@ -699,20 +690,6 @@
         function joinLink(url) {
             if (!url) return '';
             return ` <a href="${url}" target="_blank" onclick="event.stopPropagation()" class="action-link" style="margin-left:8px;">Join →</a>`;
-        }
-
-        function renderOverviewUpcoming(allUpcoming) {
-            const tbody = document.getElementById('overviewUpcomingBody'); tbody.innerHTML = '';
-            if (!allUpcoming.length) { tbody.innerHTML = '<tr><td colspan="4">No upcoming sessions.</td></tr>'; return; }
-            allUpcoming.forEach(s => {
-                const r = tbody.insertRow();
-                r.classList.add('clickable-row');
-                r.addEventListener('click', () => openSessionDetails(s, s.my_role));
-                r.insertCell(0).innerText = fmtLocalDateTime(s.session_date, s.starttime || '00:00');
-                r.insertCell(1).innerText = s.counterparty || '—';
-                r.insertCell(2).innerText = s.subject || '—';
-                r.insertCell(3).innerHTML = statusPill(s.status) + joinLink(s.meeting_url);
-            });
         }
 
         async function cancelRequest(id) {
@@ -946,8 +923,8 @@
 
         // ── Schedule (teacher) ───────────────────────────────────────────────
         function openScheduledSession(s) { openSessionDetails(s, 'teacher'); }
-        function renderScheduleSection() {
-            const tbody = document.getElementById('scheduleSessionsBody'); tbody.innerHTML = '';
+        function renderScheduleSection(tbodyId = 'scheduleSessionsBody') {
+            const tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
             // Only sessions accepted by the teacher (offer_accepted) or by both
             // parties (scheduled) belong here — pending requests and declined/
             // canceled ones are shown under Requests / Past sessions instead.
@@ -970,8 +947,8 @@
                 btn.addEventListener('click', (e) => { e.stopPropagation(); withdrawOffer(btn.getAttribute('data-id')); }));
         }
 
-        function renderStudentUpcomingSection() {
-            const tbody = document.getElementById('studentUpcomingBody'); tbody.innerHTML = '';
+        function renderStudentUpcomingSection(tbodyId = 'studentUpcomingBody') {
+            const tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
             const confirmed = studentSessions.filter(s => s.status === 'scheduled' && !isExpired(s));
             if (!confirmed.length) { tbody.innerHTML = '<tr><td colspan="4">No upcoming sessions.</td></tr>'; return; }
             confirmed.forEach(s => {
@@ -1017,9 +994,10 @@
             if (role === 'teacher') renderTeacherPastMeetings();
         }
 
-        function renderStudentPastMeetings() {
-            const tbody = document.getElementById('pastMeetingsStudentBody'); tbody.innerHTML = '';
-            const past = studentSessions.filter(s => isPastSession(s)).sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+        function renderStudentPastMeetings(tbodyId = 'pastMeetingsStudentBody', limit = null) {
+            const tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
+            let past = studentSessions.filter(s => isPastSession(s)).sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+            if (limit) past = past.slice(0, limit);
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
             past.forEach(s => {
                 const r = tbody.insertRow();
@@ -1035,9 +1013,10 @@
             });
         }
 
-        function renderTeacherPastMeetings() {
-            const tbody = document.getElementById('pastMeetingsTeacherBody'); tbody.innerHTML = '';
-            const past = teacherSessions.filter(s => isPastSession(s)).sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+        function renderTeacherPastMeetings(tbodyId = 'pastMeetingsTeacherBody', limit = null) {
+            const tbody = document.getElementById(tbodyId); tbody.innerHTML = '';
+            let past = teacherSessions.filter(s => isPastSession(s)).sort((a, b) => `${b.session_date} ${b.starttime}`.localeCompare(`${a.session_date} ${a.starttime}`));
+            if (limit) past = past.slice(0, limit);
             if (!past.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px">No past sessions yet.</td></tr>'; return; }
             past.forEach(s => {
                 const r = tbody.insertRow();
