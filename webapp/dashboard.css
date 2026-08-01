@@ -300,6 +300,8 @@ input.picker-search { border: none !important; outline: none; min-width: 120px; 
 .session-type-card p { font-size: 0.84rem; color: var(--dash-muted); margin: 0; }
 .session-type-card.selected { border-color: var(--dash-green); background: var(--dash-green-tint); box-shadow: 0 0 0 3px rgba(43,122,75,0.08); }
 .session-type-card.selected .session-type-icon { background: white; }
+.session-type-card.disabled { cursor: not-allowed; opacity: 0.55; background: #f8fafc; }
+.session-type-card.disabled:hover { border-color: var(--dash-border); }
 
 .attach-preview { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.86rem; color: var(--dash-muted); }
 .attach-preview .btn-remove-slot { flex-shrink: 0; }

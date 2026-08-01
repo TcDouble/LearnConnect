@@ -142,6 +142,7 @@
                                 <div><h4>Scheduled</h4><p>Pick a specific date and time</p></div>
                             </label>
                         </div>
+                        <small class="ls-note" id="immediateBlockedNote" style="display:none;">You already have an active immediate request — you can only schedule a session for later until it's resolved.</small>
                     </div>
                     <div class="form-row"><label>Duration</label>
                         <select id="reqDuration">
@@ -318,6 +319,27 @@
         function isConfirmedUpcoming(s) { return (s.status === 'offer_accepted' || s.status === 'scheduled') && !isExpired(s); }
         // Past sessions = only sessions actually marked completed.
         function isPastSession(s) { return s.status === 'completed'; }
+        // A request/session still occupies the student's time — used to gate the
+        // one-immediate-at-a-time rule and scheduled-overlap checks below.
+        function isActiveSession(s) {
+            return (s.status === 'waiting for teacher' || s.status === 'offer_accepted' || s.status === 'scheduled') && !isExpired(s);
+        }
+        function hasActiveImmediateRequest() {
+            return studentSessions.some(s => s.is_immediate && isActiveSession(s));
+        }
+        // dateStr/timeStr are the student's local wizard inputs (matches
+        // computeRequestWindow's interpretation); existing sessions are stored
+        // as UTC, so compare as absolute instants either way.
+        function scheduledRequestOverlaps(dateStr, timeStr, durationMin) {
+            const candStart = new Date(`${dateStr}T${timeStr}:00`);
+            const candEnd = new Date(candStart.getTime() + (durationMin || 60) * 60000);
+            return studentSessions.some(s => {
+                if (!isActiveSession(s) || !s.session_date || !s.starttime || !s.endtime) return false;
+                const existStart = new Date(`${s.session_date}T${s.starttime.slice(0, 5)}:00Z`);
+                const existEnd = new Date(`${s.end_date || s.session_date}T${s.endtime.slice(0, 5)}:00Z`);
+                return candStart < existEnd && candEnd > existStart;
+            });
+        }
         function initials(name) { return (name || '?').split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase(); }
         function yearsToRange(n) { n = n || 0; if (n < 1) return 'Less than 1 year'; if (n <= 2) return '1–2 years'; if (n <= 5) return '3–5 years'; if (n <= 10) return '6–10 years'; return '10+ years'; }
         function rangeToYears(t) { return /less than/i.test(t) ? 0 : (t.match(/\d+/) ? parseInt(t.match(/\d+/)[0], 10) : 0); }
@@ -751,6 +773,14 @@
         async function broadcastRequest() {
             if (!currentRequest) { alert('Create a request first.'); return; }
             if (!SID) { alert('Please finish your student profile setup before booking.'); return; }
+            // Re-check here too — session state (or the clock) may have moved on
+            // since the wizard's timing step was validated.
+            if (currentRequest.sessionType === 'immediate' && hasActiveImmediateRequest()) {
+                alert('You already have an active immediate request — choose Scheduled instead.'); return;
+            }
+            if (currentRequest.sessionType === 'scheduled' && scheduledRequestOverlaps(currentRequest.date, currentRequest.time, currentRequest.duration)) {
+                alert('That time overlaps one of your existing requests or sessions — pick a different time.'); return;
+            }
             const requestedSubject = (currentRequest.subject || '').toLowerCase();
             const candidates = teachers
                 .filter(t => !requestedSubject || (t.subject_list || []).some(s => s.toLowerCase() === requestedSubject))
@@ -817,6 +847,23 @@
             document.getElementById('scheduledFields').style.display = scheduled ? 'block' : 'none';
         }
 
+        // A student can only have one active immediate request at a time —
+        // lock out the Immediate option (and bump the selection to Scheduled)
+        // whenever one's already outstanding.
+        function applyImmediateAvailability() {
+            const blocked = hasActiveImmediateRequest();
+            const immediateRadio = document.querySelector('input[name="reqSessionType"][value="immediate"]');
+            immediateRadio.disabled = blocked;
+            document.getElementById('typeImmediateCard').classList.toggle('disabled', blocked);
+            document.getElementById('immediateBlockedNote').style.display = blocked ? '' : 'none';
+            if (blocked && immediateRadio.checked) {
+                document.querySelector('input[name="reqSessionType"][value="scheduled"]').checked = true;
+                document.getElementById('typeImmediateCard').classList.remove('selected');
+                document.getElementById('typeScheduledCard').classList.add('selected');
+                toggleScheduledFields();
+            }
+        }
+
         function updateReqUTCPreview() {
             const d = document.getElementById('reqDate').value;
             const t = document.getElementById('reqTime').value;
@@ -843,6 +890,7 @@
             document.getElementById('ftNav').hidden = name === 'teachers';
             ftRenderProgress();
             ftClearError();
+            if (name === 'timing') applyImmediateAvailability();
             if (name === 'teachers') loadTeacherStep();
         }
 
@@ -857,6 +905,7 @@
             document.getElementById('typeImmediateCard').classList.add('selected');
             document.getElementById('typeScheduledCard').classList.remove('selected');
             toggleScheduledFields();
+            applyImmediateAvailability();
             currentRequest = null;
             ftShowStep(FT_STEPS[0]);
         }
@@ -905,8 +954,19 @@
             }
             if (current === 'timing') {
                 const scheduled = document.querySelector('input[name="reqSessionType"]:checked').value === 'scheduled';
-                if (scheduled && (!document.getElementById('reqDate').value || !document.getElementById('reqTime').value)) {
-                    ftShowError('Please pick a date and time for your scheduled session.'); return;
+                if (!scheduled && hasActiveImmediateRequest()) {
+                    ftShowError('You already have an active immediate request — choose Scheduled instead.'); return;
+                }
+                if (scheduled) {
+                    const dateVal = document.getElementById('reqDate').value;
+                    const timeVal = document.getElementById('reqTime').value;
+                    if (!dateVal || !timeVal) {
+                        ftShowError('Please pick a date and time for your scheduled session.'); return;
+                    }
+                    const duration = parseInt(document.getElementById('reqDuration').value, 10) || 60;
+                    if (scheduledRequestOverlaps(dateVal, timeVal, duration)) {
+                        ftShowError('That time overlaps one of your existing requests or sessions — pick a different time.'); return;
+                    }
                 }
             }
             ftStepIndex++;
