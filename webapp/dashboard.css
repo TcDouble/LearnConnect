@@ -261,6 +261,10 @@ input.picker-search { border: none !important; outline: none; min-width: 120px; 
 .wizard-nav .btn { flex: 0 0 auto; }
 .wizard-nav .btn.grow { flex: 1; }
 
+.ft-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.ft-summary-chip { display: inline-flex; align-items: center; gap: 7px; background: var(--dash-green-tint); color: var(--dash-green-dark); padding: 6px 13px; border-radius: 40px; font-size: 0.82rem; font-weight: 600; }
+.ft-summary-chip i { color: var(--dash-green); font-size: 0.78rem; }
+
 .subject-btn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
 .subject-btn {
     padding: 13px 14px;

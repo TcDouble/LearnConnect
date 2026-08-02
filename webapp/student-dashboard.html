@@ -55,6 +55,12 @@
                 <div class="dashboard-header"><h1>Welcome, <span id="userNameDisplay">there</span></h1></div>
 
                 <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                        <div class="stat-number" id="statNextValue">—</div>
+                        <div class="stat-label">Next session</div>
+                        <div class="stat-sub" id="statNextSub"></div>
+                    </div>
                     <div class="stat-card teacher-flavor" id="statStudentsCard" hidden>
                         <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
                         <div class="stat-number" id="statStudentsValue">0</div>
@@ -69,12 +75,6 @@
                         <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
                         <div class="stat-number" id="statHoursValue">0</div>
                         <div class="stat-label">Hours learned</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
-                        <div class="stat-number" id="statNextValue">—</div>
-                        <div class="stat-label">Next session</div>
-                        <div class="stat-sub" id="statNextSub"></div>
                     </div>
                 </div>
 
@@ -102,6 +102,7 @@
                 <div class="dashboard-header"><h1>Find a teacher</h1><p class="greeting">Tell us what you need help with, then we'll show you teachers.</p></div>
 
                 <div class="steps" id="ftSteps"></div>
+                <div class="ft-summary" id="ftSummary" hidden></div>
                 <div class="form-error" id="ftError" hidden><i class="fas fa-circle-exclamation"></i> <span id="ftErrorText"></span></div>
 
                 <!-- Step 1: subject -->
@@ -341,6 +342,7 @@
             });
         }
         function initials(name) { return (name || '?').split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase(); }
+        function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
         function yearsToRange(n) { n = n || 0; if (n < 1) return 'Less than 1 year'; if (n <= 2) return '1–2 years'; if (n <= 5) return '3–5 years'; if (n <= 10) return '6–10 years'; return '10+ years'; }
         function rangeToYears(t) { return /less than/i.test(t) ? 0 : (t.match(/\d+/) ? parseInt(t.match(/\d+/)[0], 10) : 0); }
         function statusPill(status) {
@@ -889,9 +891,46 @@
             document.getElementById('ftBackBtn').hidden = ftStepIndex === 0;
             document.getElementById('ftNav').hidden = name === 'teachers';
             ftRenderProgress();
+            ftRenderSummary();
             ftClearError();
             if (name === 'timing') applyImmediateAvailability();
             if (name === 'teachers') loadTeacherStep();
+        }
+
+        // Recaps whatever's been filled in on earlier steps so it stays visible
+        // as the student moves forward through the wizard.
+        function ftRenderSummary() {
+            const el = document.getElementById('ftSummary');
+            const chips = [];
+
+            if (ftStepIndex > 0 && selectedSubject) {
+                chips.push(`<span class="ft-summary-chip"><i class="fas fa-book"></i> ${selectedSubject}</span>`);
+            }
+
+            if (ftStepIndex > 1) {
+                const notes = document.getElementById('reqNotes').value.trim();
+                if (notes) chips.push(`<span class="ft-summary-chip"><i class="fas fa-note-sticky"></i> ${escapeHtml(notes.length > 40 ? notes.slice(0, 40) + '…' : notes)}</span>`);
+                const file = reqAttachmentInput.files[0];
+                if (file) chips.push(`<span class="ft-summary-chip"><i class="fas fa-paperclip"></i> ${escapeHtml(file.name)}</span>`);
+            }
+
+            if (ftStepIndex > 2) {
+                const scheduled = document.querySelector('input[name="reqSessionType"]:checked').value === 'scheduled';
+                const dur = parseInt(document.getElementById('reqDuration').value, 10);
+                const durLabel = dur < 60 ? `${dur} min` : dur === 60 ? '1 hr' : `${dur / 60} hrs`;
+                if (scheduled) {
+                    // reqDate/reqTime are the student's own local wizard inputs,
+                    // not UTC — show them back as typed, no conversion.
+                    const d = document.getElementById('reqDate').value;
+                    const t = document.getElementById('reqTime').value;
+                    chips.push(`<span class="ft-summary-chip"><i class="fas fa-calendar-days"></i> ${d && t ? `${d} at ${t}` : 'Scheduled'} · ${durLabel}</span>`);
+                } else {
+                    chips.push(`<span class="ft-summary-chip"><i class="fas fa-bolt"></i> Immediate · ${durLabel}</span>`);
+                }
+            }
+
+            el.innerHTML = chips.join('');
+            el.hidden = !chips.length;
         }
 
         function resetFindTeacher() {
