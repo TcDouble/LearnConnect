@@ -159,6 +159,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="tz.js"></script>
+  <script src="confirm-dialog.js"></script>
   <script>
     const raw = localStorage.getItem('teacherPendingRequest');
     if (!raw) { window.location.href = 'student-dashboard.html'; }
@@ -247,7 +248,7 @@
     });
 
     document.getElementById('declineBtn').addEventListener('click', async () => {
-      if (!confirm(`Decline ${req.studentName}'s request for ${req.subject}?`)) return;
+      if (!await confirmYesNo(`Decline ${req.studentName}'s request for ${req.subject}?`, { title: 'Decline request' })) return;
 
       setButtonsDisabled(true);
       const btn = document.getElementById('declineBtn');

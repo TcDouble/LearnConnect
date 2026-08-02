@@ -189,6 +189,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="tz.js"></script>
+  <script src="confirm-dialog.js"></script>
   <script>
     const EDGE_FN_URL      = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/create-meeting';
     const SESSION_EMAIL_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/send-session-email';
@@ -270,7 +271,7 @@
 
     // ── Decline ──────────────────────────────────────────────────────────────
     document.getElementById('declineBtn').addEventListener('click', async () => {
-      if (!confirm(`Decline ${req.studentName}'s request for ${req.subject}?`)) return;
+      if (!await confirmYesNo(`Decline ${req.studentName}'s request for ${req.subject}?`, { title: 'Decline request' })) return;
 
       const btn = document.getElementById('declineBtn');
       btn.disabled = true;

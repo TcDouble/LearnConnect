@@ -117,6 +117,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="tz.js"></script>
+  <script src="confirm-dialog.js"></script>
   <script>
     const broadcastId = localStorage.getItem('activeBroadcastId');
     if (!broadcastId) { window.location.href = 'student-dashboard.html'; }
@@ -207,9 +208,13 @@
       const scheduled = rows.find(r => r.status === 'scheduled');
       const accepted = rows.filter(r => r.status === 'offer_accepted');
       const waiting = rows.filter(r => r.status === 'waiting for teacher');
+      // Only teachers still in play (not declined) count toward the total —
+      // it shrinks as more decline, rather than staying pinned to however many
+      // were originally sent the request.
+      const active = rows.filter(r => r.status !== 'canceled');
 
       document.getElementById('summaryCounts').textContent =
-        `Sent to ${rows.length} teacher${rows.length > 1 ? 's' : ''} — ${accepted.length + (scheduled ? 1 : 0)} accepted, ${waiting.length} still waiting to respond`;
+        `${accepted.length + (scheduled ? 1 : 0)} out of ${active.length} teacher${active.length > 1 ? 's' : ''} accepted — ${waiting.length} still waiting to respond`;
 
       document.getElementById('alreadyScheduledState').style.display = scheduled ? '' : 'none';
       document.getElementById('emptyState').style.display = (!scheduled && !accepted.length && !waiting.length) ? '' : 'none';
@@ -270,7 +275,7 @@
     document.getElementById('refreshBtn').addEventListener('click', loadResponses);
 
     document.getElementById('cancelBtn').addEventListener('click', async () => {
-      if (!confirm('Cancel this request for everyone?')) return;
+      if (!await confirmYesNo('Are you sure you want to cancel this request for everyone?', { title: 'Cancel request' })) return;
       const { error } = await supabaseClient
         .from('Blocked_Time')
         .update({ status: 'canceled' })

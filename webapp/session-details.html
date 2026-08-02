@@ -56,6 +56,38 @@
       transition: background 0.15s;
     }
     .join-btn:hover { background: #235f3b; }
+    /* Marking a session complete is its own step, not a variation on the
+       meeting-link buttons — split it off with a rule and give it real weight. */
+    .complete-action {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+    .complete-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px;
+      border-radius: 40px;
+      border: 2px solid #2b7a4b;
+      background: #eaf6ef;
+      color: #0f3b2c;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    }
+    .complete-btn:hover { background: #2b7a4b; color: white; box-shadow: 0 8px 20px rgba(43,122,75,0.25); }
+    .complete-btn i { font-size: 1.05rem; }
+    .complete-hint {
+      font-size: 0.8rem;
+      color: #64748b;
+      text-align: center;
+      margin: 8px 0 0;
+    }
     .no-link-note {
       background: #f8fafc;
       border: 1px dashed #cbd5e1;
@@ -218,6 +250,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
   <script src="tz.js"></script>
+  <script src="confirm-dialog.js"></script>
   <script>
     const EDGE_FN_URL          = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/create-meeting';
     const COMPLETE_SESSION_URL = 'https://voqpgofzhuuzlensefxm.supabase.co/functions/v1/complete-session';
@@ -283,12 +316,10 @@
         summaryShown = true;
       }
 
+      // Once the review is in, the prompt card has nothing left to say — hide it
+      // entirely instead of showing an "already reviewed" note.
       const reviewPrompt = document.getElementById('detailReviewPrompt');
-      if (s.myReviewSubmitted) {
-        reviewPrompt.textContent = "You've already left your review for this session.";
-        document.getElementById('detailReviewPromptCard').style.display = 'block';
-        summaryShown = true;
-      } else if (s.myReviewToken) {
+      if (!s.myReviewSubmitted && s.myReviewToken) {
         reviewPrompt.innerHTML = `<a href="post-meeting-review.html?token=${s.myReviewToken}" style="color:#2b7a4b;text-decoration:none;font-weight:600;">Leave your review →</a>`;
         document.getElementById('detailReviewPromptCard').style.display = 'block';
         summaryShown = true;
@@ -318,10 +349,12 @@
               style="margin-top:10px;width:100%;cursor:pointer;font-family:inherit;">
             <i class="fas fa-rotate-right"></i> Create new meeting link
           </button>` : ''}
-      ${s.isTeacher && s.status === 'scheduled' ? `<button onclick="markComplete()" class="btn btn-outline btn-block"
-              style="margin-top:10px;width:100%;cursor:pointer;font-family:inherit;color:#64748b;border-color:#e2e8f0;">
-            <i class="fas fa-check-circle"></i> Mark session as complete
-          </button>` : ''}
+      ${s.isTeacher && s.status === 'scheduled' ? `<div class="complete-action">
+            <button onclick="markComplete()" class="complete-btn">
+              <i class="fas fa-circle-check"></i> Mark session as complete
+            </button>
+            <p class="complete-hint">Do this once you've finished teaching — it opens reviews for both of you.</p>
+          </div>` : ''}
         `;
       } else if (s.isTeacher && s.status === 'scheduled') {
         area.innerHTML = `
@@ -434,7 +467,7 @@
 
     async function markComplete() {
       const area = document.getElementById('meetingLinkArea');
-      if (!confirm('Mark this session as complete? This will notify both you and the student to leave a review.')) return;
+      if (!await confirmYesNo('Mark this session as complete? This will notify both you and the student to leave a review.', { title: 'Complete session', danger: false })) return;
 
       const { data: { session: authSession } } = await supabaseClient.auth.getSession();
       if (!authSession) { alert('Please sign in to continue.'); return; }

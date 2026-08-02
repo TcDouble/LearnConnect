@@ -170,8 +170,8 @@
                     <p class="greeting" id="requestSummary" style="margin-bottom:16px;"></p>
                     <div id="availableTeachersGrid" class="teachers-grid"></div>
                     <div id="broadcastAction" hidden style="margin:16px 0;">
-                        <p class="greeting" style="margin-bottom:10px;">Sending a request to all available teachers doesn't guarantee a booking — you'll pick one teacher once they start accepting.</p>
-                        <button type="button" id="broadcastSendBtn" class="btn btn-primary btn-block">Send request to all available teachers</button>
+                        <p class="greeting" style="margin-bottom:10px;">Every available teacher is ticked by default — untick anyone you'd rather not contact. Sending a request doesn't guarantee a booking; you'll pick one teacher once they start accepting.</p>
+                        <button type="button" id="broadcastSendBtn" class="btn btn-primary btn-block">Send request to available teachers</button>
                     </div>
                     <div class="wizard-nav">
                         <button type="button" class="btn btn-outline" id="ftBackBtn2"><i class="fas fa-arrow-left"></i> Back</button>
@@ -231,6 +231,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
     <script src="tz.js"></script>
+    <script src="confirm-dialog.js"></script>
     <script>
         const SUBJECTS = ['Biology','Business Studies','Chemistry','Computer Science','Economics','English - High Level','English - Low Level','English - Middle Level','Geography','History','Legal Studies','Math - High Level','Math - Low Level','Math - Middle Level','Physics','Psychology','Robotics','Test Prep'];
 
@@ -570,23 +571,23 @@
                 r.addEventListener('click', () => openBroadcastResponses(g.broadcastId));
                 r.insertCell(0).innerText = g.isImmediate ? 'Immediate' : fmtLocalDateTime(g.sessionDate, g.starttime || '00:00');
                 r.insertCell(1).innerHTML = g.subject ? `<span class="badge-subject">${g.subject}</span>` : '—';
-                r.insertCell(2).innerText = `Sent to ${g.total} teacher${g.total > 1 ? 's' : ''} — ${g.accepted} accepted so far`;
+                r.insertCell(2).innerText = `${g.accepted} out of ${g.total} teacher${g.total > 1 ? 's' : ''} accepted`;
                 r.insertCell(3).innerHTML = `
                     <div class="row-actions">
-                        <button type="button" class="btn-mini btn-accept" data-select="${g.broadcastId}">Select teacher</button>
-                        <button type="button" class="btn-mini btn-edit" data-edit-broadcast="${g.broadcastId}">Edit</button>
-                        <button type="button" class="btn-mini btn-decline" data-cancel-broadcast="${g.broadcastId}">Cancel</button>
+                        <button type="button" class="icon-btn icon-accept" title="Select this teacher" data-select="${g.broadcastId}"><i class="fas fa-user-check"></i></button>
+                        <button type="button" class="icon-btn icon-edit" title="Edit request" data-edit-broadcast="${g.broadcastId}"><i class="fas fa-pen"></i></button>
+                        <button type="button" class="icon-btn icon-decline" title="Cancel request" data-cancel-broadcast="${g.broadcastId}"><i class="fas fa-xmark"></i></button>
                     </div>`;
             });
             singles.forEach(s => {
                 const r = tbody.insertRow();
                 r.insertCell(0).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
                 r.insertCell(1).innerHTML = s.subject ? `<span class="badge-subject">${s.subject}</span>` : '—';
-                r.insertCell(2).innerHTML = `Sent to <span class="action-link" data-view-profile="${s.session_id}">${s.counterparty || 'a teacher'}</span> — awaiting response`;
+                r.insertCell(2).innerHTML = `Sent to <span class="action-link" data-view-profile="${s.session_id}">${escapeHtml(s.counterparty) || 'a teacher'}</span> — awaiting response`;
                 r.insertCell(3).innerHTML = `
                     <div class="row-actions">
-                        <button type="button" class="btn-mini btn-edit" data-edit-session="${s.session_id}">Edit</button>
-                        <button type="button" class="btn-mini btn-decline" data-cancel-single="${s.session_id}">Cancel</button>
+                        <button type="button" class="icon-btn icon-edit" title="Edit request" data-edit-session="${s.session_id}"><i class="fas fa-pen"></i></button>
+                        <button type="button" class="icon-btn icon-decline" title="Cancel request" data-cancel-single="${s.session_id}"><i class="fas fa-xmark"></i></button>
                     </div>`;
             });
             tbody.querySelectorAll('[data-cancel-single]').forEach(btn =>
@@ -607,13 +608,15 @@
                     const s = singles.find(x => x.session_id === btn.getAttribute('data-edit-session'));
                     if (s) openEditRequest({ broadcastId: null, sessionId: s.session_id, request: s.request });
                 }));
-            tbody.querySelectorAll('[data-view-profile]').forEach(el =>
-                el.addEventListener('click', (e) => { e.stopPropagation(); openViewProfile(el.getAttribute('data-view-profile')); }));
+            tbody.querySelectorAll('[data-view-profile]').forEach(el => {
+                el.addEventListener('click', (e) => { e.stopPropagation(); openViewProfile(el.getAttribute('data-view-profile')); });
+                attachHoverProfile(el, el.getAttribute('data-view-profile'));
+            });
             return true;
         }
 
         async function cancelBroadcast(broadcastId) {
-            if (!confirm('Cancel this request for everyone?')) return;
+            if (!await confirmYesNo('Are you sure you want to cancel this request for everyone?', { title: 'Cancel request' })) return;
             const { error } = await supabaseClient
                 .from('Blocked_Time')
                 .update({ status: 'canceled' })
@@ -662,6 +665,58 @@
             window.location.href = s.broadcast_id ? 'review-broadcast-offer.html' : 'review-request.html';
         }
 
+        function refreshRequestsViews() {
+            refreshSessions().then(() => {
+                renderOverview();
+                updateNotifications();
+                if (!document.getElementById('requests-section').classList.contains('hidden-section')) {
+                    renderFullRequests(document.getElementById('requestSearchFull').value);
+                }
+            });
+        }
+
+        // Quick accept/decline straight from the requests list — same effect as
+        // the plain (no-meeting-room) actions on the review-request page, without
+        // needing to open it. A broadcast row can only ever move to
+        // offer_accepted here (the student still needs to pick a teacher); a
+        // single request goes straight to scheduled and gets the confirmation email.
+        async function quickAcceptRequest(s) {
+            if (s.broadcast_id) {
+                const { data, error } = await supabaseClient
+                    .from('Blocked_Time')
+                    .update({ status: 'offer_accepted' })
+                    .eq('SessionID', s.session_id)
+                    .eq('status', 'waiting for teacher')
+                    .select();
+                if (error) { alert('Could not accept: ' + error.message); return; }
+                if (!data || !data.length) { alert('This request has already been resolved.'); }
+            } else {
+                const { data, error } = await supabaseClient
+                    .from('Blocked_Time')
+                    .update({ status: 'scheduled' })
+                    .eq('SessionID', s.session_id)
+                    .eq('status', 'waiting for teacher')
+                    .select();
+                if (error) { alert('Could not accept: ' + error.message); return; }
+                if (!data || !data.length) { alert('This request has already been resolved.'); return; }
+                callSessionEmail('confirmation', s.session_id);
+            }
+            refreshRequestsViews();
+        }
+
+        async function quickDeclineRequest(s) {
+            if (!await confirmYesNo(`Decline ${s.counterparty || 'this student'}'s request for ${s.subject || 'this session'}?`, { title: 'Decline request' })) return;
+            const { data, error } = await supabaseClient
+                .from('Blocked_Time')
+                .update({ status: 'canceled' })
+                .eq('SessionID', s.session_id)
+                .eq('status', 'waiting for teacher')
+                .select();
+            if (error) { alert('Could not decline: ' + error.message); return; }
+            if (!data || !data.length) { alert('This request has already been resolved.'); }
+            refreshRequestsViews();
+        }
+
         function buildRequestRows(tbody, requests) {
             tbody.innerHTML = '';
             if (!requests.length) { tbody.innerHTML = '<tr><td colspan="4">No pending requests.</td></tr>'; return; }
@@ -671,10 +726,20 @@
                 r.addEventListener('click', () => openRequest(s));
                 r.insertCell(0).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
                 const nameCell = r.insertCell(1);
-                nameCell.innerHTML = `<span class="action-link">${s.counterparty || '—'}</span>`;
+                nameCell.innerHTML = `<span class="action-link">${escapeHtml(s.counterparty) || '—'}</span>`;
                 nameCell.querySelector('.action-link').addEventListener('click', (e) => { e.stopPropagation(); openViewProfile(s.session_id); });
+                attachHoverProfile(nameCell.querySelector('.action-link'), s.session_id);
                 r.insertCell(2).innerHTML = s.subject ? `<span class="badge-subject">${s.subject}</span>` : '—';
-                r.insertCell(3).innerHTML = '<span class="action-link">View →</span>';
+                const actionsCell = r.insertCell(3);
+                actionsCell.innerHTML = `
+                    <div class="row-actions">
+                        <button type="button" class="icon-btn icon-accept" title="Accept request" data-accept><i class="fas fa-check"></i></button>
+                        <button type="button" class="icon-btn icon-decline" title="Decline request" data-decline><i class="fas fa-xmark"></i></button>
+                        <button type="button" class="icon-btn icon-edit" title="View request" data-view><i class="fas fa-eye"></i></button>
+                    </div>`;
+                actionsCell.querySelector('[data-accept]').addEventListener('click', (e) => { e.stopPropagation(); quickAcceptRequest(s); });
+                actionsCell.querySelector('[data-decline]').addEventListener('click', (e) => { e.stopPropagation(); quickDeclineRequest(s); });
+                actionsCell.querySelector('[data-view]').addEventListener('click', (e) => { e.stopPropagation(); openRequest(s); });
             });
         }
 
@@ -712,11 +777,11 @@
 
         function joinLink(url) {
             if (!url) return '';
-            return ` <a href="${url}" target="_blank" onclick="event.stopPropagation()" class="action-link" style="margin-left:8px;">Join →</a>`;
+            return `<a href="${url}" target="_blank" onclick="event.stopPropagation()" class="icon-btn icon-accept" title="Join meeting"><i class="fas fa-video"></i></a>`;
         }
 
         async function cancelRequest(id) {
-            if (!confirm('Cancel this session?')) return;
+            if (!await confirmYesNo('Are you sure you want to cancel this session?', { title: 'Cancel session' })) return;
             const { error } = await supabaseClient.from('Blocked_Time').update({ status: 'canceled' }).eq('SessionID', id);
             if (error) { alert('Could not cancel: ' + error.message); return; }
             await refreshSessions(); renderOverview(); updateNotifications();
@@ -739,12 +804,30 @@
                 const ratingHtml = t.rating_count
                     ? `${starsHtml(Math.round(t.avg_rating))} <span style="color:var(--dash-muted);font-size:0.78rem;">${t.avg_rating} (${t.rating_count})</span>`
                     : `<span style="color:#94a3b8;font-size:0.82rem;">No ratings yet</span>`;
-                const card = document.createElement('div'); card.className = 'teacher-card';
-                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><div class="teacher-rating" style="margin:4px 0 8px;">${ratingHtml}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div>`;
+                const card = document.createElement('div'); card.className = 'teacher-card selectable';
+                card.innerHTML = `<div class="teacher-card-head"><div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><input type="checkbox" class="teacher-select" data-teacher-uid="${t.uid}" title="Send this teacher the request" checked></div><div class="teacher-rating" style="margin:4px 0 8px;">${ratingHtml}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div>`;
+                const cb = card.querySelector('.teacher-select');
+                cb.addEventListener('change', () => { card.classList.toggle('unselected', !cb.checked); updateBroadcastButton(); });
+                // Anywhere on the card toggles it — the checkbox itself already did.
+                card.addEventListener('click', (e) => { if (e.target !== cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); } });
                 container.appendChild(card);
             });
             document.getElementById('broadcastAction').hidden = false;
-            document.getElementById('broadcastSendBtn').textContent = `Send request to all ${filtered.length} available teacher${filtered.length > 1 ? 's' : ''}`;
+            updateBroadcastButton();
+        }
+
+        function selectedTeacherUIDs() {
+            return new Set([...document.querySelectorAll('#availableTeachersGrid .teacher-select:checked')]
+                .map(cb => cb.getAttribute('data-teacher-uid')));
+        }
+
+        function updateBroadcastButton() {
+            const n = selectedTeacherUIDs().size;
+            const btn = document.getElementById('broadcastSendBtn');
+            btn.disabled = n === 0;
+            btn.textContent = n === 0
+                ? 'Select at least one teacher'
+                : `Send request to ${n} selected teacher${n > 1 ? 's' : ''}`;
         }
 
         async function uploadAttachmentIfAny(file) {
@@ -787,10 +870,14 @@
                 alert('That time overlaps one of your existing requests or sessions — pick a different time.'); return;
             }
             const requestedSubject = (currentRequest.subject || '').toLowerCase();
-            const candidates = teachers
+            const available = teachers
                 .filter(t => !requestedSubject || (t.subject_list || []).some(s => s.toLowerCase() === requestedSubject))
                 .filter(t => !availableTeacherUIDs || availableTeacherUIDs.has(t.uid));
-            if (!candidates.length) { alert('No teachers are currently available for this subject.'); return; }
+            if (!available.length) { alert('No teachers are currently available for this subject.'); return; }
+            // Only the teachers still ticked on the cards get the request.
+            const picked = selectedTeacherUIDs();
+            const candidates = available.filter(t => picked.has(t.uid));
+            if (!candidates.length) { alert('Tick at least one teacher to send your request to.'); return; }
 
             const { date, start, end } = computeRequestWindow();
             const request = currentRequest.notes || '';
@@ -807,7 +894,7 @@
 
             const { error } = await supabaseClient.from('Blocked_Time').insert(rows);
             if (error) { alert('Could not send request: ' + error.message); return; }
-            alert(`Request sent to ${rows.length} available teacher${rows.length > 1 ? 's' : ''}! We'll let you know as they respond.`);
+            alert(`Request sent to ${rows.length} teacher${rows.length > 1 ? 's' : ''}! We'll let you know as they respond.`);
             await refreshSessions(); renderOverview(); showSection('overview');
         }
 
@@ -1036,15 +1123,17 @@
                 const nameCell = r.insertCell(1);
                 nameCell.innerHTML = `<span class="action-link">${escapeHtml(s.counterparty) || '—'}</span>`;
                 nameCell.querySelector('.action-link').addEventListener('click', (e) => { e.stopPropagation(); openViewProfile(s.session_id); });
+                attachHoverProfile(nameCell.querySelector('.action-link'), s.session_id);
                 r.insertCell(2).innerText = `${s.subject || ''}${s.request ? ' — ' + s.request : ''}`;
-                let statusHtml = statusPill(s.status) + joinLink(s.meeting_url);
+                let statusHtml = `<div class="row-actions">${statusPill(s.status)}${joinLink(s.meeting_url)}`;
                 if (s.status === 'offer_accepted') {
-                    statusHtml += `<button class="btn-cancel" data-id="${s.session_id}">Withdraw</button>`;
+                    statusHtml += `<button type="button" class="icon-btn icon-decline" title="Withdraw offer" data-withdraw="${s.session_id}"><i class="fas fa-rotate-left"></i></button>`;
                 }
+                statusHtml += '</div>';
                 r.insertCell(3).innerHTML = statusHtml;
             });
-            tbody.querySelectorAll('.btn-cancel').forEach(btn =>
-                btn.addEventListener('click', (e) => { e.stopPropagation(); withdrawOffer(btn.getAttribute('data-id')); }));
+            tbody.querySelectorAll('[data-withdraw]').forEach(btn =>
+                btn.addEventListener('click', (e) => { e.stopPropagation(); withdrawOffer(btn.getAttribute('data-withdraw')); }));
         }
 
         function renderStudentUpcomingSection(tbodyId = 'studentUpcomingBody') {
@@ -1057,12 +1146,13 @@
                 const nameCell = r.insertCell(1);
                 nameCell.innerHTML = `<span class="action-link">${escapeHtml(s.counterparty) || '—'}</span>`;
                 nameCell.querySelector('.action-link').addEventListener('click', () => openViewProfile(s.session_id));
+                attachHoverProfile(nameCell.querySelector('.action-link'), s.session_id);
                 r.insertCell(2).innerText = `${s.subject || ''}${s.request ? ' — ' + s.request : ''}`;
                 r.insertCell(3).innerHTML = `
                     <div class="row-actions">
-                        ${s.meeting_url ? `<a href="${s.meeting_url}" target="_blank" class="btn-mini btn-accept">Join meeting</a>` : ''}
-                        <button type="button" class="btn-mini btn-edit" data-view="${s.session_id}">View</button>
-                        <button type="button" class="btn-mini btn-decline" data-cancel="${s.session_id}">Cancel</button>
+                        ${s.meeting_url ? `<a href="${s.meeting_url}" target="_blank" class="icon-btn icon-accept" title="Join meeting"><i class="fas fa-video"></i></a>` : ''}
+                        <button type="button" class="icon-btn icon-edit" title="View session" data-view="${s.session_id}"><i class="fas fa-eye"></i></button>
+                        <button type="button" class="icon-btn icon-decline" title="Cancel session" data-cancel="${s.session_id}"><i class="fas fa-xmark"></i></button>
                     </div>`;
             });
             tbody.querySelectorAll('[data-view]').forEach(btn =>
@@ -1075,7 +1165,7 @@
         }
 
         async function withdrawOffer(sessionId) {
-            if (!confirm('Withdraw your offer for this request?')) return;
+            if (!await confirmYesNo('Withdraw your offer for this request?', { title: 'Withdraw offer' })) return;
             const { data, error } = await supabaseClient
                 .from('Blocked_Time')
                 .update({ status: 'canceled' })
@@ -1111,7 +1201,7 @@
                 r.insertCell(3).innerText = fmtDuration(s.actual_duration_minutes ?? s.duration);
                 const myRatingCell = r.insertCell(4);
                 if (s.student_review_submitted_at) { myRatingCell.innerHTML = starsHtml(s.student_rating); }
-                else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" onclick="event.stopPropagation()" class="action-link">Leave review →</a>` : '—'; }
+                else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" onclick="event.stopPropagation()" class="icon-btn icon-review" title="Leave a review"><i class="fas fa-star"></i></a>` : '—'; }
             });
         }
 
@@ -1131,7 +1221,7 @@
                 r.insertCell(4).innerHTML = starsHtml(s.student_rating);
                 const myRatingCell = r.insertCell(5);
                 if (s.teacher_review_submitted_at) { myRatingCell.innerHTML = starsHtml(s.teacher_rating); }
-                else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" onclick="event.stopPropagation()" class="action-link">Leave review →</a>` : '—'; }
+                else { myRatingCell.innerHTML = s.my_review_token ? `<a href="post-meeting-review.html?token=${s.my_review_token}" target="_blank" onclick="event.stopPropagation()" class="icon-btn icon-review" title="Leave a review"><i class="fas fa-star"></i></a>` : '—'; }
                 const notesCell = r.insertCell(6);
                 if (s.teacher_notes) {
                     const short = s.teacher_notes.length > 50 ? s.teacher_notes.slice(0, 50) + '…' : s.teacher_notes;
@@ -1310,7 +1400,7 @@
 
             if (personas.isStudent) {
                 studentSessions.filter(s => s.status === 'scheduled' && !seenConfirmed.has(s.session_id)).forEach(s => {
-                    notifs.push({ type: 'confirmed', icon: 'fa-check-circle', title: `Session confirmed!`, sub: `${s.counterparty || 'Your teacher'} accepted your ${s.subject || ''} request`, _date: s.session_date || '', _time: s.starttime || '', action: () => { seenConfirmed.add(s.session_id); localStorage.setItem('lcSeenConfirmed', JSON.stringify([...seenConfirmed])); setActiveView('student'); } });
+                    notifs.push({ type: 'confirmed', icon: 'fa-check-circle', title: `Session confirmed!`, sub: `${s.counterparty || 'Your teacher'} accepted your ${s.subject || ''} request`, _date: s.session_date || '', _time: s.starttime || '', action: () => { seenConfirmed.add(s.session_id); localStorage.setItem('lcSeenConfirmed', JSON.stringify([...seenConfirmed])); openSessionDetails(s, 'student'); } });
                     if (!sentConfirmations.has(s.session_id)) {
                         sentConfirmations.add(s.session_id);
                         localStorage.setItem('lcSentConfirmations', JSON.stringify([...sentConfirmations]));
@@ -1330,7 +1420,7 @@
 
             if (personas.isTeacher) {
                 teacherSessions.filter(s => s.status === 'waiting for teacher').forEach(s => {
-                    notifs.push({ type: 'request', icon: 'fa-envelope', title: `New request from ${s.counterparty || 'a student'}`, sub: s.subject || '', _date: s.session_date || '', _time: s.starttime || '', action: () => setActiveView('teacher', 'requests') });
+                    notifs.push({ type: 'request', icon: 'fa-envelope', title: `New request from ${s.counterparty || 'a student'}`, sub: s.subject || '', _date: s.session_date || '', _time: s.starttime || '', action: () => openRequest(s) });
                     if (!sentRequests.has(s.session_id)) {
                         sentRequests.add(s.session_id);
                         localStorage.setItem('lcSentRequests', JSON.stringify([...sentRequests]));
@@ -1340,14 +1430,14 @@
             }
 
             const soonCandidates = [
-                ...(personas.isStudent ? studentSessions.map(s => ({ s, role: 'student', section: 'overview' })) : []),
-                ...(personas.isTeacher ? teacherSessions.map(s => ({ s, role: 'teacher', section: 'schedule' })) : [])
+                ...(personas.isStudent ? studentSessions.map(s => ({ s, role: 'student' })) : []),
+                ...(personas.isTeacher ? teacherSessions.map(s => ({ s, role: 'teacher' })) : [])
             ];
-            soonCandidates.filter(({ s }) => s.status === 'scheduled' && s.session_date && s.starttime).forEach(({ s, role, section }) => {
+            soonCandidates.filter(({ s }) => s.status === 'scheduled' && s.session_date && s.starttime).forEach(({ s, role }) => {
                 const startDt = new Date(`${s.session_date}T${s.starttime.slice(0, 5)}:00Z`);
                 if (startDt >= now && startDt <= soonCutoff) {
                     const mins = Math.round((startDt - now) / 60000);
-                    notifs.push({ type: 'soon', icon: 'fa-clock', title: `Session with ${s.counterparty || 'someone'} starting soon`, sub: `In ${mins} min · ${s.subject || ''}`, _mins: mins, action: () => setActiveView(role, section) });
+                    notifs.push({ type: 'soon', icon: 'fa-clock', title: `Session with ${s.counterparty || 'someone'} starting soon`, sub: `In ${mins} min · ${s.subject || ''}`, _mins: mins, action: () => openSessionDetails(s, role) });
                     if (!sentReminders.has(s.session_id)) {
                         sentReminders.add(s.session_id);
                         localStorage.setItem('lcSentReminders', JSON.stringify([...sentReminders]));
@@ -1391,6 +1481,106 @@
             switchModalTab(tab);
         }
         function closeProfileModal() { document.getElementById('profileModal').classList.remove('open'); }
+
+        // ── Hover profile card ───────────────────────────────────────────────
+        // Hovering a counterparty name in the requests / upcoming tables shows a
+        // quick summary of who they are; clicking still opens the full modal.
+        // Profiles are cached per session so re-hovering never refetches.
+        const hoverProfileCache = new Map();
+        let hoverProfileEl = null, hoverProfileTimer = null, hoverProfileToken = 0;
+
+        function hoverProfileCard() {
+            if (!hoverProfileEl) {
+                hoverProfileEl = document.createElement('div');
+                hoverProfileEl.className = 'hover-profile';
+                document.body.appendChild(hoverProfileEl);
+            }
+            return hoverProfileEl;
+        }
+
+        function hoverProfileBody(row) {
+            if (!row) return '<div class="hover-profile-msg">Profile unavailable.</div>';
+            const isTeacher = row.role === 'teacher';
+            const rating = row.rating_count
+                ? `${starsHtml(Math.round(row.avg_rating))} <span style="color:var(--dash-muted);">${row.avg_rating} (${row.rating_count})</span>`
+                : '<span style="color:var(--dash-faint)">No ratings yet</span>';
+            const subjects = (row.subject_list || []).length ? escapeHtml(row.subject_list.join(', ')) : '—';
+            const rows = [
+                ['Rating', rating],
+                [isTeacher ? 'Teaches' : 'Studying', subjects]
+            ];
+            if (isTeacher) {
+                rows.push(['Experience', escapeHtml(yearsToRange(row.years_experience))]);
+            } else {
+                if (row.grade_level) rows.push(['Grade', escapeHtml(row.grade_level)]);
+                if (row.age) rows.push(['Age', escapeHtml(String(row.age))]);
+                if (row.goals) rows.push(['Goals', escapeHtml(row.goals)]);
+            }
+            const blurb = row.bio || '';
+            const short = blurb.length > 150 ? escapeHtml(blurb.slice(0, 150)) + '…' : escapeHtml(blurb);
+            return `
+                <div class="hover-profile-head">
+                    <div class="hover-profile-avatar">${escapeHtml(initials(row.name))}</div>
+                    <div>
+                        <div class="hover-profile-name">${escapeHtml(row.name) || '—'}</div>
+                        <div class="hover-profile-role">${isTeacher ? 'Teacher' : 'Student'}</div>
+                    </div>
+                </div>
+                ${rows.map(([k, v]) => `<div class="hover-profile-row"><span>${k}</span><span>${v}</span></div>`).join('')}
+                ${short ? `<div class="hover-profile-bio">${short}</div>` : ''}
+                <div class="hover-profile-hint">Click the name for the full profile</div>`;
+        }
+
+        function positionHoverProfile(anchor) {
+            const card = hoverProfileCard();
+            const r = anchor.getBoundingClientRect();
+            const w = card.offsetWidth || 270, h = card.offsetHeight || 160;
+            let left = r.left;
+            if (left + w > window.innerWidth - 12) left = window.innerWidth - w - 12;
+            if (left < 12) left = 12;
+            let top = r.bottom + 8;
+            if (top + h > window.innerHeight - 12) top = Math.max(12, r.top - h - 8);
+            card.style.left = `${left}px`;
+            card.style.top = `${top}px`;
+        }
+
+        function hideHoverProfile() {
+            clearTimeout(hoverProfileTimer);
+            hoverProfileToken++;
+            if (hoverProfileEl) hoverProfileEl.classList.remove('open');
+        }
+
+        async function showHoverProfile(anchor, sessionId) {
+            const token = ++hoverProfileToken;
+            const card = hoverProfileCard();
+
+            if (hoverProfileCache.has(sessionId)) {
+                card.innerHTML = hoverProfileBody(hoverProfileCache.get(sessionId));
+            } else {
+                card.innerHTML = '<div class="hover-profile-msg">Loading…</div>';
+            }
+            card.classList.add('open');
+            positionHoverProfile(anchor);
+
+            if (!hoverProfileCache.has(sessionId)) {
+                const { data, error } = await supabaseClient.rpc('get_counterparty_profile', { p_session_id: sessionId });
+                const row = Array.isArray(data) ? data[0] : data;
+                hoverProfileCache.set(sessionId, error ? null : (row || null));
+                if (token !== hoverProfileToken) return;   // pointer moved on while loading
+                card.innerHTML = hoverProfileBody(hoverProfileCache.get(sessionId));
+                positionHoverProfile(anchor);
+            }
+        }
+
+        function attachHoverProfile(el, sessionId) {
+            if (!el || !sessionId) return;
+            el.addEventListener('mouseenter', () => {
+                clearTimeout(hoverProfileTimer);
+                hoverProfileTimer = setTimeout(() => showHoverProfile(el, sessionId), 220);
+            });
+            el.addEventListener('mouseleave', hideHoverProfile);
+        }
+        window.addEventListener('scroll', hideHoverProfile, true);
 
         // ── View profile (read-only, from a request row) ─────────────────────
         function closeViewProfileModal() { document.getElementById('viewProfileModal').classList.remove('open'); }
@@ -1472,7 +1662,8 @@
                 row.innerHTML = `<span style="font-size:0.86rem;color:#334155;overflow-wrap:anywhere;"><i class="fas fa-paperclip"></i> ${a.filename}</span>`;
                 if (a.attachment_id) {
                     const rmBtn = document.createElement('button');
-                    rmBtn.type = 'button'; rmBtn.className = 'btn-mini btn-decline'; rmBtn.textContent = 'Remove';
+                    rmBtn.type = 'button'; rmBtn.className = 'icon-btn icon-decline'; rmBtn.title = 'Remove document';
+                    rmBtn.innerHTML = '<i class="fas fa-trash-can"></i>';
                     rmBtn.addEventListener('click', () => removeEditAttachment(a.attachment_id));
                     row.appendChild(rmBtn);
                 }
