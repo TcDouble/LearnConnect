@@ -229,13 +229,26 @@
         card.className = 'teacher-card';
         card.innerHTML = `
           <div class="teacher-name"><span class="teacher-initials">${initials(r.counterparty)}</span> <button type="button" class="teacher-name-link">${r.counterparty || 'A teacher'}</button></div>
+          <div class="teacher-rating" id="rating-${r.session_id}" style="margin:4px 0 8px;font-size:0.82rem;color:#94a3b8;">Loading rating…</div>
           <div class="teacher-exp">${fmtDuration(r.duration)} session</div>
           <button class="btn btn-primary choose-btn">Choose this teacher</button>
         `;
         card.querySelector('.teacher-name-link').addEventListener('click', () => openViewProfile(r.session_id));
         card.querySelector('.choose-btn').addEventListener('click', () => chooseTeacher(r.session_id));
         grid.appendChild(card);
+        loadCardRating(r.session_id);
       });
+    }
+
+    async function loadCardRating(sessionId) {
+      const { data, error } = await supabaseClient.rpc('get_counterparty_profile', { p_session_id: sessionId });
+      const row = Array.isArray(data) ? data[0] : data;
+      const el = document.getElementById(`rating-${sessionId}`);
+      if (!el) return;
+      if (error || !row) { el.textContent = ''; return; }
+      el.innerHTML = row.rating_count
+        ? `${starsHtml(Math.round(row.avg_rating))} <span style="color:#64748b;">${row.avg_rating} (${row.rating_count})</span>`
+        : '<span style="color:#94a3b8;">No ratings yet</span>';
     }
 
     async function chooseTeacher(sessionId) {

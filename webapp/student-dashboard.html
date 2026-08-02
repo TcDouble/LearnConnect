@@ -736,8 +736,11 @@
             filtered.forEach(t => {
                 const name = t.name || 'Unnamed teacher';
                 const subs = t.subject_list || [];
+                const ratingHtml = t.rating_count
+                    ? `${starsHtml(Math.round(t.avg_rating))} <span style="color:var(--dash-muted);font-size:0.78rem;">${t.avg_rating} (${t.rating_count})</span>`
+                    : `<span style="color:#94a3b8;font-size:0.82rem;">No ratings yet</span>`;
                 const card = document.createElement('div'); card.className = 'teacher-card';
-                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div>`;
+                card.innerHTML = `<div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><div class="teacher-rating" style="margin:4px 0 8px;">${ratingHtml}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div>`;
                 container.appendChild(card);
             });
             document.getElementById('broadcastAction').hidden = false;
@@ -1030,7 +1033,9 @@
                 r.classList.add('clickable-row');
                 r.addEventListener('click', () => openScheduledSession(s));
                 r.insertCell(0).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
-                r.insertCell(1).innerText = s.counterparty || '—';
+                const nameCell = r.insertCell(1);
+                nameCell.innerHTML = `<span class="action-link">${escapeHtml(s.counterparty) || '—'}</span>`;
+                nameCell.querySelector('.action-link').addEventListener('click', (e) => { e.stopPropagation(); openViewProfile(s.session_id); });
                 r.insertCell(2).innerText = `${s.subject || ''}${s.request ? ' — ' + s.request : ''}`;
                 let statusHtml = statusPill(s.status) + joinLink(s.meeting_url);
                 if (s.status === 'offer_accepted') {
@@ -1049,7 +1054,9 @@
             confirmed.forEach(s => {
                 const r = tbody.insertRow();
                 r.insertCell(0).innerText = s.is_immediate ? 'Immediate' : fmtLocalDateTime(s.session_date, s.starttime || '00:00');
-                r.insertCell(1).innerText = s.counterparty || '—';
+                const nameCell = r.insertCell(1);
+                nameCell.innerHTML = `<span class="action-link">${escapeHtml(s.counterparty) || '—'}</span>`;
+                nameCell.querySelector('.action-link').addEventListener('click', () => openViewProfile(s.session_id));
                 r.insertCell(2).innerText = `${s.subject || ''}${s.request ? ' — ' + s.request : ''}`;
                 r.insertCell(3).innerHTML = `
                     <div class="row-actions">
