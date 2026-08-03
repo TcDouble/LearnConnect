@@ -30,8 +30,14 @@
                 <div class="profile-wrap" id="profileWrap">
                     <button class="profile-avatar-btn" id="profileAvatarBtn" title="Account"><span id="profileInitials">?</span></button>
                     <div class="profile-dropdown" id="profileDropdown">
-                        <button class="profile-menu-item" id="menuTeacherProfile"><i class="fas fa-chalkboard-user"></i> Teacher profile</button>
-                        <button class="profile-menu-item" id="menuStudentProfile"><i class="fas fa-graduation-cap"></i> Student profile</button>
+                        <div class="profile-menu-toggle" id="profileToggleRow" hidden>
+                            <div class="view-toggle" id="profileTypeToggle">
+                                <span class="view-toggle-thumb" id="profileTypeToggleThumb"></span>
+                                <button type="button" class="view-toggle-btn" data-profile-tab="student">Student</button>
+                                <button type="button" class="view-toggle-btn" data-profile-tab="teacher">Teacher</button>
+                            </div>
+                        </div>
+                        <button class="profile-menu-item" id="menuSingleProfile" hidden></button>
                         <button class="profile-menu-item" id="menuSettings"><i class="fas fa-sliders-h"></i> Settings</button>
                         <div class="profile-menu-divider"></div>
                         <button class="profile-menu-item danger" id="menuSignOut"><i class="fas fa-right-from-bracket"></i> Sign out</button>
@@ -434,9 +440,23 @@
 
         function applyPersonaVisibility() {
             const both = personas.isStudent && personas.isTeacher;
+            const role = effectiveRole();
+            document.body.classList.toggle('role-student', role === 'student');
+            document.body.classList.toggle('role-teacher', role === 'teacher');
             document.getElementById('viewToggle').hidden = !both;
-            document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.view === activeView));
+            document.querySelectorAll('#viewToggle .view-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.view === activeView));
             document.getElementById('viewToggleThumb').classList.toggle('teacher', activeView === 'teacher');
+
+            document.getElementById('profileToggleRow').hidden = !both;
+            const singleBtn = document.getElementById('menuSingleProfile');
+            singleBtn.hidden = both;
+            if (!both) {
+                singleBtn.dataset.tab = personas.isTeacher ? 'teacher' : 'student';
+                singleBtn.innerHTML = personas.isTeacher
+                    ? '<i class="fas fa-chalkboard-user"></i> Teacher profile'
+                    : '<i class="fas fa-graduation-cap"></i> Student profile';
+            }
+
             buildSidebarNav();
         }
 
@@ -1467,8 +1487,17 @@
         }
         document.getElementById('notifBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('open'); document.getElementById('profileDropdown').classList.remove('open'); });
         document.getElementById('profileAvatarBtn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('profileDropdown').classList.toggle('open'); document.getElementById('notifDropdown').classList.remove('open'); });
-        document.getElementById('menuTeacherProfile').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); openProfileModal('teacher'); });
-        document.getElementById('menuStudentProfile').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); openProfileModal('student'); });
+        document.getElementById('menuSingleProfile').addEventListener('click', () => {
+            document.getElementById('profileDropdown').classList.remove('open');
+            openProfileModal(document.getElementById('menuSingleProfile').dataset.tab);
+        });
+        document.querySelectorAll('#profileTypeToggle .view-toggle-btn').forEach(btn =>
+            btn.addEventListener('click', () => {
+                document.getElementById('profileTypeToggleThumb').classList.toggle('teacher', btn.dataset.profileTab === 'teacher');
+                document.querySelectorAll('#profileTypeToggle .view-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+                document.getElementById('profileDropdown').classList.remove('open');
+                openProfileModal(btn.dataset.profileTab);
+            }));
         document.getElementById('menuSettings').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); openProfileModal('settings'); });
         document.getElementById('menuSignOut').addEventListener('click', async () => { await supabaseClient.auth.signOut(); window.location.href = 'index.html'; });
         document.addEventListener('click', () => { document.getElementById('notifDropdown').classList.remove('open'); document.getElementById('profileDropdown').classList.remove('open'); });
