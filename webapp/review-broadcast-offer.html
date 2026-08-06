@@ -243,7 +243,19 @@
         return;
       }
 
+      // Non-premium students auto-book the first teacher who accepts instead
+      // of manually reviewing everyone — this either confirms the session on
+      // the spot or is a no-op (premium student, or someone else already won).
+      const { data: autoData, error: autoErr } = await supabaseClient.rpc('maybe_auto_confirm_broadcast', { p_session_id: req.session_id });
+      const autoConfirmed = !autoErr && (Array.isArray(autoData) ? autoData[0]?.auto_confirmed : autoData?.auto_confirmed);
+
       localStorage.removeItem('teacherPendingRequest');
+      if (autoConfirmed) {
+        btn.innerHTML = '<i class="fas fa-circle-check"></i> Confirmed!';
+        showStatus('info', "You're booked — this session is confirmed.");
+        setTimeout(() => { window.location.href = returnUrl; }, 1200);
+        return;
+      }
       window.location.href = returnUrl;
     });
 

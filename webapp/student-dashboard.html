@@ -30,14 +30,9 @@
                 <div class="profile-wrap" id="profileWrap">
                     <button class="profile-avatar-btn" id="profileAvatarBtn" title="Account"><span id="profileInitials">?</span></button>
                     <div class="profile-dropdown" id="profileDropdown">
-                        <div class="profile-menu-toggle" id="profileToggleRow" hidden>
-                            <div class="view-toggle" id="profileTypeToggle">
-                                <span class="view-toggle-thumb" id="profileTypeToggleThumb"></span>
-                                <button type="button" class="view-toggle-btn" data-profile-tab="student">Student</button>
-                                <button type="button" class="view-toggle-btn" data-profile-tab="teacher">Teacher</button>
-                            </div>
-                        </div>
                         <button class="profile-menu-item" id="menuSingleProfile" hidden></button>
+                        <button class="profile-menu-item" id="menuStudentProfile" hidden><i class="fas fa-graduation-cap"></i> Student profile</button>
+                        <button class="profile-menu-item" id="menuTeacherProfile" hidden><i class="fas fa-chalkboard-user"></i> Teacher profile</button>
                         <button class="profile-menu-item" id="menuSettings"><i class="fas fa-sliders-h"></i> Settings</button>
                         <div class="profile-menu-divider"></div>
                         <button class="profile-menu-item danger" id="menuSignOut"><i class="fas fa-right-from-bracket"></i> Sign out</button>
@@ -295,6 +290,7 @@
         let teacherSessions = [];
         let personas = { isStudent: false, isTeacher: false };
         let activeView = null; // 'student' | 'teacher' — which single-persona view a dual-persona user is looking at
+        let isPremium = false; // self-toggled in Settings for now — gates the find-a-teacher flow
 
         // The role whose artifacts should currently be shown. Single-persona
         // users always see their one role; dual-persona users see whichever
@@ -402,12 +398,13 @@
             const uid = session.user.id;
             supabaseClient.from('Users').update({ timezone: USER_TZ }).eq('UID', uid);
 
-            const { data: u } = await supabaseClient.from('Users').select('firstname, lastname, email, is_student, is_teacher').eq('UID', uid).single();
+            const { data: u } = await supabaseClient.from('Users').select('firstname, lastname, email, is_student, is_teacher, is_premium').eq('UID', uid).single();
             fullName = u ? [u.firstname, u.lastname].filter(Boolean).join(' ') : (localStorage.getItem('studentFullName') || localStorage.getItem('teacherFullName') || 'there');
             email = (u && u.email) || localStorage.getItem('studentEmail') || localStorage.getItem('teacherEmail') || '';
             if (u) {
                 personas.isStudent = !!u.is_student;
                 personas.isTeacher = !!u.is_teacher;
+                isPremium = !!u.is_premium;
                 localStorage.setItem('isStudent', personas.isStudent ? 'true' : 'false');
                 localStorage.setItem('isTeacher', personas.isTeacher ? 'true' : 'false');
             }
@@ -447,12 +444,17 @@
             document.querySelectorAll('#viewToggle .view-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.view === activeView));
             document.getElementById('viewToggleThumb').classList.toggle('teacher', activeView === 'teacher');
 
-            document.getElementById('profileToggleRow').hidden = !both;
-            const singleBtn = document.getElementById('menuSingleProfile');
-            singleBtn.hidden = both;
+            // Dual-persona users get both profile links in the dropdown (the
+            // view toggle up top only switches which dashboard they're looking
+            // at, not which profile they can open). Single-persona users just
+            // get their one.
+            document.getElementById('menuSingleProfile').hidden = both;
+            document.getElementById('menuStudentProfile').hidden = !both;
+            document.getElementById('menuTeacherProfile').hidden = !both;
             if (!both) {
-                singleBtn.dataset.tab = personas.isTeacher ? 'teacher' : 'student';
-                singleBtn.innerHTML = personas.isTeacher
+                const singleBtn = document.getElementById('menuSingleProfile');
+                singleBtn.dataset.tab = role;
+                singleBtn.innerHTML = role === 'teacher'
                     ? '<i class="fas fa-chalkboard-user"></i> Teacher profile'
                     : '<i class="fas fa-graduation-cap"></i> Student profile';
             }
@@ -825,11 +827,17 @@
                     ? `${starsHtml(Math.round(t.avg_rating))} <span style="color:var(--dash-muted);font-size:0.78rem;">${t.avg_rating} (${t.rating_count})</span>`
                     : `<span style="color:#94a3b8;font-size:0.82rem;">No ratings yet</span>`;
                 const card = document.createElement('div'); card.className = 'teacher-card selectable';
-                card.innerHTML = `<div class="teacher-card-head"><div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><input type="checkbox" class="teacher-select" data-teacher-uid="${t.uid}" title="Send this teacher the request" checked></div><div class="teacher-rating" style="margin:4px 0 8px;">${ratingHtml}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div>`;
-                const cb = card.querySelector('.teacher-select');
-                cb.addEventListener('change', () => { card.classList.toggle('unselected', !cb.checked); updateBroadcastButton(); });
-                // Anywhere on the card toggles it — the checkbox itself already did.
-                card.addEventListener('click', (e) => { if (e.target !== cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); } });
+                // Non-premium students send to every matching teacher — the
+                // checkbox stays visible (so it's clear that's what's happening)
+                // but locked on, rather than hidden outright.
+                const cbTitle = isPremium ? 'Send this teacher the request' : 'Premium lets you leave specific teachers out — upgrade in Settings';
+                card.innerHTML = `<div class="teacher-card-head"><div class="teacher-name"><span class="teacher-initials">${initials(t.name)}</span> ${name}</div><input type="checkbox" class="teacher-select" data-teacher-uid="${t.uid}" title="${cbTitle}" checked${isPremium ? '' : ' disabled'}></div><div class="teacher-rating" style="margin:4px 0 8px;">${ratingHtml}</div><div class="teacher-exp">${t.years_experience || 0} yrs experience</div><div class="teacher-subjects">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('')}</div>`;
+                if (isPremium) {
+                    const cb = card.querySelector('.teacher-select');
+                    cb.addEventListener('change', () => { card.classList.toggle('unselected', !cb.checked); updateBroadcastButton(); });
+                    // Anywhere on the card toggles it — the checkbox itself already did.
+                    card.addEventListener('click', (e) => { if (e.target !== cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); } });
+                }
                 container.appendChild(card);
             });
             document.getElementById('broadcastAction').hidden = false;
@@ -847,7 +855,9 @@
             btn.disabled = n === 0;
             btn.textContent = n === 0
                 ? 'Select at least one teacher'
-                : `Send request to ${n} selected teacher${n > 1 ? 's' : ''}`;
+                : isPremium
+                    ? `Send request to ${n} selected teacher${n > 1 ? 's' : ''}`
+                    : `Send request to all ${n} available teacher${n > 1 ? 's' : ''}`;
         }
 
         async function uploadAttachmentIfAny(file) {
@@ -1491,13 +1501,8 @@
             document.getElementById('profileDropdown').classList.remove('open');
             openProfileModal(document.getElementById('menuSingleProfile').dataset.tab);
         });
-        document.querySelectorAll('#profileTypeToggle .view-toggle-btn').forEach(btn =>
-            btn.addEventListener('click', () => {
-                document.getElementById('profileTypeToggleThumb').classList.toggle('teacher', btn.dataset.profileTab === 'teacher');
-                document.querySelectorAll('#profileTypeToggle .view-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
-                document.getElementById('profileDropdown').classList.remove('open');
-                openProfileModal(btn.dataset.profileTab);
-            }));
+        document.getElementById('menuStudentProfile').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); openProfileModal('student'); });
+        document.getElementById('menuTeacherProfile').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); openProfileModal('teacher'); });
         document.getElementById('menuSettings').addEventListener('click', () => { document.getElementById('profileDropdown').classList.remove('open'); openProfileModal('settings'); });
         document.getElementById('menuSignOut').addEventListener('click', async () => { await supabaseClient.auth.signOut(); window.location.href = 'index.html'; });
         document.addEventListener('click', () => { document.getElementById('notifDropdown').classList.remove('open'); document.getElementById('profileDropdown').classList.remove('open'); });
@@ -1783,6 +1788,7 @@
             if (tab === 'settings') {
                 document.getElementById('pmWantLearn').checked = personas.isStudent;
                 document.getElementById('pmWantTeach').checked = personas.isTeacher;
+                document.getElementById('pmWantPremium').checked = isPremium;
                 document.getElementById('pmReminderRow').hidden = !personas.isStudent;
                 document.getElementById('pmNotifRow').hidden = !personas.isTeacher;
                 document.getElementById('pmReminderSetting').value = localStorage.getItem('studentReminders') || 'All sessions';
@@ -1833,6 +1839,7 @@
         async function pmSaveSettings() {
             const wantStudent = document.getElementById('pmWantLearn').checked;
             const wantTeach = document.getElementById('pmWantTeach').checked;
+            const wantPremium = document.getElementById('pmWantPremium').checked;
             if (!wantStudent && !wantTeach) { alert('Select at least one: Learn or Teach.'); return; }
 
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -1847,11 +1854,12 @@
             if (wantTeach && !TID) { localStorage.setItem('editAddPersona', 'teacher'); window.location.href = 'Profile-setup.html'; return; }
 
             const tz = document.getElementById('pmTimezone').value;
-            const { error } = await supabaseClient.from('Users').update({ is_student: wantStudent, is_teacher: wantTeach, timezone: tz }).eq('UID', uid);
+            const { error } = await supabaseClient.from('Users').update({ is_student: wantStudent, is_teacher: wantTeach, is_premium: wantPremium, timezone: tz }).eq('UID', uid);
             if (error) { alert('Could not save: ' + error.message); return; }
 
             personas.isStudent = wantStudent;
             personas.isTeacher = wantTeach;
+            isPremium = wantPremium;
             localStorage.setItem('isStudent', wantStudent ? 'true' : 'false');
             localStorage.setItem('isTeacher', wantTeach ? 'true' : 'false');
             if (wantStudent) { localStorage.setItem('studentReminders', document.getElementById('pmReminderSetting').value); localStorage.setItem('studentTZ', tz); }
@@ -1909,6 +1917,10 @@
             <label>I want to</label>
             <div class="opt-in-row"><input type="checkbox" id="pmWantLearn"><label for="pmWantLearn">Learn (student)</label></div>
             <div class="opt-in-row"><input type="checkbox" id="pmWantTeach"><label for="pmWantTeach">Teach (teacher)</label></div>
+          </div>
+          <div class="form-row">
+            <label>Membership <span class="hint">(self-toggle for now — no billing yet)</span></label>
+            <div class="opt-in-row"><input type="checkbox" id="pmWantPremium"><label for="pmWantPremium">Premium — choose exactly which teachers get your request, and pick who to book from everyone who accepts</label></div>
           </div>
           <div class="form-row" id="pmReminderRow"><label>Email reminders <span class="hint">(as student)</span></label><select id="pmReminderSetting"><option>All sessions</option><option>Only upcoming</option><option>None</option></select></div>
           <div class="form-row" id="pmNotifRow"><label>Email notifications <span class="hint">(as teacher)</span></label><select id="pmNotifSetting"><option>All updates</option><option>Only session reminders</option><option>None</option></select></div>

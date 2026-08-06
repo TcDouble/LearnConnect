@@ -87,9 +87,6 @@ body.dashboard-page.role-teacher { background: var(--dash-purple-tint); }
 .profile-menu-item.danger:hover { background: #fef2f2; color: #b91c1c; }
 .profile-menu-item.danger i { color: #b91c1c; }
 .profile-menu-divider { height: 1px; background: #f1f5f9; margin: 4px 0; }
-.profile-menu-toggle { padding: 10px 16px 8px; }
-.profile-menu-toggle .view-toggle { width: 100%; margin: 0; }
-.profile-menu-toggle .view-toggle-btn { font-size: 0.78rem; padding: 6px 10px; }
 
 /* ---------- Layout ---------- */
 /* Header stays fixed (it's outside this flex row); sidebar and main-content
