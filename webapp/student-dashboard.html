@@ -694,6 +694,9 @@
                 if (!document.getElementById('requests-section').classList.contains('hidden-section')) {
                     renderFullRequests(document.getElementById('requestSearchFull').value);
                 }
+                if (!document.getElementById('schedule-section').classList.contains('hidden-section')) {
+                    renderScheduleSection();
+                }
             });
         }
 
@@ -711,7 +714,13 @@
                     .eq('status', 'waiting for teacher')
                     .select();
                 if (error) { alert('Could not accept: ' + error.message); return; }
-                if (!data || !data.length) { alert('This request has already been resolved.'); }
+                if (!data || !data.length) { alert('This request has already been resolved.'); refreshRequestsViews(); return; }
+                // Non-premium students auto-book the first teacher who accepts —
+                // this either confirms the session on the spot (canceling every
+                // other teacher's copy) or is a no-op for a premium student.
+                const { data: autoData, error: autoErr } = await supabaseClient.rpc('maybe_auto_confirm_broadcast', { p_session_id: s.session_id });
+                const autoConfirmed = !autoErr && (Array.isArray(autoData) ? autoData[0]?.auto_confirmed : autoData?.auto_confirmed);
+                if (autoConfirmed) alert(`You're booked! This session with ${s.counterparty || 'the student'} is confirmed.`);
             } else {
                 const { data, error } = await supabaseClient
                     .from('Blocked_Time')
